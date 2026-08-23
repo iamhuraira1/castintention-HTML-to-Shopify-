@@ -1,0 +1,435 @@
+/* ============================================================
+   JOURNAL INDEX SECTION
+   Matches CAST_Journal_Index_Mockup_FINAL.html design 1:1.
+
+   THEME INTEGRATION NOTES:
+   - Colors come from the section's Color scheme (.color-{scheme}
+     class applied by the theme) via --color-foreground / --color-background.
+   - Typography intentionally does NOT declare its own font-family.
+     It inherits from the theme's global heading/body font variables
+     so the section always matches whatever fonts are set in
+     Theme Settings > Typography. If your theme exposes different
+     variable names than the ones below, update the two lines in
+     the ":root features" block only — nothing else needs to change.
+   - All spacing/size values are CSS custom properties rendered
+     inline by the section's Liquid file from Theme Customizer
+     settings, with independent desktop and mobile values.
+
+   FIX (2026-08): removed the duplicate border-top on
+   .featured-article — it sat directly against .journals-header's
+   border-bottom with nothing between them, so the top of the page
+   was rendering two stacked 1px lines while every other border on
+   the page (bottom of featured article, pagination) is a single
+   1px line. That's what read as "top border bigger than bottom
+   border." .journals-header's border-bottom already draws that
+   line, so no border is lost — just the duplicate.
+   ============================================================ */
+
+.journal-index-section {
+  /* Theme font inheritance — uses CAST's existing heading/body
+     font variables. Falls back gracefully if the theme variable
+     is not yet defined on the page. */
+  --ji-font-heading: var(--font-heading-family, inherit);
+  --ji-font-body: var(--font-body-family, inherit);
+  font-family: var(--ji-font-heading);
+}
+
+
+.journal-index-section .journals-title,
+.journal-index-section .journals-eyebrow,
+.journal-index-section .journal-card-label,
+.journal-index-section .featured-headline,
+.journal-index-section .more-title,
+.journal-index-section .journal-card-title,
+.journal-index-section .article-byline,
+.journal-index-section .article-date,
+.journal-index-section .article-read,
+.journal-index-section .journal-card-read,
+.journal-index-section .pagination-info {
+  font-family: var(--ji-font-heading);
+  font-weight: var(--font-heading-weight, 300);
+}
+
+.journal-index-section .featured-excerpt,
+.journal-index-section .journal-card-excerpt {
+  font-family: "Spectral", Georgia, serif;
+  font-weight: 300;
+}
+
+/* ── PAGE HEADER ── */
+.journal-index-section .journals-header {
+  padding: var(--ji-header-pt-d, 80px) 80px var(--ji-header-pb-d, 64px);
+  border-bottom: 1px solid rgba(var(--color-foreground), var(--ji-border-opacity, 0.08));
+}
+
+.journal-index-section .journals-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(var(--color-foreground), 0.62);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.journal-index-section .journals-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: rgba(var(--color-foreground), 0.5);
+  flex-shrink: 0;
+}
+
+.journal-index-section .journals-title {
+  font-size: var(--ji-heading-size-d, 48px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  max-width: 560px;
+  color: rgb(var(--color-foreground));
+}
+
+/* ── FEATURED ARTICLE ── */
+.journal-index-section .featured-article-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.journal-index-section {
+  padding-top: var(--ji-featured-pt-d, 0px);
+}
+
+.journal-index-section .featured-article {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: var(--ji-featured-image-height-d, 560px);
+  /* border-top intentionally removed — .journals-header's
+     border-bottom already draws this line; having both created a
+     doubled-up border at the top of the page. See note at top of
+     file. */
+  border-bottom: 1px solid rgba(var(--color-foreground), var(--ji-border-opacity, 0.08));
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-bottom: var(--ji-featured-pb-d, 0px);
+}
+
+.journal-index-section .featured-article:hover {
+  opacity: var(--ji-hover-opacity, 0.92);
+}
+
+.journal-index-section .featured-image {
+  background: rgba(var(--color-foreground), 0.06);
+  display: flex;
+  align-items: flex-end;
+  padding: 20px 24px;
+  min-height: var(--ji-featured-image-height-d, 560px);
+  overflow: hidden;
+  position: relative;
+}
+
+.journal-index-section .featured-image-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.journal-index-section .img-placeholder-label {
+  position: relative;
+  z-index: 1;
+  font-size: 10px;
+  color: rgba(var(--color-foreground), 0.4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 5px 10px;
+}
+
+.journal-index-section .featured-content {
+  padding: var(--ji-featured-content-pad-d, 72px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.journal-index-section .journal-card-label {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(var(--color-foreground), 0.62);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.journal-index-section .journal-card-label::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: rgba(var(--color-foreground), 0.5);
+  flex-shrink: 0;
+}
+
+.journal-index-section .featured-headline {
+  font-size: var(--ji-featured-headline-size-d, 34px);
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+  color: rgb(var(--color-foreground));
+}
+
+.journal-index-section .featured-excerpt {
+  font-size: 15px;
+  line-height: 1.75;
+  color: rgba(var(--color-foreground), 0.62);
+  max-width: 420px;
+}
+
+.journal-index-section .article-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 28px;
+  margin-top: 28px;
+  border-top: 1px solid rgba(var(--color-foreground), var(--ji-border-opacity, 0.1));
+}
+
+.journal-index-section .article-byline,
+.journal-index-section .article-date {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--color-foreground), 0.62);
+}
+
+.journal-index-section .article-read {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(var(--color-foreground), 0.62);
+  margin-left: auto;
+}
+
+.journal-index-section .journal-card-read {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--color-foreground));
+  text-decoration: none;
+  border-bottom: 1px solid rgba(var(--color-foreground), 0.2);
+  padding-bottom: 2px;
+  display: inline-block;
+  transition: opacity 0.2s;
+  width: fit-content;
+}
+
+/* Featured article CTA keeps its original fixed spacing (centered layout, not affected by card-height issue) */
+.journal-index-section .featured-content .journal-card-read {
+  margin-top: 32px;
+}
+
+/* Grid card CTA — always bottom-aligned regardless of title/excerpt length */
+.journal-index-section .journal-card-content .journal-card-read {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.journal-index-section a:hover .journal-card-read {
+  opacity: var(--ji-hover-opacity, 0.55);
+}
+
+/* ── JOURNALS GRID ── */
+.journal-index-section .journals-grid-section {
+  padding: var(--ji-grid-pt-d, 80px) 80px var(--ji-grid-pb-d, 80px);
+}
+
+.journal-index-section .more-title {
+  font-size: var(--ji-grid-title-size-d, 22px);
+  margin-bottom: 64px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--color-foreground));
+}
+
+.journal-index-section .journals-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--ji-grid-cols-d, 3), 1fr);
+  gap: var(--ji-grid-gap-d, 2px);
+  align-items: stretch;
+}
+
+.journal-index-section .journal-card {
+  background: rgba(var(--color-foreground), 0.04);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.journal-index-section .journal-card:hover {
+  opacity: var(--ji-hover-opacity, 0.85);
+}
+
+.journal-index-section .journal-card-image {
+  aspect-ratio: var(--ji-card-image-ratio-d, 1.5);
+  background: #e2ddd1;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.journal-index-section .journal-card-image-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.journal-index-section .journal-card-content {
+  padding: var(--ji-card-content-pad-d, 28px) var(--ji-card-content-pad-d, 28px) calc(var(--ji-card-content-pad-d, 28px) + 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  background: #eeebe6;
+}
+
+.journal-index-section .journal-card-title {
+  font-size: var(--ji-card-title-size-d, 16px);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: rgb(var(--color-foreground));
+  margin-bottom:0;
+}
+
+.journal-index-section .journal-card-excerpt {
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(var(--color-foreground), 0.62);
+  margin: 0;
+}
+
+.journal-index-section .journals-empty {
+  font-family: var(--ji-font-body);
+  font-size: 14px;
+  color: rgba(var(--color-foreground), 0.62);
+  padding: 40px 0;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+/* ── PAGINATION ── */
+.journal-index-section .journals-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 64px;
+  padding-top: 48px;
+  border-top: 1px solid rgba(var(--color-foreground), var(--ji-border-opacity, 0.08));
+}
+
+.journal-index-section .pagination-info {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--color-foreground), 0.62);
+}
+
+.journal-index-section .pagination-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.journal-index-section .pagination-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(var(--color-foreground), 0.14);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--color-foreground));
+  transition: opacity 0.2s, background 0.2s;
+  text-decoration: none;
+}
+
+.journal-index-section .pagination-btn:hover {
+  background: rgba(var(--color-foreground), 0.05);
+}
+
+.journal-index-section .pagination-btn.is-disabled {
+  opacity: 0.28;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ── MOBILE ── */
+@media screen and (max-width: 749px) {
+  .journal-index-section {
+    padding-top: var(--ji-featured-pt-m, 0px);
+  }
+
+  .journal-index-section .journals-header {
+    padding: var(--ji-header-pt-m, 48px) 24px var(--ji-header-pb-m, 40px);
+  }
+
+  .journal-index-section .journals-title {
+    font-size: var(--ji-heading-size-m, 28px);
+  }
+
+  .journal-index-section .featured-article {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    margin-bottom: var(--ji-featured-pb-m, 0px);
+  }
+
+  .journal-index-section .featured-image {
+    min-height: var(--ji-featured-image-height-m, 280px);
+  }
+
+  .journal-index-section .featured-content {
+    padding: var(--ji-featured-content-pad-m, 24px);
+  }
+
+  .journal-index-section .featured-headline {
+    font-size: var(--ji-featured-headline-size-m, 22px);
+  }
+
+  .journal-index-section .journals-grid-section {
+    padding: var(--ji-grid-pt-m, 60px) 24px var(--ji-grid-pb-m, 60px);
+  }
+
+  .journal-index-section .more-title {
+    font-size: var(--ji-grid-title-size-m, 16px);
+  }
+
+  .journal-index-section .journals-grid {
+    grid-template-columns: repeat(var(--ji-grid-cols-m, 1), 1fr);
+    gap: var(--ji-grid-gap-m, 2px);
+  }
+
+  .journal-index-section .journal-card-image {
+    aspect-ratio: var(--ji-card-image-ratio-m, 1.5);
+  }
+
+  .journal-index-section .journal-card-content {
+    padding: var(--ji-card-content-pad-m, 24px) var(--ji-card-content-pad-m, 24px) calc(var(--ji-card-content-pad-m, 24px) + 8px);
+  }
+
+  .journal-index-section .journal-card-title {
+    font-size: var(--ji-card-title-size-m, 16px);
+  }
+
+  .journal-index-section .journals-pagination {
+    margin-top: 40px;
+    padding-top: 32px;
+  }
+}
