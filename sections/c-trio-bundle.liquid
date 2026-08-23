@@ -1,0 +1,567 @@
+{% comment %}
+  CAST — Trio Bundle Section
+  File: sections/c-trio-bundle.liquid
+
+  Features:
+  - Left: product image (desktop) / mobile image (separate upload)
+  - Right: eyebrow, headline, body, price, CTA — all editable
+  - Product picker — pulls real price from Shopify
+  - Manual price override option
+  - Dark background (deep blue) — colors customizable
+  - Desktop: 2 col | Mobile: stacked (image top, content bottom)
+  - Separate padding controls per device
+  - No JS needed
+  - Flush against the section below (Testimonial + Video) — the
+    theme's default inter-section spacing is neutralized on this
+    section's bottom edge, see note near the bottom of the <style> block
+{% endcomment %}
+
+<section
+  class="c-trio-bundle"
+  id="c-trio-bundle-{{ section.id }}"
+>
+
+  {%- comment -%} ── LEFT: Image ── {%- endcomment -%}
+  <div class="c-trio-bundle__image-col">
+
+    {% if section.settings.image != blank %}
+  <div class="c-trio-bundle__image-wrap c-trio-bundle__image-wrap--desktop">
+
+    {% if section.settings.product != blank %}
+      <a href="{{ section.settings.product.url }}">
+    {% endif %}
+
+    {{
+      section.settings.image
+      | image_url: width: 1000
+      | image_tag:
+        class: 'c-trio-bundle__image',
+        alt: section.settings.headline | default: 'The Trio',
+        loading: 'lazy'
+    }}
+
+    {% if section.settings.product != blank %}
+      </a>
+    {% endif %}
+
+  </div>
+{% else %}
+      <div class="c-trio-bundle__image-placeholder">
+        {{ 'product-1' | placeholder_svg_tag: 'c-trio-bundle__placeholder-svg' }}
+      </div>
+    {% endif %}
+{% if section.settings.image_mobile != blank %}
+  <div class="c-trio-bundle__image-wrap c-trio-bundle__image-wrap--mobile">
+
+    {% if section.settings.product != blank %}
+      <a href="{{ section.settings.product.url }}">
+    {% endif %}
+
+    {{
+      section.settings.image_mobile
+      | image_url: width: 800
+      | image_tag:
+        class: 'c-trio-bundle__image',
+        alt: section.settings.headline | default: 'The Trio',
+        loading: 'lazy'
+    }}
+
+    {% if section.settings.product != blank %}
+      </a>
+    {% endif %}
+
+  </div>
+{% elsif section.settings.image != blank %}
+      {%- comment -%} Fallback: show desktop image on mobile too {%- endcomment -%}
+    {% endif %}
+
+  </div>
+
+  {%- comment -%} ── RIGHT: Content ── {%- endcomment -%}
+  <div class="c-trio-bundle__content">
+
+    {% if section.settings.eyebrow != blank %}
+      <p class="c-trio-bundle__eyebrow">{{ section.settings.eyebrow }}</p>
+    {% endif %}
+
+  {% if section.settings.headline != blank %}
+  <h2 class="c-trio-bundle__headline">
+
+    {% if section.settings.product != blank %}
+      <a href="{{ section.settings.product.url }}" class="c-trio-bundle__headline-link">
+        {{ section.settings.headline }}
+      </a>
+    {% else %}
+      {{ section.settings.headline }}
+    {% endif %}
+
+  </h2>
+{% endif %}
+
+    {% if section.settings.body_text != blank %}
+      <p class="c-trio-bundle__body">{{ section.settings.body_text }}</p>
+    {% endif %}
+
+    {%- comment -%} Price — from product or manual override {%- endcomment -%}
+    {% assign show_price = false %}
+    {% if section.settings.price_override != blank %}
+      {% assign show_price = true %}
+      {% assign price_display = section.settings.price_override %}
+    {% elsif section.settings.product != blank %}
+      {% assign show_price = true %}
+      {% assign price_display = section.settings.product.price | money %}
+      {% if section.settings.size_label != blank %}
+        {% assign price_display = price_display | append: ' | ' | append: section.settings.size_label %}
+      {% endif %}
+    {% endif %}
+
+    {% if show_price %}
+      <p class="c-trio-bundle__price">{{ price_display }}</p>
+    {% endif %}
+
+   {%- comment -%} CTA {%- endcomment -%}
+{% if section.settings.cta_text != blank %}
+  {% assign cta_url = section.settings.cta_link %}
+  {% if cta_url == blank and section.settings.product != blank %}
+    {% assign cta_url = section.settings.product.url %}
+  {% endif %}
+
+  {% if cta_url != blank %}
+    <a href="{{ cta_url }}" class="c-trio-bundle__cta">
+      {{ section.settings.cta_text }}
+    </a>
+  {% else %}
+    <span class="c-trio-bundle__cta">
+      {{ section.settings.cta_text }}
+    </span>
+  {% endif %}
+{% endif %}
+
+  </div>
+
+</section>
+
+<style>
+  #c-trio-bundle-{{ section.id }} {
+    --trio-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --trio-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --trio-padding-mobile:  {{ section.settings.padding_mobile }}px;
+    --trio-gap:             {{ section.settings.col_gap }}px;
+    --trio-bg:              {{ section.settings.bg_color }};
+    --trio-headline-color:  {{ section.settings.headline_color }};
+    --trio-body-color:      {{ section.settings.body_color }};
+    --trio-eyebrow-color:   {{ section.settings.eyebrow_color }};
+    --trio-price-color:     {{ section.settings.price_color }};
+    --trio-btn-border:      {{ section.settings.btn_border_color }};
+    --trio-btn-text:        {{ section.settings.headline_color }};
+  }
+
+  /* ── Section ── */
+  .c-trio-bundle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--trio-gap);
+    align-items: center;
+    background: var(--trio-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1px solid rgba(0,0,0,0.06);
+    {% endif %}
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Image column ── */
+  .c-trio-bundle__image-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+
+  }
+
+  /* Desktop image — shown by default */
+  .c-trio-bundle__image-wrap--desktop {
+    display: block;
+    width: 100%;
+  }
+
+  /* Mobile image — hidden on desktop */
+  .c-trio-bundle__image-wrap--mobile {
+    display: none;
+    width: 100%;
+  }
+
+  .c-trio-bundle__image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+  }
+
+  .c-trio-bundle__image-placeholder {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.2;
+  }
+
+  .c-trio-bundle__placeholder-svg {
+    width: 60%;
+    height: auto;
+  }
+
+  /* ── Content column ── */
+  .c-trio-bundle__content {
+    padding: 20px 22% 0px 0px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .c-trio-bundle__eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--trio-eyebrow-color);
+    margin-bottom: 20px;
+    font-weight: 300;
+  }
+
+  .c-trio-bundle__headline {
+    font-size: clamp(22px, 2.5vw, 32px);
+    font-weight: 300;
+    color: var(--trio-headline-color);
+    line-height: 1.2;
+    margin: 0px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-family: 'Work Sans', sans-serif;
+  }
+.c-trio-bundle__headline-link{
+  color: inherit;
+  text-decoration: none;
+}
+
+.c-trio-bundle__headline-link:hover{
+  color: inherit;
+  text-decoration: none;
+}
+  .c-trio-bundle__body {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--trio-body-color);
+    margin-bottom: 0px;
+    font-weight: 300;
+  }
+
+  .c-trio-bundle__price {
+    font-size: 14px;
+    color: var(--trio-price-color);
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+
+  .c-trio-bundle__cta {
+    display: inline-block;
+    padding: 14px 36px;
+    background: transparent;
+    color: var(--trio-btn-text);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid var(--trio-btn-border);
+    transition: border-color 0.2s ease, background 0.2s ease;
+    width: fit-content;
+  }
+
+  .c-trio-bundle__cta:hover {
+    border-color: var(--trio-headline-color);
+    background: rgba(249,248,246,0.05);
+  }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 900px) {
+    .c-trio-bundle {
+      padding: var(--trio-padding-tablet) 48px;
+      gap: 48px;
+    }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 640px) {
+    .c-trio-bundle {
+      padding: var(--trio-padding-mobile) 24px;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    /* Stack: image on top, content below */
+    .c-trio-bundle__image-col {
+      order: -1;
+      padding: 0;
+    }
+
+    /* Show mobile image if uploaded */
+    {% if section.settings.image_mobile != blank %}
+    .c-trio-bundle__image-wrap--desktop { display: none; }
+    .c-trio-bundle__image-wrap--mobile  { display: block; }
+    {% endif %}
+
+    .c-trio-bundle__content {
+      padding: 0;
+    }
+
+    .c-trio-bundle__cta {
+      width: 100%;
+      text-align: center;
+    }
+
+    .c-trio-bundle__price {
+      margin-bottom: 28px;
+    }
+  }
+ .c-trio-bundle__image {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+}
+
+  /*
+    ── Flush against Testimonial + Video below ──
+    Nicole: "there's a gap between the second video and the trio
+    coming soon section... the video should be flush against top
+    and bottom sections, as it is with the footer."
+
+    Neither this section nor Testimonial + Video adds any vertical
+    margin/padding of its own at desktop width, so the gap is coming
+    from the theme's default spacing wrapper around every section
+    (Shopify auto-wraps each section in <div id="shopify-section-{id}">).
+    This overrides that wrapper's spacing on just this section's
+    bottom edge — the seam against Testimonial + Video — without
+    touching spacing anywhere else on the page.
+
+    If a gap still shows after this, it means the theme is applying
+    spacing a different way (e.g. inline style on the wrapper, or a
+    row/margin setting in the JSON template) — send me theme.liquid
+    or the homepage JSON template and I'll target that directly.
+  */
+  #shopify-section-{{ section.id }} {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Trio Bundle",
+  "tag": "section",
+  "class": "c-trio-bundle-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Image — Desktop"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Trio image — Desktop",
+      "info": "Landscape or square. Shows the 3 bottles together. e.g. 'calm spray with box.png'"
+    },
+    {
+      "type": "header",
+      "content": "Image — Mobile"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mobile",
+      "label": "Trio image — Mobile",
+      "info": "Portrait or square format works best. Leave blank to use desktop image."
+    },
+    {
+      "type": "header",
+      "content": "Product"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Trio product",
+      "info": "Links the CTA to the product page and pulls the price automatically."
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "The complete system"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Headline",
+      "default": "The Trio"
+    },
+    {
+      "type": "textarea",
+      "id": "body_text",
+      "label": "Body text",
+      "default": "Three sprays, each designed for a specific physiological state."
+    },
+    {
+      "type": "header",
+      "content": "Price"
+    },
+    {
+      "type": "text",
+      "id": "price_override",
+      "label": "Price (manual override)",
+      "default": "$60 | 30mL / 1 fl oz each",
+      "info": "Type custom price text here. If filled, this overrides the product price."
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Size label",
+      "info": "Only used if pulling price from product above (not manual override)."
+    },
+    {
+      "type": "header",
+      "content": "CTA button"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "default": "Shop The Trio"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link",
+      "info": "Leave blank to use the product URL above."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "color",
+      "id": "headline_color",
+      "label": "Headline & button text",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow color",
+      "default": "#8090b8"
+    },
+    {
+      "type": "color",
+      "id": "body_color",
+      "label": "Body text color",
+      "default": "#9eaac4"
+    },
+    {
+      "type": "color",
+      "id": "price_color",
+      "label": "Price color",
+      "default": "#6b7a9c"
+    },
+    {
+      "type": "color",
+      "id": "btn_border_color",
+      "label": "Button border color",
+      "default": "#3d5280"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 56
+    },
+    {
+      "type": "range",
+      "id": "col_gap",
+      "label": "Column gap",
+      "min": 24,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 56
+    }
+  ],
+  "presets": [
+    {
+      "name": "Trio Bundle",
+      "settings": {
+        "eyebrow": "The complete system",
+        "headline": "The Trio",
+        "body_text": "Three sprays, each designed for a specific physiological state.",
+        "price_override": "$60 | 30mL / 1 fl oz each",
+        "cta_text": "Shop The Trio",
+        "show_border_top": true
+      }
+    }
+  ]
+}
+{% endschema %}

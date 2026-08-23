@@ -1,0 +1,641 @@
+{% comment %}
+  CAST — PDP Reviews Section (Metaobjects powered)
+  File: sections/cast-reviews.liquid
+
+  Data source: Shopify Metaobjects, type handle = "cast_review"
+  Required Metaobject fields (create in Admin > Content > Metaobjects):
+    - rating                 (Integer)
+    - review_text            (Multi-line text)
+    - reviewer_name          (Single line text)
+    - reviewer_location_date (Single line text)
+    - product                (Reference -> Product)
+    - approved               (True/False)
+
+  IMPORTANT: On the metaobject definition, go to "Storefronts" and enable
+  access for this theme, otherwise shop.metaobjects.product_review.values
+  will return empty in Liquid.
+
+  Behavior:
+  - Reads only reviews where approved == true AND product == current product
+  - Renders 3 per page, paginated with JS (no reload)
+  - Card design unchanged from the original approved design
+  - "Write a Review" modal uses Shopify's native contact form (no Formspree)
+{% endcomment %}
+
+{% assign all_reviews = shop.metaobjects.cast_review.values %}
+{% assign review_count = 0 %}
+
+<section
+  class="c-pdp-reviews"
+  id="c-pdp-reviews-{{ section.id }}"
+  data-per-page="3"
+>
+
+  <div class="c-pdp-reviews__grid" id="c-pdp-reviews-grid-{{ section.id }}">
+    {% for review in all_reviews %}
+      {% if review.approved.value == true and review.product.value.id == product.id %}
+        {% assign review_count = review_count | plus: 1 %}
+        <div class="c-pdp-reviews__card" data-review-card>
+
+          {%- comment -%} Stars {%- endcomment -%}
+          <div class="c-pdp-reviews__stars" aria-label="{{ review.rating.value }} out of 5 stars">
+            {% for i in (1..5) %}
+              <span
+                class="c-pdp-reviews__star{% if i > review.rating.value %} is-empty{% endif %}"
+                aria-hidden="true"
+              ></span>
+            {% endfor %}
+          </div>
+
+          {%- comment -%} Review text {%- endcomment -%}
+          {% if review.review_text.value != blank %}
+            <p class="c-pdp-reviews__text">{{ review.review_text.value }}</p>
+          {% endif %}
+
+          {%- comment -%} Meta: name + date/location {%- endcomment -%}
+          <div class="c-pdp-reviews__meta">
+            {% if review.reviewer_name.value != blank %}
+              <span class="c-pdp-reviews__name">{{ review.reviewer_name.value }}</span>
+            {% endif %}
+            {% if review.reviewer_location_date.value != blank %}
+              <span class="c-pdp-reviews__date">{{ review.reviewer_location_date.value }}</span>
+            {% endif %}
+          </div>
+
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% if review_count == 0 %}
+    <p class="c-pdp-reviews__empty">No reviews yet. Be the first to write one.</p>
+  {% endif %}
+
+  {%- comment -%} Pagination controls (JS driven) {%- endcomment -%}
+  {% if review_count > 3 %}
+    <div class="c-pdp-reviews__pagination" id="c-pdp-reviews-pagination-{{ section.id }}">
+      <button type="button" class="c-pdp-reviews__page-btn" data-page-prev aria-label="Previous reviews">←</button>
+      <span class="c-pdp-reviews__page-status" data-page-status></span>
+      <button type="button" class="c-pdp-reviews__page-btn" data-page-next aria-label="Next reviews">→</button>
+    </div>
+  {% endif %}
+
+  {%- comment -%} CTA row: Read all reviews (optional) + Write a review {%- endcomment -%}
+  <div class="c-pdp-reviews__cta">
+    {% if section.settings.cta_text != blank and section.settings.cta_link != blank %}
+      <a href="{{ section.settings.cta_link }}" class="c-pdp-reviews__cta-btn">
+        {{ section.settings.cta_text }}
+      </a>
+    {% endif %}
+    <button type="button" class="c-pdp-reviews__cta-btn c-pdp-reviews__write-btn" data-write-review-open>
+      {{ section.settings.write_review_text | default: "Write a Review" }}
+    </button>
+  </div>
+
+</section>
+
+{%- comment -%} ===================== WRITE A REVIEW MODAL ===================== {%- endcomment -%}
+<div class="c-write-review__overlay" data-write-review-modal hidden>
+  <div class="c-write-review__box" role="dialog" aria-modal="true" aria-labelledby="c-write-review-title-{{ section.id }}">
+    <button type="button" class="c-write-review__close" data-write-review-close aria-label="Close">×</button>
+    <h3 class="c-write-review__title" id="c-write-review-title-{{ section.id }}">Write a Review</h3>
+
+    {% form 'contact', id: 'c-write-review-form' %}
+      {% if form.posted_successfully? %}
+        <p class="c-write-review__success">Thank you — your review has been submitted for approval.</p>
+      {% else %}
+
+        <input type="hidden" name="contact[Subject]" value="New Product Review — {{ product.title }}">
+        <input type="hidden" name="contact[Product]" value="{{ product.title }} ({{ product.id }})">
+
+        <label class="c-write-review__label" for="cwr-rating-{{ section.id }}">Rating</label>
+        <select class="c-write-review__input" id="cwr-rating-{{ section.id }}" name="contact[Rating]" required>
+          <option value="">Select a rating</option>
+          <option value="5">5 - Excellent</option>
+          <option value="4">4 - Good</option>
+          <option value="3">3 - Average</option>
+          <option value="2">2 - Poor</option>
+          <option value="1">1 - Very poor</option>
+        </select>
+
+        <label class="c-write-review__label" for="cwr-name-{{ section.id }}">Name</label>
+        <input class="c-write-review__input" type="text" id="cwr-name-{{ section.id }}" name="contact[Name]" required>
+
+        <label class="c-write-review__label" for="cwr-email-{{ section.id }}">Email</label>
+        <input class="c-write-review__input" type="email" id="cwr-email-{{ section.id }}" name="contact[email]" required>
+
+        <label class="c-write-review__label" for="cwr-location-{{ section.id }}">Location (optional)</label>
+        <input class="c-write-review__input" type="text" id="cwr-location-{{ section.id }}" name="contact[Location]" placeholder="e.g. Toronto, ON">
+
+        <label class="c-write-review__label" for="cwr-body-{{ section.id }}">Your review</label>
+        <textarea class="c-write-review__input c-write-review__textarea" id="cwr-body-{{ section.id }}" name="contact[body]" rows="5" required></textarea>
+
+        <button type="submit" class="c-write-review__submit">Submit Review</button>
+        <p class="c-write-review__note">Reviews are checked before they're published.</p>
+
+      {% endif %}
+    {% endform %}
+  </div>
+</div>
+
+<style>
+  #c-pdp-reviews-{{ section.id }} {
+    --rev-bg:             {{ section.settings.bg_color }};
+    --rev-card-bg:        {{ section.settings.card_bg_color }};
+    --rev-text:           {{ section.settings.text_color }};
+    --rev-muted:          {{ section.settings.muted_color }};
+    --rev-star:           {{ section.settings.star_color }};
+    --rev-padding-desktop:{{ section.settings.padding_desktop }}px;
+    --rev-padding-tablet: {{ section.settings.padding_tablet }}px;
+    --rev-padding-mobile: {{ section.settings.padding_mobile }}px;
+  }
+
+  .c-pdp-reviews {
+    padding: var(--rev-padding-desktop) 80px;
+    background: var(--rev-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1.5px solid rgba(0,0,0,0.14);
+    {% endif %}
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-pdp-reviews__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .c-pdp-reviews__card {
+    background: var(--rev-card-bg);
+    padding: 36px 32px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .c-pdp-reviews__card[data-hidden] {
+    display: none;
+  }
+
+  .c-pdp-reviews__stars {
+    display: flex;
+    gap: 4px;
+  }
+
+  .c-pdp-reviews__star {
+    width: 10px;
+    height: 10px;
+    background: var(--rev-star);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .c-pdp-reviews__star.is-empty {
+    background: rgba(0,0,0,0.15);
+  }
+
+  .c-pdp-reviews__text {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--rev-text);
+    font-weight: 300;
+    flex: 1;
+  }
+
+  .c-pdp-reviews__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,0,0,0.07);
+  }
+
+  .c-pdp-reviews__name {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--rev-text);
+    font-weight: 300;
+  }
+
+  .c-pdp-reviews__date {
+    font-size: 11px;
+    color: var(--rev-muted);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+  }
+
+  .c-pdp-reviews__empty {
+    text-align: center;
+    font-size: 13px;
+    color: var(--rev-muted);
+    margin-bottom: 32px;
+  }
+
+  /* Pagination */
+  .c-pdp-reviews__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .c-pdp-reviews__page-btn {
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.25);
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--rev-text);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .c-pdp-reviews__page-btn:hover:not(:disabled) {
+    border-color: var(--rev-text);
+    background: rgba(0,0,0,0.03);
+  }
+
+  .c-pdp-reviews__page-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .c-pdp-reviews__page-status {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--rev-muted);
+    text-transform: uppercase;
+  }
+
+  /* CTA */
+  .c-pdp-reviews__cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .c-pdp-reviews__cta-btn {
+    display: inline-block;
+    padding: 14px 40px;
+    background: transparent;
+    color: var(--rev-text);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid rgba(0,0,0,0.25);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .c-pdp-reviews__cta-btn:hover {
+    border-color: var(--rev-text);
+    background: rgba(0,0,0,0.03);
+  }
+
+  /* Tablet */
+  @media screen and (max-width: 900px) {
+    .c-pdp-reviews {
+      padding: var(--rev-padding-tablet) 48px;
+    }
+    .c-pdp-reviews__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Mobile */
+  @media screen and (max-width: 640px) {
+    .c-pdp-reviews {
+      padding: var(--rev-padding-mobile) 24px;
+    }
+    .c-pdp-reviews__grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .c-pdp-reviews__card {
+      padding: 24px 20px 28px;
+    }
+    .c-pdp-reviews__cta {
+      flex-direction: column;
+    }
+  }
+
+  /* ===== Write a Review modal ===== */
+  .c-write-review__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 20px;
+  }
+
+  .c-write-review__overlay[hidden] {
+    display: none;
+  }
+
+  .c-write-review__box {
+    position: relative;
+    background: #F9F8F6;
+    max-width: 460px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 40px 32px;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-write-review__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    color: #1a1a1a;
+  }
+
+  .c-write-review__title {
+    font-family: 'Spectral', Georgia, serif;
+    font-weight: 400;
+    font-size: 20px;
+    margin: 0 0 24px;
+    color: #1a1a1a;
+  }
+
+  .c-write-review__label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    margin: 16px 0 6px;
+  }
+
+  .c-write-review__input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(0,0,0,0.2);
+    background: #fff;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 14px;
+    color: #1a1a1a;
+    box-sizing: border-box;
+  }
+
+  .c-write-review__textarea {
+    resize: vertical;
+  }
+
+  .c-write-review__submit {
+    margin-top: 24px;
+    width: 100%;
+    padding: 14px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .c-write-review__note {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #666;
+    text-align: center;
+  }
+
+  .c-write-review__success {
+    font-size: 14px;
+    color: #1a1a1a;
+  }
+</style>
+
+<script>
+  (function () {
+    var sectionId = {{ section.id | json }};
+    var perPage = 3;
+    var grid = document.getElementById('c-pdp-reviews-grid-' + sectionId);
+    var paginationEl = document.getElementById('c-pdp-reviews-pagination-' + sectionId);
+    if (!grid) return;
+
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('[data-review-card]'));
+    var totalPages = Math.ceil(cards.length / perPage);
+    var currentPage = 1;
+
+    function renderPage() {
+      cards.forEach(function (card, i) {
+        var pageOfCard = Math.floor(i / perPage) + 1;
+        if (pageOfCard === currentPage) {
+          card.removeAttribute('data-hidden');
+        } else {
+          card.setAttribute('data-hidden', '');
+        }
+      });
+
+      if (paginationEl) {
+        var statusEl = paginationEl.querySelector('[data-page-status]');
+        var prevBtn = paginationEl.querySelector('[data-page-prev]');
+        var nextBtn = paginationEl.querySelector('[data-page-next]');
+        if (statusEl) statusEl.textContent = currentPage + ' / ' + totalPages;
+        if (prevBtn) prevBtn.disabled = currentPage === 1;
+        if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+      }
+    }
+
+    if (paginationEl) {
+      var prevBtn = paginationEl.querySelector('[data-page-prev]');
+      var nextBtn = paginationEl.querySelector('[data-page-next]');
+      if (prevBtn) {
+        prevBtn.addEventListener('click', function () {
+          if (currentPage > 1) {
+            currentPage--;
+            renderPage();
+          }
+        });
+      }
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+          if (currentPage < totalPages) {
+            currentPage++;
+            renderPage();
+          }
+        });
+      }
+    }
+
+    renderPage();
+
+    // Write a Review modal open/close
+    var modal = document.querySelector('[data-write-review-modal]');
+    var openBtns = document.querySelectorAll('[data-write-review-open]');
+    var closeBtn = document.querySelector('[data-write-review-close]');
+
+    openBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (modal) modal.hidden = false;
+      });
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        modal.hidden = true;
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) modal.hidden = true;
+      });
+    }
+
+    // If the contact form posted successfully, Shopify reloads the page with
+    // a success message in context — auto-open the modal so the user sees it.
+    {% if form and form.posted_successfully? %}
+      if (modal) modal.hidden = false;
+    {% endif %}
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "PDP — Reviews",
+  "tag": "section",
+  "class": "c-pdp-reviews-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Read all reviews button (optional)"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "default": "Read all reviews"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link",
+      "info": "Link to your reviews page or app. Leave blank to hide."
+    },
+    {
+      "type": "header",
+      "content": "Write a review button"
+    },
+    {
+      "type": "text",
+      "id": "write_review_text",
+      "label": "Button text",
+      "default": "Write a Review"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "label": "Card background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted / date color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "star_color",
+      "label": "Star color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 200,
+      "step": 8,
+      "unit": "px",
+      "default": 136
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    }
+  ],
+  "presets": [
+    {
+      "name": "PDP — Reviews"
+    }
+  ]
+}
+{% endschema %}

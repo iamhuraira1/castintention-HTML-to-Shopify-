@@ -1,0 +1,554 @@
+{% comment %}
+  CAST — Testimonial + Video Section
+  File: sections/c-testimonial-video.liquid
+
+  Features:
+  - Left: quote, attribution, CTA link — all editable
+  - Right: Shopify-hosted video OR image — full height flush
+  - Separate mobile image/video upload
+  - "Use mobile media on desktop" override — lets you show the
+    mobile-cropped video/image on desktop too, for cases where the
+    desktop crop cuts off important framing (e.g. a product bottle)
+  - Live focal-point (X/Y) + fit (cover/contain) controls — no code
+    changes needed to re-center or stop cropping content
+  - Mobile: stacks vertically (video/image top, quote below)
+  - Colors, min-height, padding — all customizable
+  - No JS (video autoplay handled natively)
+  - Accessible: quote marked up correctly
+  - Flush against the section above (Trio Bundle) — see note near
+    the bottom of the <style> block
+{% endcomment %}
+
+<section
+  class="c-testimonial"
+  id="c-testimonial-{{ section.id }}"
+>
+
+  {%- comment -%} ── LEFT: Quote content ── {%- endcomment -%}
+  <div class="c-testimonial__content">
+
+    {% if section.settings.quote != blank %}
+      <blockquote class="c-testimonial__quote">
+        {{ section.settings.quote }}
+      </blockquote>
+    {% endif %}
+
+    {% if section.settings.attribution != blank %}
+      <p class="c-testimonial__attribution">{{ section.settings.attribution }}</p>
+    {% endif %}
+
+    {% if section.settings.cta_text != blank and section.settings.cta_link != blank %}
+      <a href="{{ section.settings.cta_link }}" class="c-testimonial__cta">
+        {{ section.settings.cta_text }}
+      </a>
+    {% endif %}
+
+  </div>
+
+  {%- comment -%} ── RIGHT: Video or Image — single container, asset picked by JS below ── {%- endcomment -%}
+  <div class="c-testimonial__media">
+
+    {%- comment -%}
+      Desktop template.
+      If "use_mobile_media_on_desktop" is on and a mobile asset exists,
+      that mobile-cropped asset is used here too — this is the toggle
+      for "use the mobile version on desktop if necessary".
+    {%- endcomment -%}
+    <template data-testimonial-media="desktop">
+      {% if section.settings.use_mobile_media_on_desktop and section.settings.video_mobile != blank %}
+        {{
+          section.settings.video_mobile
+          | video_tag:
+            image_size: '1000x',
+            autoplay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            preload: 'metadata',
+            class: 'c-testimonial__video',
+            aria-hidden: 'true'
+        }}
+      {% elsif section.settings.use_mobile_media_on_desktop and section.settings.image_mobile != blank %}
+        {{
+          section.settings.image_mobile
+          | image_url: width: 1000
+          | image_tag:
+            class: 'c-testimonial__image',
+            alt: section.settings.attribution | default: '',
+            loading: 'lazy'
+        }}
+      {% elsif section.settings.video != blank %}
+        {{
+          section.settings.video
+          | video_tag:
+            image_size: '1000x',
+            autoplay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            preload: 'metadata',
+            class: 'c-testimonial__video',
+            aria-hidden: 'true'
+        }}
+      {% elsif section.settings.image != blank %}
+        {{
+          section.settings.image
+          | image_url: width: 1000
+          | image_tag:
+            class: 'c-testimonial__image',
+            alt: section.settings.attribution | default: '',
+            loading: 'lazy'
+        }}
+      {% else %}
+        <div class="c-testimonial__fallback"></div>
+      {% endif %}
+    </template>
+
+    {%- comment -%} Mobile template — always the mobile-specific asset when present {%- endcomment -%}
+    <template data-testimonial-media="mobile">
+      {% if section.settings.video_mobile != blank %}
+        {{
+          section.settings.video_mobile
+          | video_tag:
+            image_size: '800x',
+            autoplay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            preload: 'metadata',
+            class: 'c-testimonial__video',
+            aria-hidden: 'true'
+        }}
+      {% elsif section.settings.image_mobile != blank %}
+        {{
+          section.settings.image_mobile
+          | image_url: width: 800
+          | image_tag:
+            class: 'c-testimonial__image',
+            alt: '',
+            loading: 'lazy'
+        }}
+      {% elsif section.settings.video != blank %}
+        {{
+          section.settings.video
+          | video_tag:
+            image_size: '800x',
+            autoplay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            preload: 'metadata',
+            class: 'c-testimonial__video',
+            aria-hidden: 'true'
+        }}
+      {% elsif section.settings.image != blank %}
+        {{
+          section.settings.image
+          | image_url: width: 800
+          | image_tag:
+            class: 'c-testimonial__image',
+            alt: '',
+            loading: 'lazy'
+        }}
+      {% else %}
+        <div class="c-testimonial__fallback"></div>
+      {% endif %}
+    </template>
+
+  </div>
+
+</section>
+
+<style>
+  #c-testimonial-{{ section.id }} {
+    --test-min-height:       {{ section.settings.min_height }}px;
+    --test-min-height-mob:   {{ section.settings.min_height_mobile }}px;
+    --test-padding-desktop:  {{ section.settings.padding_desktop }}px;
+    --test-padding-tablet:   {{ section.settings.padding_tablet }}px;
+    --test-padding-mobile:   {{ section.settings.padding_mobile }}px;
+    --test-bg:               {{ section.settings.bg_color }};
+    --test-quote-color:      {{ section.settings.quote_color }};
+    --test-attr-color:       {{ section.settings.attr_color }};
+    --test-cta-color:        {{ section.settings.cta_color }};
+    --test-focal-x:          {{ section.settings.focal_x }}%;
+    --test-focal-y:          {{ section.settings.focal_y }}%;
+    --test-media-fit:        {{ section.settings.media_fit }};
+  }
+
+  /* ── Section — 2 col grid ── */
+  .c-testimonial {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: var(--test-min-height);
+    background: var(--test-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1px solid rgba(0,0,0,0.06);
+    {% endif %}
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Left: Content ── */
+  .c-testimonial__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--test-padding-desktop) 80px;
+  }
+
+  .c-testimonial__quote {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 300;
+    line-height: 1.45;
+    color: var(--test-quote-color);
+    margin-bottom: 32px;
+    letter-spacing: -0.01em;
+    font-style: normal;
+    padding: 0;
+    margin-left: 0;
+    border: none;
+  }
+
+  .c-testimonial__attribution {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--test-attr-color);
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+
+  .c-testimonial__cta {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--test-cta-color);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,0,0,0.22);
+    padding-bottom: 2px;
+    display: inline-block;
+    transition: opacity 0.2s ease;
+    width: fit-content;
+    font-weight: 300;
+  }
+
+  .c-testimonial__cta:hover { opacity: 0.55; }
+
+  /* ── Right: Media — full height, flush ── */
+  .c-testimonial__media {
+    position: relative;
+    overflow: hidden;
+    min-height: var(--test-min-height);
+    background: var(--test-bg);
+  }
+
+  .c-testimonial__video,
+  .c-testimonial__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: var(--test-media-fit);
+    object-position: var(--test-focal-x) var(--test-focal-y);
+    display: block;
+  }
+
+  /* Fallback gradient */
+  .c-testimonial__fallback {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, #2d1f0a 0%, #1a1208 50%, #0d1520 100%);
+  }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 900px) {
+    .c-testimonial__content {
+      padding: var(--test-padding-tablet) 48px;
+    }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 640px) {
+    .c-testimonial {
+      grid-template-columns: 1fr;
+      min-height: unset;
+    }
+
+    /* Media on top, content below */
+    .c-testimonial__media {
+      order: -1;
+      min-height: var(--test-min-height-mob);
+    }
+
+    .c-testimonial__content {
+      padding: var(--test-padding-mobile) 24px;
+    }
+
+    .c-testimonial__quote {
+      font-size: clamp(18px, 5vw, 24px);
+      margin-bottom: 24px;
+    }
+
+    .c-testimonial__attribution {
+      margin-bottom: 28px;
+    }
+  }
+
+  /*
+    ── Flush against Trio Bundle above ──
+    Same fix as in c-trio-bundle.liquid, applied to this section's
+    top edge so the seam between the two sections has zero gap from
+    either side. Doesn't touch the seam below (Testimonial → Footer),
+    which Nicole confirmed is already flush and correct.
+  */
+  #shopify-section-{{ section.id }} {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+</style>
+<script>
+(function () {
+  var root = document.getElementById('c-testimonial-{{ section.id }}');
+  if (!root) return;
+
+  var isMobile = window.matchMedia('(max-width: 640px)').matches;
+  var activeDevice = isMobile ? 'mobile' : 'desktop';
+  var inactiveDevice = isMobile ? 'desktop' : 'mobile';
+
+  var inactiveTemplate = root.querySelector('template[data-testimonial-media="' + inactiveDevice + '"]');
+  if (inactiveTemplate) inactiveTemplate.remove();
+
+  var activeTemplate = root.querySelector('template[data-testimonial-media="' + activeDevice + '"]');
+  if (!activeTemplate) return;
+
+  var container = activeTemplate.parentElement;
+  container.appendChild(activeTemplate.content.cloneNode(true));
+  activeTemplate.remove();
+})();
+</script>
+{% schema %}
+{
+  "name": "Testimonial + Video",
+  "tag": "section",
+  "class": "c-testimonial-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Quote"
+    },
+    {
+      "type": "textarea",
+      "id": "quote",
+      "label": "Quote text",
+      "default": "\"I use this before bed after long workdays. It's become the signal my body needs to slow down.\""
+    },
+    {
+      "type": "text",
+      "id": "attribution",
+      "label": "Attribution",
+      "default": "Sarah M."
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "CTA text",
+      "default": "Shop Sleep Spray"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "CTA link"
+    },
+    {
+      "type": "header",
+      "content": "Media — Desktop"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Video — Desktop",
+      "info": "Upload MP4 via Content > Files. Takes priority over image."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image — Desktop",
+      "info": "Used when no video is set. Portrait orientation recommended."
+    },
+    {
+      "type": "checkbox",
+      "id": "use_mobile_media_on_desktop",
+      "label": "Use mobile video/image on desktop too",
+      "info": "Turn this on if the desktop crop is cutting off important framing (e.g. the product bottle, or the model's head when she lies down) — the mobile-cropped video/image below will be shown on desktop instead of the desktop asset.",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Media — Framing"
+    },
+    {
+      "type": "select",
+      "id": "media_fit",
+      "label": "Media fit",
+      "options": [
+        { "value": "cover", "label": "Fill frame (crop to fill)" },
+        { "value": "contain", "label": "Show full frame (no crop, letterboxed)" }
+      ],
+      "default": "cover",
+      "info": "Switch to \"Show full frame\" if no crop keeps both the bottle and the model in view at once."
+    },
+    {
+      "type": "range",
+      "id": "focal_x",
+      "label": "Focal point — horizontal",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 50,
+      "info": "0% = left edge, 50% = center, 100% = right edge."
+    },
+    {
+      "type": "range",
+      "id": "focal_y",
+      "label": "Focal point — vertical",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 50,
+      "info": "0% = top edge, 50% = center, 100% = bottom edge."
+    },
+    {
+      "type": "header",
+      "content": "Media — Mobile"
+    },
+    {
+      "type": "video",
+      "id": "video_mobile",
+      "label": "Video — Mobile (portrait)",
+      "info": "Also used on desktop if \"Use mobile video/image on desktop too\" is checked above."
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mobile",
+      "label": "Image — Mobile (portrait)",
+      "info": "Also used on desktop if \"Use mobile video/image on desktop too\" is checked above."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Section background",
+      "default": "#EEEBE6"
+    },
+    {
+      "type": "color",
+      "id": "quote_color",
+      "label": "Quote text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "attr_color",
+      "label": "Attribution color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "cta_color",
+      "label": "CTA link color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop layout"
+    },
+    {
+      "type": "range",
+      "id": "min_height",
+      "label": "Min height — Desktop",
+      "min": 400,
+      "max": 800,
+      "step": 40,
+      "unit": "px",
+      "default": 640
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Content padding — Desktop",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "header",
+      "content": "Tablet layout"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Content padding — Tablet",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "header",
+      "content": "Mobile layout"
+    },
+    {
+      "type": "range",
+      "id": "min_height_mobile",
+      "label": "Media height — Mobile",
+      "min": 240,
+      "max": 560,
+      "step": 40,
+      "unit": "px",
+      "default": 400
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Content padding — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 56
+    }
+  ],
+  "presets": [
+    {
+      "name": "Testimonial + Video",
+      "settings": {
+        "quote": "\"I use this before bed after long workdays. It's become the signal my body needs to slow down.\"",
+        "attribution": "Sarah M.",
+        "cta_text": "Shop Sleep Spray",
+        "show_border_top": true,
+        "min_height": 640,
+        "min_height_mobile": 400
+      }
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,840 @@
+{% comment %}
+  CAST — Featured Product Collection
+  File: sections/c-featured-collection.liquid
+
+  Features:
+  - Products pulled from Shopify — each product added as a block
+  - Client picks product from product picker in theme editor
+  - Custom "use state" label per product (overrides product type)
+  - Custom CTA text per product
+  - Real product image, title, price from Shopify
+  - Hover: image darkens, product lifts
+  - Section label + title editable
+  - Desktop: 3 col grid | Tablet: 2 col | Mobile: 1 col
+  - Separate spacing controls per device
+  - Quick Add: shopping bag icon on image, adds to cart via AJAX, shows confirmation toast
+  - Performance: lazy load images, no JS needed for base render (quick add JS is progressive)
+
+  FIX (2026-08 #7): quick-add icon + button were sized 24px icon in a
+  48px circle — reduced to 18px icon in a 44px circle per Nicole's
+  request to make them slightly smaller.
+
+  FIX (2026-08 #8): the quick-add button carried a native `disabled`
+  attribute whenever the variant was unavailable. A disabled button
+  never fires a click event — the browser blocks it before any JS
+  runs — so clicking it produced zero feedback (no toast, nothing
+  added), which is exactly what Nicole reported. This was likely an
+  out-of-stock/no-inventory variant in the dev store, not a broken
+  add-to-cart flow, but either way it gave no visible signal. Removed
+  the native `disabled` attribute; the "unavailable" state is now
+  handled in JS instead, so clicking always shows a toast — either
+  "added to your cart" on success, an explicit "currently
+  unavailable" message if the variant can't be purchased, or the
+  existing network-error fallback. No more silent failures.
+{% endcomment %}
+
+<section
+  class="c-featured-collection"
+  id="c-featured-collection-{{ section.id }}"
+>
+
+  {%- comment -%} ── Section header ── {%- endcomment -%}
+  {% if section.settings.section_label != blank or section.settings.section_title != blank %}
+    <div class="c-featured-collection__header">
+      {% if section.settings.section_label != blank %}
+        <p class="c-featured-collection__label">{{ section.settings.section_label }}</p>
+      {% endif %}
+      {% if section.settings.section_title != blank %}
+        <h2 class="c-featured-collection__title">{{ section.settings.section_title }}</h2>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {%- comment -%} ── Product grid ── {%- endcomment -%}
+  <div class="c-featured-collection__grid">
+
+    {% for block in section.blocks %}
+      {% if block.type == 'product' %}
+        {% assign product = block.settings.product %}
+
+        {% if product != blank %}
+          {%- comment -%} Real Shopify product {%- endcomment -%}
+         {% assign quick_add_variant = product.first_available_variant %}
+          <div
+            class="c-product-card"
+            {{ block.shopify_attributes }}
+          >
+            <div class="c-product-card__image-wrap">
+              <a
+                href="{{ product.url }}"
+                class="c-product-card__image-link"
+                aria-label="{{ product.title }}"
+                tabindex="-1"
+              >
+                <div class="c-product-card__image-area">
+                {% if product.featured_image != blank %}
+    {{
+      product.featured_image
+      | image_url: width: 1600
+      | image_tag:
+        class: 'c-product-card__image',
+        alt: product.featured_image.alt | default: product.title,
+        loading: 'lazy',
+        widths: '400,600,800,1000,1200,1600',
+        sizes: '(max-width: 640px) 90vw, (max-width: 900px) 45vw, 30vw'
+    }}
+{% else %}
+                    <div class="c-product-card__image-placeholder"></div>
+                  {% endif %}
+                </div>
+              </a>
+
+              {%- comment -%} Quick add to cart icon {%- endcomment -%}
+              {% if section.settings.enable_quick_add and quick_add_variant != blank %}
+                <button
+                  type="button"
+                  class="c-product-card__quick-add{% if quick_add_variant.available == false %} c-product-card__quick-add--disabled{% endif %}"
+                  data-quick-add-button
+                  data-variant-id="{{ quick_add_variant.id }}"
+                  data-product-title="{{ product.title | escape }}"
+                  aria-label="Add {{ product.title | escape }} to cart"
+                >
+                  {% if section.settings.quick_add_icon != blank %}
+                    {{
+                      section.settings.quick_add_icon
+                      | image_url: width: 64
+                      | image_tag:
+                        class: 'c-product-card__quick-add-icon c-product-card__quick-add-icon--custom',
+                        alt: '',
+                        loading: 'lazy',
+                        widths: '32,48,64'
+                    }}
+                  {% else %}
+                    <svg class="c-product-card__quick-add-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M6 8H18L17.2 19.5C17.14 20.33 16.44 21 15.6 21H8.4C7.56 21 6.86 20.33 6.8 19.5L6 8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                      <path d="M9 8V6C9 4.34315 10.3431 3 12 3C13.6569 3 15 4.34315 15 6V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  {% endif %}
+                  <svg class="c-product-card__quick-add-spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="40" stroke-dashoffset="10"/>
+                  </svg>
+                </button>
+              {% endif %}
+            </div>
+
+            <div class="c-product-card__info">
+
+              {%- comment -%} Use state label {%- endcomment -%}
+              {% assign use_state = block.settings.use_state %}
+              {% if use_state == blank %}
+                {% assign use_state = product.type %}
+              {% endif %}
+              {% if use_state != blank %}
+                <span class="c-product-card__use-state">{{ use_state }}</span>
+              {% endif %}
+
+              {%- comment -%} Product name {%- endcomment -%}
+              <h3 class="c-product-card__name">
+                <a href="{{ product.url }}" class="c-product-card__name-link">
+                  {{ product.title }}
+                </a>
+              </h3>
+
+              {%- comment -%} Price {%- endcomment -%}
+              <p class="c-product-card__price">
+               {{ product.price | money_without_trailing_zeros }}
+                {% if block.settings.show_size and block.settings.size_label != blank %}
+                  <span class="c-product-card__size"> | {{ block.settings.size_label }}</span>
+                {% endif %}
+              </p>
+
+              {%- comment -%} CTA link {%- endcomment -%}
+              {% assign cta_text = block.settings.cta_text %}
+              {% if cta_text == blank %}
+                {% assign cta_text = 'Shop ' | append: product.title %}
+              {% endif %}
+              <a href="{{ product.url }}" class="c-product-card__cta">
+                {{ cta_text }}
+              </a>
+
+            </div>
+          </div>
+
+        {% else %}
+          {%- comment -%} Empty block placeholder (editor only) {%- endcomment -%}
+          <div class="c-product-card c-product-card--placeholder" {{ block.shopify_attributes }}>
+            <div class="c-product-card__image-area">
+              <div class="c-product-card__image-placeholder">
+                {{ 'product-1' | placeholder_svg_tag: 'c-product-card__placeholder-svg' }}
+              </div>
+            </div>
+            <div class="c-product-card__info">
+              <span class="c-product-card__use-state">Use state</span>
+              <h3 class="c-product-card__name">Product name</h3>
+              <p class="c-product-card__price">$00.00</p>
+              <span class="c-product-card__cta">Shop now</span>
+            </div>
+          </div>
+        {% endif %}
+
+      {% endif %}
+    {% endfor %}
+
+  </div>
+
+  {%- comment -%} ── Quick add confirmation toast ── {%- endcomment -%}
+  <div class="c-quick-add-toast" data-quick-add-toast role="status" aria-live="polite">
+    <span data-quick-add-toast-text></span>
+  </div>
+
+</section>
+
+<style>
+  #c-featured-collection-{{ section.id }} {
+    --fc-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --fc-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --fc-padding-mobile:  {{ section.settings.padding_mobile }}px;
+    --fc-gap:             {{ section.settings.card_gap }}px;
+    --fc-bg:              {{ section.settings.bg_color }};
+    --fc-card-bg:         {{ section.settings.card_bg_color }};
+    --fc-image-bg:        {{ section.settings.image_bg_color }};
+    --fc-image-bg-hover:  {{ section.settings.image_bg_hover_color }};
+  }
+
+  /* ── Section ── */
+  .c-featured-collection {
+    position: relative;
+    padding: var(--fc-padding-desktop) 80px;
+    background: var(--fc-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1px solid rgba(0,0,0,0.06);
+    {% endif %}
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Header ── */
+  .c-featured-collection__header {
+    margin-bottom: 64px;
+  }
+
+  .c-featured-collection__label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #666666;
+    margin-bottom: 16px;
+    font-weight: 300;
+  }
+
+  .c-featured-collection__title {
+    font-size: clamp(18px, 2vw, 24px);
+    font-weight: 300;
+    color: #000000;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Grid ── */
+  .c-featured-collection__grid {
+    display: grid;
+    grid-template-columns: repeat({{ section.settings.columns_desktop }}, 1fr);
+    gap: var(--fc-gap);
+  }
+
+  /* ── Product Card ── */
+  .c-product-card {
+    position: relative;
+    background: var(--fc-card-bg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Image area ── */
+  .c-product-card__image-wrap {
+    position: relative;
+  }
+
+  .c-product-card__image-link {
+    display: block;
+    text-decoration: none;
+  }
+
+  .c-product-card__image-area {
+    position: relative;
+    background: var(--fc-image-bg);
+    aspect-ratio: 3 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: background 0.3s ease;
+  }
+
+  .c-product-card:hover .c-product-card__image-area {
+    background: var(--fc-image-bg-hover);
+  }
+
+  .c-product-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .c-product-card:hover .c-product-card__image {
+    transform: translateY(-8px) scale(1.02);
+  }
+
+  /* ── Placeholder ── */
+  .c-product-card__image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .c-product-card__placeholder-svg {
+    width: 60%;
+    height: 60%;
+    opacity: 0.3;
+  }
+
+  /* ── Quick add button ──
+     FIX #7: 48px → 44px button, 24px → 18px icon (Nicole: "make the
+     icons slightly smaller"). */
+  .c-product-card__quick-add {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+    color: #000000;
+    opacity: 1;
+    transform: translateY(6px);
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease;
+    z-index: 2;
+  }
+
+  .c-product-card:hover .c-product-card__quick-add,
+  .c-product-card__quick-add:focus-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (hover: none) {
+    /* Always show on touch devices — no hover to reveal it */
+    .c-product-card__quick-add {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .c-product-card__quick-add:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+  }
+
+  /* Unavailable variants are styled as dimmed but stay clickable —
+     see FIX #8: clicking now shows an explicit "unavailable" toast
+     instead of the button being natively `disabled` (which silently
+     blocked the click from ever reaching our JS). */
+  .c-product-card__quick-add--disabled {
+    opacity: 0.35 !important;
+  }
+
+  .c-product-card__quick-add-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .c-product-card__quick-add-icon--custom {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .c-product-card__quick-add-spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    animation: c-quick-add-spin 0.7s linear infinite;
+  }
+
+  .c-product-card__quick-add.is-loading .c-product-card__quick-add-icon {
+    display: none;
+  }
+
+  .c-product-card__quick-add.is-loading .c-product-card__quick-add-spinner {
+    display: block;
+  }
+
+  @keyframes c-quick-add-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Confirmation toast ── */
+  .c-quick-add-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translate(-50%, 16px);
+    background: #000000;
+    color: #ffffff;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    padding: 14px 22px;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 999;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  .c-quick-add-toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  /* ── Info ── */
+  .c-product-card__info {
+    padding: 28px 32px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+  }
+
+  .c-product-card__use-state {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #666666;
+    font-weight: 300;
+  }
+
+  .c-product-card__name {
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+   margin: 7px 0px;
+  }
+
+  .c-product-card__name-link {
+    color: #000000;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .c-product-card__name-link:hover { opacity: 0.6; }
+
+  .c-product-card__price {
+    font-size: 13px;
+    color: #1a1a1a;
+    font-weight: 300;
+       margin-top: 0px !important;
+    margin-bottom: 20px;
+  }
+
+  .c-product-card__size {
+    color: #666666;
+  }
+
+  .c-product-card__cta {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #000000;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,0,0,0.22);
+    padding-bottom: 2px;
+    display: inline-block;
+    transition: opacity 0.2s ease;
+    width: fit-content;
+    font-weight: 300;
+  }
+
+  .c-product-card__cta:hover { opacity: 0.55; }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 900px) {
+    .c-featured-collection {
+      padding: var(--fc-padding-tablet) 48px;
+    }
+
+    .c-featured-collection__grid {
+      grid-template-columns: repeat({{ section.settings.columns_tablet }}, 1fr);
+    }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 640px) {
+    .c-featured-collection {
+      padding: var(--fc-padding-mobile) 24px;
+    }
+
+    .c-featured-collection__grid {
+      grid-template-columns: repeat({{ section.settings.columns_mobile }}, 1fr);
+    }
+
+    .c-featured-collection__header {
+      margin-bottom: 40px;
+    }
+
+    .c-product-card__info {
+      padding: 20px 20px 28px;
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    var root = document.getElementById('c-featured-collection-{{ section.id }}');
+    if (!root || root.dataset.quickAddInit) return;
+    root.dataset.quickAddInit = 'true';
+
+    var toast = root.querySelector('[data-quick-add-toast]');
+    var toastText = root.querySelector('[data-quick-add-toast-text]');
+    var toastTimer = null;
+
+    function showToast(message) {
+      if (!toast || !toastText) return;
+      toastText.textContent = message;
+      toast.classList.add('is-visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        toast.classList.remove('is-visible');
+      }, 3000);
+    }
+
+    var CART_URL = (window.Shopify && Shopify.routes && Shopify.routes.root ? Shopify.routes.root : '/') + 'cart';
+
+    function updateHeaderCartBadge(cart) {
+      // Matches sections/c-header.liquid:
+      // <a class="c-header__cart" aria-label="Cart — N items">...<span class="c-header__cart-count">N</span></a>
+      if (!cart) return;
+      var cartLinks = document.querySelectorAll('.c-header__cart');
+      cartLinks.forEach(function (cartLink) {
+        cartLink.setAttribute('aria-label', 'Cart — ' + cart.item_count + ' items');
+
+        var badge = cartLink.querySelector('.c-header__cart-count');
+
+        if (cart.item_count > 0) {
+          if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'c-header__cart-count';
+            badge.setAttribute('aria-hidden', 'true');
+            cartLink.appendChild(badge);
+          }
+          badge.textContent = cart.item_count;
+        } else if (badge) {
+          badge.remove();
+        }
+      });
+    }
+
+    function updateCartCountFallback(cart) {
+      // Extra fallback in case any other cart count element exists elsewhere on the page.
+      if (!cart) return;
+      var countEls = document.querySelectorAll('[data-cart-count], .cart-count, .cart-count-bubble, #CartCount');
+      countEls.forEach(function (el) {
+        if (el.tagName === 'INPUT') {
+          el.value = cart.item_count;
+        } else {
+          el.textContent = cart.item_count;
+        }
+      });
+    }
+
+    function refreshCartUI() {
+      fetch(CART_URL + '.js')
+        .then(function (r) { return r.json(); })
+        .then(function (cart) {
+          updateHeaderCartBadge(cart);
+          updateCartCountFallback(cart);
+          document.dispatchEvent(new CustomEvent('cart:update', { detail: { cart: cart } }));
+          document.dispatchEvent(new CustomEvent('cart:refresh', { detail: { cart: cart } }));
+        })
+        .catch(function () {});
+    }
+
+    root.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-quick-add-button]');
+      if (!button || button.classList.contains('is-loading')) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      var productTitle = button.getAttribute('data-product-title') || 'Item';
+
+      // FIX #8: previously this state was blocked by a native `disabled`
+      // attribute, so the click never even reached this handler and
+      // nothing was shown to the person testing it. Now it always
+      // shows feedback, even when the variant can't be purchased.
+
+      var variantId = button.getAttribute('data-variant-id');
+      if (!variantId) {
+        showToast('Could not add that item — please try again.');
+        return;
+      }
+
+      button.classList.add('is-loading');
+
+      fetch(window.Shopify && Shopify.routes && Shopify.routes.root ? Shopify.routes.root + 'cart/add.js' : '/cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ items: [{ id: variantId, quantity: 1 }] })
+      })
+        .then(function (response) {
+          return response.json().then(function (data) {
+            if (!response.ok) throw data;
+            return data;
+          });
+        })
+        .then(function () {
+          showToast(productTitle + ' added to your cart.');
+          refreshCartUI();
+        })
+        .catch(function (err) {
+          var message = (err && err.description) || 'Could not add that item — please try again.';
+          showToast(message);
+        })
+        .finally(function () {
+          button.classList.remove('is-loading');
+        });
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Featured Collection",
+  "tag": "section",
+  "class": "c-featured-collection-wrapper",
+  "max_blocks": 6,
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Product",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Product"
+        },
+        {
+          "type": "text",
+          "id": "use_state",
+          "label": "Use state label",
+          "info": "e.g. 'For nightly wind-down'. Leave blank to use product type."
+        },
+        {
+          "type": "text",
+          "id": "cta_text",
+          "label": "CTA text",
+          "info": "e.g. 'Shop Sleep Spray'. Leave blank to auto-generate."
+        },
+        {
+          "type": "checkbox",
+          "id": "show_size",
+          "label": "Show size label",
+          "default": true
+        },
+        {
+          "type": "text",
+          "id": "size_label",
+          "label": "Size label",
+          "default": "100mL / 3.4 fl oz",
+          "info": "Shown next to price e.g. '100mL / 3.4 fl oz'"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section header"
+    },
+    {
+      "type": "text",
+      "id": "section_label",
+      "label": "Section label",
+      "default": "The collection",
+      "info": "Small uppercase label above title"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section title",
+      "default": "Start with your state."
+    },
+    {
+      "type": "header",
+      "content": "Quick add to cart"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_quick_add",
+      "label": "Enable quick add to cart icon",
+      "info": "Adds a small shopping bag icon to each product image. Clicking it adds the product to the cart without leaving the page. Uses the first available variant, so it's best suited to single-variant products.",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "quick_add_icon",
+      "label": "Custom quick add icon (optional)",
+      "info": "Leave blank to use the default bag icon. Upload a small square PNG/SVG icon for best results."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Section background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "label": "Card background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "image_bg_color",
+      "label": "Image area background",
+      "default": "#E2DDD1"
+    },
+    {
+      "type": "color",
+      "id": "image_bg_hover_color",
+      "label": "Image area background (hover)",
+      "default": "#d4cec4"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop layout"
+    },
+    {
+      "type": "select",
+      "id": "columns_desktop",
+      "label": "Columns — Desktop",
+      "options": [
+        { "value": "2", "label": "2 columns" },
+        { "value": "3", "label": "3 columns" },
+        { "value": "4", "label": "4 columns" }
+      ],
+      "default": "3"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "range",
+      "id": "card_gap",
+      "label": "Gap between cards",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 2
+    },
+    {
+      "type": "header",
+      "content": "Tablet layout"
+    },
+    {
+      "type": "select",
+      "id": "columns_tablet",
+      "label": "Columns — Tablet",
+      "options": [
+        { "value": "1", "label": "1 column" },
+        { "value": "2", "label": "2 columns" },
+        { "value": "3", "label": "3 columns" }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "header",
+      "content": "Mobile layout"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Columns — Mobile",
+      "options": [
+        { "value": "1", "label": "1 column" },
+        { "value": "2", "label": "2 columns" }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 56
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured Collection",
+      "settings": {
+        "section_label": "The collection",
+        "section_title": "Start with your state.",
+        "columns_desktop": "3",
+        "columns_tablet": "2",
+        "columns_mobile": "1"
+      }
+    }
+  ]
+}
+{% endschema %}

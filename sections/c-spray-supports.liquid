@@ -1,0 +1,456 @@
+{% comment %}
+  CAST — Spray Supports / How It Works
+  File: sections/c-spray-supports.liquid
+
+  Features:
+  - Each spray item is a block — add/remove/reorder in editor
+  - Name, description, CTA text + link all editable per block
+  - Section label + title editable
+  - 3 col grid with dividers (desktop) → stacked (mobile)
+  - CTA buttons row — one per block
+  - Colors, spacing — desktop/tablet/mobile controls
+  - No JS needed — pure CSS layout
+{% endcomment %}
+
+<section
+  class="c-spray-supports"
+  id="c-spray-supports-{{ section.id }}"
+>
+
+  {%- comment -%} ── Section header ── {%- endcomment -%}
+  <div class="c-spray-supports__header">
+    {% if section.settings.section_label != blank %}
+      <p class="c-spray-supports__label">{{ section.settings.section_label }}</p>
+    {% endif %}
+    {% if section.settings.section_title != blank %}
+      <h2 class="c-spray-supports__title">{{ section.settings.section_title }}</h2>
+    {% endif %}
+  </div>
+
+  {%- comment -%} ── Spray items grid ── {%- endcomment -%}
+  {% if section.blocks.size > 0 %}
+    <div class="c-spray-supports__grid">
+      {% for block in section.blocks %}
+        {% if block.type == 'spray_item' %}
+          <div
+            class="c-spray-supports__item"
+            {{ block.shopify_attributes }}
+          >
+            {% if block.settings.name != blank %}
+              <p class="c-spray-supports__item-name">{{ block.settings.name }}</p>
+            {% endif %}
+            {% if block.settings.description != blank %}
+              <p class="c-spray-supports__item-text">{{ block.settings.description }}</p>
+            {% endif %}
+            {% if block.settings.cta_text != blank and block.settings.cta_link != blank %}
+              <a href="{{ block.settings.cta_link }}" class="c-spray-supports__cta-btn">
+                {{ block.settings.cta_text }}
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+</section>
+
+<style>
+  #c-spray-supports-{{ section.id }} {
+    --ss-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --ss-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --ss-padding-mobile:  {{ section.settings.padding_mobile }}px;
+    --ss-bg:              {{ section.settings.bg_color }};
+    --ss-text:            {{ section.settings.text_color }};
+    --ss-muted:           {{ section.settings.muted_color }};
+    --ss-btn-bg:          {{ section.settings.btn_bg_color }};
+    --ss-btn-text:        {{ section.settings.btn_text_color }};
+    --ss-divider:         {{ section.settings.divider_color }};
+    --ss-blocks:          {{ section.blocks.size }};
+  }
+
+  /* ── Section ── */
+  .c-spray-supports {
+    padding: var(--ss-padding-desktop) 80px;
+    background: var(--ss-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1px solid rgba(0,0,0,0.06);
+    {% endif %}
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Header ── */
+  .c-spray-supports__header {
+    margin-bottom: 0;
+  }
+
+  .c-spray-supports__label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ss-muted);
+    margin-bottom: 16px;
+    font-weight: 300;
+  }
+
+  .c-spray-supports__title {
+    font-size: clamp(18px, 2vw, 24px);
+    font-weight: 300;
+    color: var(--ss-text);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Grid ── */
+  .c-spray-supports__grid {
+    display: grid;
+    grid-template-columns: repeat({{ section.blocks.size }}, 1fr);
+    border-top: 1px solid var(--ss-divider);
+    margin-top: 56px;
+  }
+
+  /* ── Item — card with button inside ── */
+  .c-spray-supports__item {
+    padding: 30px 48px 48px 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+  }
+  .c-spray-supports__item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 1px;
+  height: 60%;
+  background: var(--ss-divider);
+}
+
+  .c-spray-supports__item:not(:first-child) {
+    padding-left: 48px;
+  }
+
+  .c-spray-supports__item:last-child {
+    border-right: none;
+    padding-right: 0;
+  }
+
+  /* Push button to bottom of card */
+  .c-spray-supports__item-text {
+    flex: 1;
+  }
+
+  /* ── Item name with line ── */
+  .c-spray-supports__item-name {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ss-muted);
+    margin-bottom: 0px;
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .c-spray-supports__item-name::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--ss-muted);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  /* ── Item description ── */
+  .c-spray-supports__item-text {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--ss-text);
+    font-weight: 300;
+  }
+
+  /* ── CTA button — inside card ── */
+  .c-spray-supports__cta-btn {
+    display: inline-block;
+    padding: 12px 28px;
+    background: var(--ss-btn-bg);
+    color: var(--ss-btn-text);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    width: fit-content;
+    margin-top: auto;
+    margin-left: -48px;
+  }
+  .c-spray-supports__item:first-child .c-spray-supports__cta-btn {
+  margin-left: 0;
+}
+  .c-spray-supports__cta-btn:hover { opacity: 0.85; }
+  
+  /* ── TABLET ── */
+  @media screen and (max-width: 900px) {
+    .c-spray-supports {
+      padding: var(--ss-padding-tablet) 48px;
+    }
+
+    .c-spray-supports__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* Last item spans full width if odd number */
+    .c-spray-supports__item:last-child:nth-child(odd) {
+      border-right: none;
+      border-top: 1px solid var(--ss-divider);
+      padding-top: 48px;
+      padding-left: 0;
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 640px) {
+    .c-spray-supports {
+      padding: var(--ss-padding-mobile) 24px;
+    }
+
+    .c-spray-supports__grid {
+      grid-template-columns: 1fr;
+      border-top: none;
+      margin-top: 40px;
+    }
+
+    .c-spray-supports__item {
+      padding: 32px 0;
+      border-right: none;
+      border-top: 1px solid var(--ss-divider);
+    }
+
+    .c-spray-supports__item:first-child {
+      padding-top: 32px;
+    }
+
+    .c-spray-supports__cta-row {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .c-spray-supports__cta-btn {
+      width: fit-content;
+    }
+
+    .c-spray-supports__cta-spacer {
+      display: none;
+    }
+  }
+  @media (min-width: 768px) {
+  .c-spray-supports__item-text{
+  margin-bottom:17%;
+  }
+  }
+  
+@media screen and (max-width: 640px) {
+  .c-spray-supports__item:not(:first-child) {
+    padding-left: 0; /* ← yeh add karo */
+  }
+  
+  .c-spray-supports__cta-btn {
+    width: fit-content;
+    margin-left: 0;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "Spray Supports",
+  "tag": "section",
+  "class": "c-spray-supports-wrapper",
+  "max_blocks": 4,
+  "blocks": [
+    {
+      "type": "spray_item",
+      "name": "Spray item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Spray name",
+          "default": "Sleep Spray"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Description",
+          "default": "For the nights your nervous system stays on alert, Sleep Spray works through olfactory pathways connected to nervous system activity, supporting your shift into rest."
+        },
+        {
+          "type": "header",
+          "content": "CTA button"
+        },
+        {
+          "type": "text",
+          "id": "cta_text",
+          "label": "Button text",
+          "default": "Shop Sleep Spray",
+          "info": "Leave blank to hide button for this item"
+        },
+        {
+          "type": "url",
+          "id": "cta_link",
+          "label": "Button link"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section header"
+    },
+    {
+      "type": "text",
+      "id": "section_label",
+      "label": "Section label",
+      "default": "How it works"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section title",
+      "default": "What each spray supports"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Label / muted color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "Divider color",
+      "default": "#e0ddd8"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg_color",
+      "label": "Button background",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "color",
+      "id": "btn_text_color",
+      "label": "Button text",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 56
+    }
+  ],
+  "presets": [
+    {
+      "name": "Spray Supports",
+      "blocks": [
+        {
+          "type": "spray_item",
+          "settings": {
+            "name": "Sleep Spray",
+            "description": "For the nights your nervous system stays on alert, Sleep Spray works through olfactory pathways connected to nervous system activity, supporting your shift into rest.",
+            "cta_text": "Shop Sleep Spray"
+          }
+        },
+        {
+          "type": "spray_item",
+          "settings": {
+            "name": "Calm Spray",
+            "description": "Daily stressors can accumulate in your nervous system, leaving you tenser than you realize. Calm Spray supports a steadier state, so you can meet the demands of the day.",
+            "cta_text": "Shop Calm Spray"
+          }
+        },
+        {
+          "type": "spray_item",
+          "settings": {
+            "name": "Clarity Spray",
+            "description": "Extended screen time, travel, or long work days can leave you in a fog. Clarity Spray supports cognitive reset so you can focus.",
+            "cta_text": "Shop Clarity Spray"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

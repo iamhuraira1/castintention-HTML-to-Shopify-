@@ -1,0 +1,406 @@
+{% comment %}
+  CAST — Journal More Articles
+  File: sections/c-article-more.liquid
+
+  Features:
+  - Loops through blog.articles automatically
+  - Excludes current article
+  - Shows article image, title, excerpt, date, read link
+  - 3 col desktop → 2 col tablet → 1 col mobile
+  - Section label + title editable
+  - Limit: max 3 articles shown
+  - All content dynamic from Shopify blog
+{% endcomment %}
+
+{%- assign other_articles = blog.articles | where: 'handle', article.handle | map: 'handle' -%}
+
+<section
+  class="c-article-more"
+  id="c-article-more-{{ section.id }}"
+>
+
+  <div class="c-article-more__header">
+    {% if section.settings.label != blank %}
+      <p class="c-article-more__label">{{ section.settings.label }}</p>
+    {% endif %}
+    {% if section.settings.title != blank %}
+      <h2 class="c-article-more__title">{{ section.settings.title }}</h2>
+    {% endif %}
+  </div>
+
+  <div class="c-article-more__grid">
+    {% assign count = 0 %}
+    {% for a in blog.articles %}
+      {% if a.handle != article.handle and count < 3 %}
+        {% assign count = count | plus: 1 %}
+        <div class="c-article-more__card">
+
+          <a href="{{ a.url }}" class="c-article-more__image-link" tabindex="-1" aria-hidden="true">
+            <div class="c-article-more__image-area">
+              {% if a.image != blank %}
+                <img
+                  src="{{ a.image | image_url: width: 800 }}"
+                  alt="{{ a.image.alt | default: a.title | escape }}"
+                  width="{{ a.image.width }}"
+                  height="{{ a.image.height }}"
+                  loading="lazy"
+                  class="c-article-more__image"
+                >
+              {% else %}
+                <div class="c-article-more__image-placeholder"></div>
+              {% endif %}
+            </div>
+          </a>
+
+          <div class="c-article-more__content">
+
+            <span class="c-article-more__blog-label">
+              {{ blog.title | default: section.settings.label }}
+            </span>
+
+            <h3 class="c-article-more__card-title">
+              <a href="{{ a.url }}" class="c-article-more__card-link">
+                {{ a.title }}
+              </a>
+            </h3>
+
+            {% if a.excerpt != blank %}
+              <p class="c-article-more__excerpt">
+                {{ a.excerpt | strip_html | truncate: 120 }}
+              </p>
+            {% endif %}
+
+            <a href="{{ a.url }}" class="c-article-more__read">
+              {{ section.settings.read_label | default: 'Read' }}
+            </a>
+
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+
+    {% if count == 0 %}
+      <p class="c-article-more__empty">No other journals yet.</p>
+    {% endif %}
+  </div>
+
+</section>
+
+<style>
+  #c-article-more-{{ section.id }} {
+    --am-bg:        {{ section.settings.bg_color }};
+    --am-card-bg:   {{ section.settings.card_bg_color }};
+    --am-image-bg:  {{ section.settings.image_bg_color }};
+    --am-text:      {{ section.settings.text_color }};
+    --am-muted:     {{ section.settings.muted_color }};
+    --am-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --am-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --am-padding-mobile:  {{ section.settings.padding_mobile }}px;
+  }
+
+  .c-article-more {
+    padding: var(--am-padding-desktop) 80px;
+    background: var(--am-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1.5px solid rgba(0,0,0,0.14);
+    {% endif %}
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-article-more__header {
+    margin-bottom: 64px;
+  }
+
+  .c-article-more__label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--am-muted);
+    margin-bottom: 16px;
+    font-weight: 300;
+  }
+
+  .c-article-more__title {
+    font-size: clamp(16px, 2vw, 22px);
+    font-weight: 300;
+    color: var(--am-text);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* Grid */
+  .c-article-more__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+
+  /* Card */
+  .c-article-more__card {
+    background: var(--am-card-bg);
+    display: flex;
+    flex-direction: column;
+    transition: opacity 0.2s;
+  }
+
+  .c-article-more__card:hover { opacity: 0.85; }
+
+  /* Image */
+  .c-article-more__image-link { display: block; text-decoration: none; }
+
+  .c-article-more__image-area {
+    aspect-ratio: 3 / 2;
+    background: var(--am-image-bg);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .c-article-more__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .c-article-more__card:hover .c-article-more__image {
+    transform: scale(1.03);
+  }
+
+  .c-article-more__image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: var(--am-image-bg);
+  }
+
+  /* Content */
+  .c-article-more__content {
+    padding: 28px 28px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .c-article-more__blog-label {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--am-muted);
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+
+  .c-article-more__blog-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--am-muted);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  .c-article-more__card-title {
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--am-text);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+
+  .c-article-more__card-link {
+    color: var(--am-text);
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .c-article-more__card-link:hover { opacity: 0.7; }
+
+  .c-article-more__excerpt {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--am-muted);
+    font-weight: 300;
+  }
+
+  .c-article-more__read {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--am-text);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    padding-bottom: 2px;
+    display: inline-block;
+    margin-top: auto;
+    padding-top: 16px;
+    font-weight: 300;
+    transition: opacity 0.2s;
+    width: fit-content;
+  }
+
+  .c-article-more__read:hover { opacity: 0.55; }
+
+  .c-article-more__empty {
+    font-size: 14px;
+    color: var(--am-muted);
+    font-weight: 300;
+    grid-column: 1 / -1;
+  }
+
+  /* Tablet */
+  @media screen and (max-width: 900px) {
+    .c-article-more {
+      padding: var(--am-padding-tablet) 48px;
+    }
+    .c-article-more__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Mobile */
+  @media screen and (max-width: 640px) {
+    .c-article-more {
+      padding: var(--am-padding-mobile) 24px;
+    }
+    .c-article-more__grid {
+      grid-template-columns: 1fr;
+    }
+    .c-article-more__header {
+      margin-bottom: 40px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Article More Journals",
+  "tag": "section",
+  "class": "c-article-more-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "text",
+      "id": "label",
+      "label": "Section label",
+      "default": "Continue reading"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section title",
+      "default": "More from Journals"
+    },
+    {
+      "type": "text",
+      "id": "read_label",
+      "label": "Read CTA text",
+      "default": "Read"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Section background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "label": "Card background",
+      "default": "#EEEBE6"
+    },
+    {
+      "type": "color",
+      "id": "image_bg_color",
+      "label": "Image background",
+      "default": "#E2DDD1"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted / label color",
+      "default": "#666666"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 120
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 96,
+      "step": 8,
+      "unit": "px",
+      "default": 64
+    }
+  ],
+  "presets": [
+    {
+      "name": "Article More Journals",
+      "settings": {
+        "label": "Continue reading",
+        "title": "More from Journals",
+        "read_label": "Read",
+        "show_border_top": true
+      }
+    }
+  ]
+}
+{% endschema %}

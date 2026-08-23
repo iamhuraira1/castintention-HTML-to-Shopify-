@@ -1,0 +1,235 @@
+{% comment %}
+  CAST — Journal Hero Image + Article Body
+  File: sections/c-article-body.liquid
+
+  Dynamic sources:
+  - article.image — hero image from Shopify
+  - article.content — full article body from Shopify admin richtext editor
+    (client writes headings, paragraphs, inline images all in Shopify admin)
+  - No hardcoded content — all from article.content
+{% endcomment %}
+
+<div
+  class="c-article-body"
+  id="c-article-body-{{ section.id }}"
+>
+
+  {%- comment -%} Hero image — article.image from Shopify {%- endcomment -%}
+  {% if article.image != blank %}
+    <div class="c-article-body__hero-wrap">
+      <div class="c-article-body__hero">
+        <img
+          src="{{ article.image | image_url: width: 1200 }}"
+          alt="{{ article.image.alt | default: article.title | escape }}"
+          width="{{ article.image.width }}"
+          height="{{ article.image.height }}"
+          loading="eager"
+          fetchpriority="high"
+          class="c-article-body__hero-img"
+        >
+      </div>
+    </div>
+  {% endif %}
+
+  {%- comment -%}
+    Article body — {{ article.content }}
+    Client writes everything in Shopify admin richtext editor:
+    - Paragraphs, H2 subheadings, inline images, image pairs
+    - All styling applied via .c-article-body__content CSS below
+  {%- endcomment -%}
+  <div class="c-article-body__content">
+    {{ article.content }}
+  </div>
+
+</div>
+
+<style>
+  #c-article-body-{{ section.id }} {
+    --ab-bg:         {{ section.settings.bg_color }};
+    --ab-text:       {{ section.settings.text_color }};
+    --ab-muted:      {{ section.settings.muted_color }};
+    --ab-image-bg:   {{ section.settings.image_bg_color }};
+  }
+
+  .c-article-body {
+    background: var(--ab-bg);
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Hero image ── */
+  .c-article-body__hero-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .c-article-body__hero {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--ab-image-bg);
+  }
+
+  .c-article-body__hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  /* ── Article content ── */
+  .c-article-body__content {
+    max-width: 680px;
+    margin: 0 auto;
+       padding: 1px 40px 70px 0;
+  }
+
+  /* Paragraphs */
+  .c-article-body__content p {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--ab-text);
+    font-weight: 300;
+    margin-bottom: 28px;
+  }
+
+  .c-article-body__content p:last-child { margin-bottom: 0; }
+
+  /* H2 subheadings */
+  .c-article-body__content h2 {
+    font-size: clamp(20px, 2.5vw, 26px);
+    font-weight: 300;
+    color: {{ section.settings.text_color }};
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin: 56px 0 24px;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* H3 */
+  .c-article-body__content h3 {
+    font-size: clamp(17px, 2vw, 22px);
+    font-weight: 300;
+    color: {{ section.settings.text_color }};
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    margin: 40px 0 18px;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* Inline images from richtext editor */
+  .c-article-body__content img {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 40px 0;
+    background: var(--ab-image-bg);
+  }
+
+  /* Links */
+  .c-article-body__content a {
+    color: var(--ab-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: opacity 0.2s;
+  }
+
+  .c-article-body__content a:hover { opacity: 0.6; }
+
+  /* Lists */
+  .c-article-body__content ul,
+  .c-article-body__content ol {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--ab-text);
+    font-weight: 300;
+    margin-bottom: 28px;
+    padding-left: 24px;
+  }
+
+  .c-article-body__content li {
+    margin-bottom: 8px;
+  }
+
+  /* Bold / italic */
+  .c-article-body__content strong { font-weight: 400; }
+  .c-article-body__content em { font-style: italic; }
+
+  /* Blockquote */
+  .c-article-body__content blockquote {
+    border-left: 2px solid rgba(0,0,0,0.15);
+    padding-left: 24px;
+    margin: 40px 0;
+    font-style: italic;
+    color: var(--ab-muted);
+  }
+
+  /* Mobile */
+  @media screen and (max-width: 640px) {
+    .c-article-body__hero-wrap,
+    .c-article-body__content {
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+
+    .c-article-body__content {
+      padding-top: 1px;
+      padding-bottom: 48px;
+    }
+
+    .c-article-body__content p {
+      font-size: 16px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Article Body",
+  "tag": "div",
+  "class": "c-article-body-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Article content (headings, paragraphs, images) is managed directly in Shopify Admin → Blog posts. No content is hardcoded here."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted / blockquote color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "image_bg_color",
+      "label": "Image placeholder background",
+      "default": "#EEEBE6"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Article Body"
+    }
+  ]
+}
+{% endschema %}

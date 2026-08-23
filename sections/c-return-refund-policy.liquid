@@ -1,0 +1,741 @@
+{% comment %}
+  ────────────────────────────────────────────────
+  CAST — Policy Page (c-policy-page)
+  Simple, reusable bilingual (EN/FR) legal/policy page section.
+  Use for: Privacy Policy, Terms of Service, Shipping Policy,
+  Return Policy, Cookie Policy, Accessibility Statement, or any
+  other legal document.
+
+  Structure:
+   • One "intro" block (title, effective date, intro text)
+   • Unlimited "section" blocks (numbered/unnumbered sections)
+   Each block carries BOTH English and French content side by side,
+   toggled instantly via the language switcher — no page reload.
+
+  Features (kept intentionally minimal):
+   • Instant EN/FR toggle, deep-linkable via ?lang=, remembered for
+     the browsing session (sessionStorage), full keyboard support
+   • Auto-hides the switcher if no block has French content filled in
+   • Single-column, full-width reading layout on every screen size —
+     no sidebar, no sticky elements, no scroll effects
+   • Fully theme-integrated: color scheme picker, CAST typography
+  ────────────────────────────────────────────────
+{% endcomment %}
+
+{%- liquid
+  assign sid = section.id
+  assign intro_block = null
+  assign section_blocks = section.blocks | where: 'type', 'section'
+
+  for block in section.blocks
+    if block.type == 'intro'
+      assign intro_block = block
+    endif
+  endfor
+
+  assign has_french = false
+  for block in section_blocks
+    if block.settings.heading_fr != blank or block.settings.content_fr != blank
+      assign has_french = true
+    endif
+  endfor
+  if intro_block and intro_block.settings.title_fr != blank
+    assign has_french = true
+  endif
+
+  assign show_switcher = false
+  if section.settings.show_language_switcher and has_french
+    assign show_switcher = true
+  endif
+-%}
+
+<section
+  class="c-policy color-{{ section.settings.color_scheme }}"
+  id="c-policy-{{ sid }}"
+  data-default-lang="{{ section.settings.default_language }}"
+  data-has-french="{{ has_french }}"
+>
+
+  <div class="c-policy__inner{% if section.settings.layout_width == 'contained' %} c-policy__inner--contained{% endif %}">
+
+    {%- comment -%} ── Header ── {%- endcomment -%}
+    <div class="c-policy__header">
+
+      {%- if intro_block -%}
+        {%- if intro_block.settings.title_en != blank -%}
+          <h1 class="c-policy__title" data-lang="en">{{ intro_block.settings.title_en | escape }}</h1>
+        {%- endif -%}
+        {%- if intro_block.settings.title_fr != blank -%}
+          <h1 class="c-policy__title" data-lang="fr">{{ intro_block.settings.title_fr | escape }}</h1>
+        {%- endif -%}
+
+        {%- if intro_block.settings.effective_date_en != blank -%}
+          <p class="c-policy__date" data-lang="en">{{ intro_block.settings.effective_date_en | escape }}</p>
+        {%- endif -%}
+        {%- if intro_block.settings.effective_date_fr != blank -%}
+          <p class="c-policy__date" data-lang="fr">{{ intro_block.settings.effective_date_fr | escape }}</p>
+        {%- endif -%}
+      {%- endif -%}
+
+      {%- if show_switcher -%}
+        <div class="c-policy__lang-switch" role="group" aria-label="Language / Langue">
+          <button type="button" class="c-policy__lang-btn" data-lang-btn="en" aria-pressed="false">English</button>
+          <button type="button" class="c-policy__lang-btn" data-lang-btn="fr" aria-pressed="false">Français</button>
+        </div>
+      {%- endif -%}
+
+      {%- if intro_block and intro_block.settings.intro_en != blank -%}
+        <div class="c-policy__intro" data-lang="en">{{ intro_block.settings.intro_en }}</div>
+      {%- endif -%}
+      {%- if intro_block and intro_block.settings.intro_fr != blank -%}
+        <div class="c-policy__intro" data-lang="fr">{{ intro_block.settings.intro_fr }}</div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} ── Content: simple single column, full width ── {%- endcomment -%}
+    <div class="c-policy__content">
+      {%- for block in section_blocks -%}
+        <div class="c-policy__section">
+
+          {%- if block.settings.heading_en != blank -%}
+            <h2 class="c-policy__heading" data-lang="en">{{ block.settings.heading_en | escape }}</h2>
+          {%- endif -%}
+          {%- if block.settings.heading_fr != blank -%}
+            <h2 class="c-policy__heading" data-lang="fr">{{ block.settings.heading_fr | escape }}</h2>
+          {%- endif -%}
+
+          {%- if block.settings.content_en != blank -%}
+            <div class="c-policy__rte" data-lang="en">{{ block.settings.content_en }}</div>
+          {%- endif -%}
+          {%- if block.settings.content_fr != blank -%}
+            <div class="c-policy__rte" data-lang="fr">{{ block.settings.content_fr }}</div>
+          {%- endif -%}
+
+        </div>
+      {%- endfor -%}
+    </div>
+
+  </div>
+
+</section>
+
+<style>
+  #c-policy-{{ sid }} {
+    --cp-pad-top-d:     {{ section.settings.padding_top_desktop }}px;
+    --cp-pad-bottom-d:  {{ section.settings.padding_bottom_desktop }}px;
+    --cp-pad-top-m:     {{ section.settings.padding_top_mobile }}px;
+    --cp-pad-bottom-m:  {{ section.settings.padding_bottom_mobile }}px;
+    --cp-max-width:     {{ section.settings.content_max_width }}px;
+    --cp-heading-space: {{ section.settings.heading_spacing }}px;
+    --cp-para-space:    {{ section.settings.paragraph_spacing }}px;
+    background: rgb(var(--color-background));
+    color: rgba(var(--color-foreground), 0.85);
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Language visibility ── */
+  #c-policy-{{ sid }} [data-lang] { display: none; }
+  #c-policy-{{ sid }}[data-lang-active="en"] [data-lang="en"] { display: revert; }
+  #c-policy-{{ sid }}[data-lang-active="fr"] [data-lang="fr"] { display: revert; }
+  #c-policy-{{ sid }} h1[data-lang],
+  #c-policy-{{ sid }} .c-policy__heading[data-lang] { display: none; }
+  #c-policy-{{ sid }}[data-lang-active="en"] h1.c-policy__title[data-lang="en"],
+  #c-policy-{{ sid }}[data-lang-active="en"] .c-policy__heading[data-lang="en"] { display: block; }
+  #c-policy-{{ sid }}[data-lang-active="fr"] h1.c-policy__title[data-lang="fr"],
+  #c-policy-{{ sid }}[data-lang-active="fr"] .c-policy__heading[data-lang="fr"] { display: block; }
+
+  /* ── Inner wrapper ── */
+  #c-policy-{{ sid }} .c-policy__inner {
+    padding: var(--cp-pad-top-d) 32px var(--cp-pad-bottom-d);
+  }
+  #c-policy-{{ sid }} .c-policy__inner--contained {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+#c-policy-{{ sid }} .c-policy__header {
+  width: 100%;
+  max-width: none;
+  margin: 0 0 56px;
+  text-align: left;
+}
+  #c-policy-{{ sid }} .c-policy__title {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 300;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: rgb(var(--color-foreground));
+    margin: 0 0 16px;
+    text-wrap: pretty;
+  }
+
+  #c-policy-{{ sid }} .c-policy__date {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: rgba(var(--color-foreground), 0.55);
+    margin: 0 0 28px;
+    font-weight: 300;
+  }
+
+  /* ── Language switcher (the one feature that stays) ── */
+  #c-policy-{{ sid }} .c-policy__lang-switch {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgba(var(--color-foreground), 0.14);
+    margin-bottom: 32px;
+  }
+  #c-policy-{{ sid }} .c-policy__lang-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px 18px;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(var(--color-foreground), 0.55);
+    transition: background 0.2s ease, color 0.2s ease;
+    border-radius: 2px;
+  }
+  #c-policy-{{ sid }} .c-policy__lang-btn[aria-pressed="true"] {
+    background: rgb(var(--color-foreground));
+    color: rgb(var(--color-background));
+  }
+  @media (hover: hover) and (pointer: fine) {
+    #c-policy-{{ sid }} .c-policy__lang-btn:not([aria-pressed="true"]):hover {
+      color: rgb(var(--color-foreground));
+    }
+  }
+  #c-policy-{{ sid }} .c-policy__lang-btn:focus-visible {
+    outline: 2px solid rgba(var(--color-foreground), 0.6);
+    outline-offset: 2px;
+    z-index: 1;
+    position: relative;
+  }
+
+  #c-policy-{{ sid }} .c-policy__intro p {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.8;
+    color: rgba(var(--color-foreground), 0.7);
+    font-weight: 300;
+    margin: 0 0 var(--cp-para-space);
+  }
+  #c-policy-{{ sid }} .c-policy__intro p:last-child { margin-bottom: 0; }
+  #c-policy-{{ sid }} .c-policy__intro strong { font-weight: 500; }
+
+  /* ── Content: single column, full width, comfortable reading measure ── */
+ #c-policy-{{ sid }} .c-policy__content {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+  #c-policy-{{ sid }} .c-policy__section {
+     margin-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(var(--color-foreground), 0.08);
+  }
+  #c-policy-{{ sid }} .c-policy__section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  #c-policy-{{ sid }} .c-policy__heading {
+    font-size: clamp(17px, 2vw, 21px);
+    font-weight: 300;
+    letter-spacing: -0.005em;
+    color: rgb(var(--color-foreground));
+    margin: 0 0 var(--cp-heading-space);
+    text-wrap: pretty;
+  }
+
+  /* ── Rich text body ── */
+  #c-policy-{{ sid }} .c-policy__rte {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.8;
+    color: rgba(var(--color-foreground), 0.7);
+    font-weight: 300;
+  }
+  #c-policy-{{ sid }} .c-policy__rte p {
+    margin: 0 0 var(--cp-para-space);
+    text-wrap: pretty;
+  }
+  #c-policy-{{ sid }} .c-policy__rte p:last-child { margin-bottom: 0; }
+
+  #c-policy-{{ sid }} .c-policy__rte h3 {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(var(--color-foreground));
+    font-weight: 400;
+    margin: 32px 0 14px;
+  }
+  #c-policy-{{ sid }} .c-policy__rte h3:first-child { margin-top: 0; }
+
+  #c-policy-{{ sid }} .c-policy__rte ul,
+  #c-policy-{{ sid }} .c-policy__rte ol {
+    margin: 0 0 var(--cp-para-space);
+    padding-left: 22px;
+  }
+  #c-policy-{{ sid }} .c-policy__rte ul ul,
+  #c-policy-{{ sid }} .c-policy__rte ol ol,
+  #c-policy-{{ sid }} .c-policy__rte ul ol,
+  #c-policy-{{ sid }} .c-policy__rte ol ul {
+    margin: 10px 0 0;
+  }
+  #c-policy-{{ sid }} .c-policy__rte li {
+    margin-bottom: 12px;
+    line-height: 1.65;
+  }
+  #c-policy-{{ sid }} .c-policy__rte li:last-child { margin-bottom: 0; }
+
+  #c-policy-{{ sid }} .c-policy__rte strong { font-weight: 500; color: rgb(var(--color-foreground)); }
+  #c-policy-{{ sid }} .c-policy__rte em { font-style: italic; }
+
+  #c-policy-{{ sid }} .c-policy__rte a {
+    color: rgb(var(--color-foreground));
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    transition: opacity 0.2s ease;
+  }
+  #c-policy-{{ sid }} .c-policy__rte a:hover { opacity: 0.6; }
+  #c-policy-{{ sid }} .c-policy__rte a:focus-visible {
+    outline: 2px solid rgba(var(--color-foreground), 0.6);
+    outline-offset: 2px;
+  }
+
+  #c-policy-{{ sid }} .c-policy__rte table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 var(--cp-para-space);
+    font-size: 13.5px;
+  }
+  #c-policy-{{ sid }} .c-policy__rte th,
+  #c-policy-{{ sid }} .c-policy__rte td {
+    border: 1px solid rgba(var(--color-foreground), 0.12);
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+  #c-policy-{{ sid }} .c-policy__rte th {
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: rgb(var(--color-foreground));
+    background: rgba(var(--color-foreground), 0.03);
+  }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 989px) {
+    #c-policy-{{ sid }} .c-policy__inner { padding: var(--cp-pad-top-d) 24px var(--cp-pad-bottom-d); }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 749px) {
+    #c-policy-{{ sid }} .c-policy__inner { padding: var(--cp-pad-top-m) 16px var(--cp-pad-bottom-m); }
+    #c-policy-{{ sid }} .c-policy__lang-switch { width: 100%; }
+    #c-policy-{{ sid }} .c-policy__lang-btn { flex: 1; }
+  }
+</style>
+
+<script>
+(function () {
+  var root = document.getElementById('c-policy-{{ sid }}');
+  if (!root || root.dataset.cpInit) return;
+  root.dataset.cpInit = '1';
+
+  var storageKey = 'cast-policy-lang';
+  var defaultLang = root.dataset.defaultLang || 'en';
+  var hasFrench = root.dataset.hasFrench === 'true';
+
+  /* ── Language: session-only (sessionStorage), URL param, keyboard nav ── */
+  function getInitialLang() {
+    if (!hasFrench) return 'en';
+    var params = new URLSearchParams(window.location.search);
+    var urlLang = params.get('lang');
+    if (urlLang === 'en' || urlLang === 'fr') return urlLang;
+    try {
+      var stored = window.sessionStorage.getItem(storageKey);
+      if (stored === 'en' || stored === 'fr') return stored;
+    } catch (e) {}
+    return defaultLang === 'fr' ? 'fr' : 'en';
+  }
+
+  var langBtns = Array.prototype.slice.call(root.querySelectorAll('[data-lang-btn]'));
+
+  function setLang(lang, updateUrl) {
+    root.setAttribute('data-lang-active', lang);
+    langBtns.forEach(function (btn) {
+      btn.setAttribute('aria-pressed', btn.dataset.langBtn === lang ? 'true' : 'false');
+    });
+    try { window.sessionStorage.setItem(storageKey, lang); } catch (e) {}
+
+    if (updateUrl) {
+      var url = new URL(window.location.href);
+      url.searchParams.set('lang', lang);
+      window.history.replaceState(null, '', url.toString());
+    }
+  }
+
+  setLang(getInitialLang(), false);
+
+  langBtns.forEach(function (btn, i) {
+    btn.addEventListener('click', function () {
+      setLang(btn.dataset.langBtn, true);
+    });
+    /* Arrow-key navigation between the two language buttons */
+    btn.addEventListener('keydown', function (e) {
+      var targetIndex = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') targetIndex = (i + 1) % langBtns.length;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') targetIndex = (i - 1 + langBtns.length) % langBtns.length;
+      if (e.key === 'Home') targetIndex = 0;
+      if (e.key === 'End') targetIndex = langBtns.length - 1;
+      if (targetIndex !== null) {
+        e.preventDefault();
+        var target = langBtns[targetIndex];
+        target.focus();
+        setLang(target.dataset.langBtn, true);
+      }
+    });
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Return & Refund Policy",
+  "tag": "section",
+  "class": "c-policy-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Language"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_language_switcher",
+      "label": "Show language switcher",
+      "default": true,
+      "info": "Automatically hidden if no block has French content filled in."
+    },
+    {
+      "type": "select",
+      "id": "default_language",
+      "label": "Default language",
+      "options": [
+        {
+          "value": "en",
+          "label": "English"
+        },
+        {
+          "value": "fr",
+          "label": "Français"
+        }
+      ],
+      "default": "en",
+      "info": "Used only if the visitor has no saved preference and no ?lang= in the URL."
+    },
+    {
+      "type": "header",
+      "content": "Color"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "layout_width",
+      "label": "Section width",
+      "options": [
+        {
+          "value": "full",
+          "label": "Full width (matches site sections)"
+        },
+        {
+          "value": "contained",
+          "label": "Contained (max 1400px)"
+        }
+      ],
+      "default": "full"
+    },
+    {
+      "type": "range",
+      "id": "content_max_width",
+      "label": "Content max width",
+      "min": 480,
+      "max": 900,
+      "step": 10,
+      "unit": "px",
+      "default": 680
+    },
+    {
+      "type": "range",
+      "id": "heading_spacing",
+      "label": "Space below headings",
+      "min": 8,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "paragraph_spacing",
+      "label": "Space between paragraphs",
+      "min": 12,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 22
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_desktop",
+      "label": "Top padding",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_desktop",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 120
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "label": "Top padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "intro",
+      "name": "Intro / Header",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "header",
+          "content": "English"
+        },
+        {
+          "type": "text",
+          "id": "title_en",
+          "label": "Title (EN)",
+          "default": "Return & Refund Policy"
+        },
+        {
+          "type": "text",
+          "id": "effective_date_en",
+          "label": "Effective date (EN)",
+          "default": "Effective Date: June 1, 2026"
+        },
+        {
+          "type": "richtext",
+          "id": "intro_en",
+          "label": "Intro text (EN)"
+        },
+        {
+          "type": "header",
+          "content": "Français"
+        },
+        {
+          "type": "text",
+          "id": "title_fr",
+          "label": "Title (FR)"
+        },
+        {
+          "type": "text",
+          "id": "effective_date_fr",
+          "label": "Effective date (FR)"
+        },
+        {
+          "type": "richtext",
+          "id": "intro_fr",
+          "label": "Intro text (FR)"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "name": "Section",
+      "settings": [
+        {
+          "type": "header",
+          "content": "English"
+        },
+        {
+          "type": "text",
+          "id": "heading_en",
+          "label": "Heading (EN)"
+        },
+        {
+          "type": "richtext",
+          "id": "content_en",
+          "label": "Content (EN)"
+        },
+        {
+          "type": "header",
+          "content": "Français"
+        },
+        {
+          "type": "text",
+          "id": "heading_fr",
+          "label": "Heading (FR)",
+          "info": "Leave blank if this document has no French version."
+        },
+        {
+          "type": "richtext",
+          "id": "content_fr",
+          "label": "Content (FR)"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Return & Refund Policy",
+      "category": "Legal",
+      "blocks": [
+        {
+          "type": "intro",
+          "settings": {
+            "title_en": "Return & Refund Policy",
+            "effective_date_en": "Effective Date: June 1, 2026",
+            "intro_en": "<p>At Cast, we take great care in crafting and packaging every order. Due to the nature of our products, all sales are final.</p>",
+            "title_fr": "Politique de retour et de remboursement",
+            "effective_date_fr": "Date d'entrée en vigueur : 1 jun 2026",
+            "intro_fr": "<p>Chez Cast, nous apportons le plus grand soin à la fabrication et à l'emballage de chaque commande. En raison de la nature de nos produits, <strong>toutes les ventes sont finales.</strong></p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "Returns",
+            "content_en": "<p>Due to the nature of our products, <strong>all sales are final.</strong></p><p>We do not accept returns or exchanges for products that have been delivered, except where required by applicable law.</p><p>This policy helps protect the quality, safety, and integrity of every Cast product we produce.</p>",
+            "heading_fr": "Retours",
+            "content_fr": "<p>En raison de la nature de nos produits, <strong>toutes les ventes sont finales.</strong></p><p>Nous n'acceptons ni les retours ni les échanges de produits une fois qu'ils ont été livrés, sauf lorsque la loi applicable l'exige.</p><p>Cette politique vise à protéger la qualité, la sécurité et l'intégrité de chaque produit Cast que nous fabriquons.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "Non-Returnable Items",
+            "content_en": "<p>Unless required by applicable law, the following items are not eligible for return or exchange:</p><ul><li>Opened products</li><li>Used products</li><li>Gift cards</li><li>Promotional or complimentary items</li><li>Final sale items</li></ul>",
+            "heading_fr": "Articles non admissibles au retour",
+            "content_fr": "<p>Sauf lorsque la loi applicable l'exige, les articles suivants ne peuvent être retournés ni échangés :</p><ul><li>Produits ouverts.</li><li>Produits utilisés.</li><li>Cartes-cadeaux.</li><li>Articles promotionnels ou offerts gratuitement.</li><li>Articles identifiés comme vente finale.</li></ul>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "Exchanges",
+            "content_en": "<p>We do not offer exchanges once an order has been delivered.</p><p>If your order arrives damaged, defective, or you receive an incorrect item, please refer to the section below.</p>",
+            "heading_fr": "Échanges",
+            "content_fr": "<p>Nous n'offrons pas d'échanges une fois qu'une commande a été livrée.</p><p>Si votre commande arrive endommagée, défectueuse ou si vous recevez un article incorrect, veuillez consulter la section ci-dessous.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "Damaged, Defective, or Incorrect Orders",
+            "content_en": "<p>If your order arrives damaged, defective, or you receive an incorrect item, please contact us within <strong>7 days</strong> of delivery at <strong><a href='mailto:info@castintention.com'>info@castintention.com</a></strong>.</p><p>Please include:</p><ul><li>Your order number</li><li>Photographs of the shipping box</li><li>Photographs of the product</li><li>A brief description of the issue</li></ul><p>We'll review your claim and, where appropriate, determine the most suitable resolution.</p>",
+            "heading_fr": "Commandes endommagées, défectueuses ou incorrectes",
+            "content_fr": "<p>Si votre commande arrive endommagée, défectueuse ou si vous recevez un article incorrect, veuillez communiquer avec nous dans un délai de <strong>7 jours</strong> suivant la livraison à <strong><a href='mailto:info@castintention.com'>info@castintention.com</a></strong>.</p><p>Veuillez inclure :</p><ul><li>Votre numéro de commande.</li><li>Des photos de la boîte d'expédition.</li><li>Des photos du produit.</li><li>Une brève description du problème.</li></ul><p>Nous examinerons votre demande et déterminerons, lorsqu'il y a lieu, la solution la plus appropriée.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "Order Cancellations",
+            "content_en": "<p>Orders may only be cancelled before they have been processed for shipment.</p><p>Once an order has been processed or shipped, it cannot be cancelled.</p>",
+            "heading_fr": "Annulation des commandes",
+            "content_fr": "<p>Les commandes peuvent être annulées uniquement avant qu'elles aient été traitées en vue de leur expédition.</p><p>Une fois la commande traitée ou expédiée, elle ne peut plus être annulée.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "Refused Deliveries & Returned Shipments",
+            "content_en": "<p>Orders refused at delivery or returned to Cast due to an incorrect or incomplete shipping address provided by the customer may be subject to additional shipping charges before they can be reshipped.</p><p>If a refund is issued in these circumstances, the original shipping charges and any costs incurred by Cast may be deducted where permitted by applicable law.</p>",
+            "heading_fr": "Refus de livraison et envois retournés",
+            "content_fr": "<p>Les commandes refusées lors de la livraison ou retournées à Cast en raison d'une adresse de livraison inexacte ou incomplète fournie par le client peuvent être assujetties à des frais supplémentaires avant d'être réexpédiées.</p><p>Si un remboursement est accordé dans ces circonstances, les frais d'expédition initiaux ainsi que les coûts engagés par Cast pourront être déduits, lorsque la loi applicable le permet.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "Chargebacks",
+            "content_en": "<p>If you experience an issue with your order, we encourage you to contact us before initiating a chargeback with your payment provider. We're committed to reviewing concerns fairly and working toward an appropriate resolution whenever possible.</p>",
+            "heading_fr": "Contestations de paiement",
+            "content_fr": "<p>Si vous rencontrez un problème avec votre commande, nous vous encourageons à communiquer avec nous avant d'entreprendre une contestation de paiement auprès de votre fournisseur de paiement.</p><p>Nous nous engageons à examiner chaque situation de façon équitable et à chercher une solution appropriée lorsque cela est justifié.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "Consumer Rights",
+            "content_en": "<p>Nothing in this Policy limits or excludes any rights you may have under applicable consumer protection legislation.</p>",
+            "heading_fr": "Droits des consommateurs",
+            "content_fr": "<p>Aucune disposition de la présente politique ne limite ni n'exclut les droits dont vous pouvez bénéficier en vertu des lois applicables en matière de protection du consommateur.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "Contact Us",
+            "content_en": "<p>If you have any questions regarding your order, please contact us.</p><p>Cast<br><a href='https://www.google.com/maps/search/?api=1&query=205-383+Sorauren+Avenue+Toronto+ON+M6R+0A4+Canada' target='_blank' rel='noopener noreferrer'>205-383 Sorauren Avenue<br>Toronto, ON M6R 0A4<br>Canada</a></p><p><strong>Email:</strong> <a href='mailto:info@castintention.com'>info@castintention.com</a></p>",
+            "heading_fr": "Nous joindre",
+            "content_fr": "<p>Si vous avez des questions concernant votre commande, veuillez communiquer avec nous.</p><p>Cast<br><a href='https://www.google.com/maps/search/?api=1&query=205-383+Sorauren+Avenue+Toronto+ON+M6R+0A4+Canada' target='_blank' rel='noopener noreferrer'>205-383 Sorauren Avenue<br>Toronto, ON M6R 0A4<br>Canada</a></p><p><strong>Courriel :</strong> <a href='mailto:info@castintention.com'>info@castintention.com</a></p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

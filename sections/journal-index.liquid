@@ -1,0 +1,822 @@
+{{ 'section-journal-index.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign ji_blog = section.settings.blog
+  assign ji_per_page = section.settings.articles_per_page | default: 6
+
+  if section.settings.featured_mode == 'manual'
+    if section.settings.featured_article != blank
+      assign ji_featured = section.settings.featured_article
+    endif
+  else
+    if ji_blog != blank
+      for article in ji_blog.articles
+        assign ji_featured = article
+        break
+      endfor
+    endif
+  endif
+
+  comment
+    Request one extra article per page from Shopify's paginate tag.
+    Since the featured article is filtered out of the rendered grid
+    wherever it appears, requesting N+1 keeps the visible count on
+    each page equal to the merchant's chosen "articles per page",
+    regardless of which page the featured article happens to fall on.
+  endcomment
+  assign ji_fetch_count = ji_per_page | plus: 1
+
+  comment
+    Reading time for the featured article, calculated from word count
+    at ~200 words per minute, rounded up, with a 1 minute floor.
+  endcomment
+  if ji_featured != blank
+    assign ji_word_count = ji_featured.content | strip_html | strip_newlines | split: ' ' | size
+    assign ji_read_minutes = ji_word_count | divided_by: 200.0 | ceil
+    if ji_read_minutes < 1
+      assign ji_read_minutes = 1
+    endif
+  endif
+-%}
+
+<div
+  class="journal-index-section color-{{ section.settings.color_scheme }}"
+  id="journal-index-{{ section.id }}"
+  style="
+    --ji-header-pt-d: {{ section.settings.header_padding_top_desktop }}px;
+    --ji-header-pb-d: {{ section.settings.header_padding_bottom_desktop }}px;
+    --ji-header-pt-m: {{ section.settings.header_padding_top_mobile }}px;
+    --ji-header-pb-m: {{ section.settings.header_padding_bottom_mobile }}px;
+
+    --ji-heading-size-d: {{ section.settings.heading_size_desktop }}px;
+    --ji-heading-size-m: {{ section.settings.heading_size_mobile }}px;
+
+    --ji-featured-pt-d: {{ section.settings.featured_padding_top_desktop }}px;
+    --ji-featured-pb-d: {{ section.settings.featured_padding_bottom_desktop }}px;
+    --ji-featured-pt-m: {{ section.settings.featured_padding_top_mobile }}px;
+    --ji-featured-pb-m: {{ section.settings.featured_padding_bottom_mobile }}px;
+    --ji-featured-content-pad-d: {{ section.settings.featured_content_padding_desktop }}px;
+    --ji-featured-content-pad-m: {{ section.settings.featured_content_padding_mobile }}px;
+    --ji-featured-image-height-d: {{ section.settings.featured_image_height_desktop }}px;
+    --ji-featured-image-height-m: {{ section.settings.featured_image_height_mobile }}px;
+    --ji-featured-headline-size-d: {{ section.settings.featured_headline_size_desktop }}px;
+    --ji-featured-headline-size-m: {{ section.settings.featured_headline_size_mobile }}px;
+
+    --ji-grid-pt-d: {{ section.settings.grid_padding_top_desktop }}px;
+    --ji-grid-pb-d: {{ section.settings.grid_padding_bottom_desktop }}px;
+    --ji-grid-pt-m: {{ section.settings.grid_padding_top_mobile }}px;
+    --ji-grid-pb-m: {{ section.settings.grid_padding_bottom_mobile }}px;
+    --ji-grid-title-size-d: {{ section.settings.grid_title_size_desktop }}px;
+    --ji-grid-title-size-m: {{ section.settings.grid_title_size_mobile }}px;
+    --ji-grid-gap-d: {{ section.settings.grid_gap_desktop }}px;
+    --ji-grid-gap-m: {{ section.settings.grid_gap_mobile }}px;
+    --ji-grid-cols-d: {{ section.settings.grid_columns_desktop }};
+    --ji-grid-cols-m: {{ section.settings.grid_columns_mobile }};
+
+    --ji-card-content-pad-d: {{ section.settings.card_content_padding_desktop }}px;
+    --ji-card-content-pad-m: {{ section.settings.card_content_padding_mobile }}px;
+    --ji-card-title-size-d: {{ section.settings.card_title_size_desktop }}px;
+    --ji-card-title-size-m: {{ section.settings.card_title_size_mobile }}px;
+    --ji-card-image-ratio-d: {{ section.settings.card_image_ratio_desktop }};
+    --ji-card-image-ratio-m: {{ section.settings.card_image_ratio_mobile }};
+
+    --ji-border-opacity: {{ section.settings.border_opacity | divided_by: 100.0 }};
+    --ji-hover-opacity: {{ section.settings.hover_opacity | divided_by: 100.0 }};
+  "
+>
+
+  {%- comment -%} ───────────── PAGE HEADER ───────────── {%- endcomment -%}
+  <div class="journals-header">
+    {%- if section.settings.eyebrow != blank -%}
+      <div class="journals-eyebrow">{{ section.settings.eyebrow }}</div>
+    {%- endif -%}
+    {%- if section.settings.heading != blank -%}
+      <h1 class="journals-title">{{ section.settings.heading }}</h1>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} ───────────── FEATURED ARTICLE ───────────── {%- endcomment -%}
+  {%- if ji_featured != blank -%}
+    <a href="{{ ji_featured.url }}" class="featured-article-link" aria-label="{{ ji_featured.title | escape }}">
+      <div class="featured-article">
+        <div class="featured-image">
+          {%- if ji_featured.image != blank -%}
+            <picture>
+              {%- if section.settings.featured_image_mobile != blank -%}
+                <source media="(max-width: 749px)" srcset="{{ section.settings.featured_image_mobile | image_url: width: 750 }}">
+              {%- endif -%}
+              <img
+                src="{{ ji_featured.image | image_url: width: 1200 }}"
+                srcset="{{ ji_featured.image | image_url: width: 600 }} 600w, {{ ji_featured.image | image_url: width: 1200 }} 1200w, {{ ji_featured.image | image_url: width: 1800 }} 1800w"
+                sizes="(max-width: 749px) 100vw, 50vw"
+                alt="{{ ji_featured.image.alt | default: ji_featured.title | escape }}"
+                width="{{ ji_featured.image.width }}"
+                height="{{ ji_featured.image.height }}"
+                loading="eager"
+                class="featured-image-img"
+              >
+            </picture>
+          {%- elsif section.settings.featured_image_desktop != blank -%}
+            <picture>
+              {%- if section.settings.featured_image_mobile != blank -%}
+                <source media="(max-width: 749px)" srcset="{{ section.settings.featured_image_mobile | image_url: width: 750 }}">
+              {%- endif -%}
+              <img
+                src="{{ section.settings.featured_image_desktop | image_url: width: 1200 }}"
+                srcset="{{ section.settings.featured_image_desktop | image_url: width: 600 }} 600w, {{ section.settings.featured_image_desktop | image_url: width: 1200 }} 1200w, {{ section.settings.featured_image_desktop | image_url: width: 1800 }} 1800w"
+                sizes="(max-width: 749px) 100vw, 50vw"
+                alt="{{ ji_featured.title | escape }}"
+                loading="eager"
+                class="featured-image-img"
+              >
+            </picture>
+          {%- else -%}
+            <div class="img-placeholder-label">{{ 'sections.journal_index.image_placeholder' | t }}</div>
+          {%- endif -%}
+        </div>
+
+        <div class="featured-content">
+          {%- if section.settings.show_card_label -%}
+            <span class="journal-card-label">{{ section.settings.card_label | default: ji_blog.title }}</span>
+          {%- endif -%}
+
+          <h2 class="featured-headline">{{ ji_featured.title }}</h2>
+
+          {%- if ji_featured.excerpt != blank -%}
+            <p class="featured-excerpt">{{ ji_featured.excerpt | strip_html }}</p>
+          {%- elsif section.settings.show_fallback_excerpt -%}
+            <p class="featured-excerpt">{{ ji_featured.content | strip_html | truncatewords: 28 }}</p>
+          {%- endif -%}
+
+          <div class="article-meta">
+            {%- if section.settings.show_author -%}
+              <span class="article-byline">{{ section.settings.author_label | default: 'CAST' }}</span>
+            {%- endif -%}
+            {%- if section.settings.show_date -%}
+              <span class="article-date">{{ ji_featured.published_at | date: "%B %Y" }}</span>
+            {%- endif -%}
+            {%- if section.settings.show_reading_time -%}
+              <span class="article-read">{{ ji_read_minutes }} {{ section.settings.reading_time_label | default: 'min read' }}</span>
+            {%- endif -%}
+          </div>
+
+          <span class="journal-card-read">{{ section.settings.read_label | default: 'Read article' }}</span>
+        </div>
+      </div>
+    </a>
+  {%- endif -%}
+
+  {%- comment -%} ───────────── JOURNALS GRID ───────────── {%- endcomment -%}
+  {%- if ji_blog != blank -%}
+    <div class="journals-grid-section">
+      {%- if section.settings.grid_title != blank -%}
+        <h2 class="more-title">{{ section.settings.grid_title }}</h2>
+      {%- endif -%}
+
+      {%- paginate ji_blog.articles by ji_fetch_count -%}
+        <div class="journals-grid">
+          {%- assign ji_rendered_count = 0 -%}
+          {%- for article in ji_blog.articles -%}
+            {%- unless article.id == ji_featured.id -%}
+              {%- assign ji_rendered_count = ji_rendered_count | plus: 1 -%}
+              {%- if ji_rendered_count <= ji_per_page -%}
+                <a href="{{ article.url }}" class="journal-card">
+                  <div class="journal-card-image">
+                    {%- if article.image != blank -%}
+                      <img
+                        src="{{ article.image | image_url: width: 600 }}"
+                        srcset="{{ article.image | image_url: width: 400 }} 400w, {{ article.image | image_url: width: 600 }} 600w, {{ article.image | image_url: width: 900 }} 900w"
+                        sizes="(max-width: 749px) 100vw, 33vw"
+                        alt="{{ article.image.alt | default: article.title | escape }}"
+                        width="{{ article.image.width }}"
+                        height="{{ article.image.height }}"
+                        loading="lazy"
+                        class="journal-card-image-img"
+                      >
+                    {%- elsif section.settings.grid_fallback_image_desktop != blank -%}
+                      <picture>
+                        {%- if section.settings.grid_fallback_image_mobile != blank -%}
+                          <source media="(max-width: 749px)" srcset="{{ section.settings.grid_fallback_image_mobile | image_url: width: 600 }}">
+                        {%- endif -%}
+                        <img
+                          src="{{ section.settings.grid_fallback_image_desktop | image_url: width: 600 }}"
+                          alt="{{ article.title | escape }}"
+                          loading="lazy"
+                          class="journal-card-image-img"
+                        >
+                      </picture>
+                    {%- else -%}
+                      <div class="img-placeholder-label">{{ 'sections.journal_index.image_placeholder' | t }}</div>
+                    {%- endif -%}
+                  </div>
+
+                  <div class="journal-card-content">
+                    {%- if section.settings.show_card_label -%}
+                      <span class="journal-card-label">{{ section.settings.card_label | default: ji_blog.title }}</span>
+                    {%- endif -%}
+
+                    <h3 class="journal-card-title">{{ article.title }}</h3>
+
+                    {%- if article.excerpt != blank -%}
+                      <p class="journal-card-excerpt">{{ article.excerpt | strip_html }}</p>
+                    {%- elsif section.settings.show_fallback_excerpt -%}
+                      <p class="journal-card-excerpt">{{ article.content | strip_html | truncatewords: 18 }}</p>
+                    {%- endif -%}
+
+                    <span class="journal-card-read">{{ section.settings.read_label_grid | default: 'Read' }}</span>
+                  </div>
+                </a>
+              {%- endif -%}
+            {%- endunless -%}
+          {%- else -%}
+            <p class="journals-empty">{{ 'sections.journal_index.no_articles' | t }}</p>
+          {%- endfor -%}
+        </div>
+
+        {%- if paginate.pages > 1 -%}
+          <div class="journals-pagination" role="navigation" aria-label="{{ 'general.pagination.label' | t }}">
+            <span class="pagination-info">
+              {{ 'sections.journal_index.page_info' | t: current: paginate.current_page, total: paginate.pages }}
+            </span>
+            <div class="pagination-buttons">
+              {%- if paginate.previous -%}
+                <a href="{{ paginate.previous.url }}" class="pagination-btn" aria-label="{{ 'general.pagination.previous' | t }}">
+                  <svg fill="none" height="16" width="16" viewbox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><polyline points="15,18 9,12 15,6"></polyline></svg>
+                </a>
+              {%- else -%}
+                <span class="pagination-btn is-disabled" aria-disabled="true">
+                  <svg fill="none" height="16" width="16" viewbox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><polyline points="15,18 9,12 15,6"></polyline></svg>
+                </span>
+              {%- endif -%}
+
+              {%- if paginate.next -%}
+                <a href="{{ paginate.next.url }}" class="pagination-btn" aria-label="{{ 'general.pagination.next' | t }}">
+                  <svg fill="none" height="16" width="16" viewbox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><polyline points="9,18 15,12 9,6"></polyline></svg>
+                </a>
+              {%- else -%}
+                <span class="pagination-btn is-disabled" aria-disabled="true">
+                  <svg fill="none" height="16" width="16" viewbox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><polyline points="9,18 15,12 9,6"></polyline></svg>
+                </span>
+              {%- endif -%}
+            </div>
+          </div>
+        {%- endif -%}
+      {%- endpaginate -%}
+    </div>
+  {%- else -%}
+    <div class="journals-grid-section">
+      <p class="journals-empty">{{ 'sections.journal_index.select_blog' | t }}</p>
+    </div>
+  {%- endif -%}
+
+</div>
+
+{% schema %}
+{
+  "name": "Journal index",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Blog source"
+    },
+    {
+      "type": "blog",
+      "id": "blog",
+      "label": "Blog to display"
+    },
+    {
+      "type": "range",
+      "id": "articles_per_page",
+      "label": "Articles per page (grid)",
+      "min": 3,
+      "max": 12,
+      "step": 1,
+      "default": 6,
+      "info": "The featured article is always excluded from this count and from pagination, on whichever page it falls on."
+    },
+    {
+      "type": "header",
+      "content": "Page header content"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow text",
+      "default": "Journals"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "On rest, recovery, and the nervous system."
+    },
+    {
+      "type": "header",
+      "content": "Featured article source"
+    },
+    {
+      "type": "select",
+      "id": "featured_mode",
+      "label": "Featured article source",
+      "options": [
+        { "value": "auto", "label": "Automatic — latest article" },
+        { "value": "manual", "label": "Manual — choose article" }
+      ],
+      "default": "auto"
+    },
+    {
+      "type": "article",
+      "id": "featured_article",
+      "label": "Choose featured article",
+      "info": "Only used when 'Featured article source' is set to Manual."
+    },
+    {
+      "type": "header",
+      "content": "Featured fallback image"
+    },
+    {
+      "type": "image_picker",
+      "id": "featured_image_desktop",
+      "label": "Fallback image — Desktop"
+    },
+    {
+      "type": "image_picker",
+      "id": "featured_image_mobile",
+      "label": "Fallback image — Mobile"
+    },
+    {
+      "type": "header",
+      "content": "Grid content"
+    },
+    {
+      "type": "text",
+      "id": "grid_title",
+      "label": "Grid heading",
+      "default": "More from journals"
+    },
+    {
+      "type": "range",
+      "id": "grid_columns_desktop",
+      "label": "Columns — Desktop",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "grid_columns_mobile",
+      "label": "Columns — Mobile",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 1
+    },
+    {
+      "type": "header",
+      "content": "Grid fallback image"
+    },
+    {
+      "type": "image_picker",
+      "id": "grid_fallback_image_desktop",
+      "label": "Fallback image — Desktop"
+    },
+    {
+      "type": "image_picker",
+      "id": "grid_fallback_image_mobile",
+      "label": "Fallback image — Mobile"
+    },
+    {
+      "type": "header",
+      "content": "Card content"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_card_label",
+      "label": "Show category label",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "card_label",
+      "label": "Category label text",
+      "info": "Leave blank to use the blog's name automatically.",
+      "default": "Journals"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_author",
+      "label": "Show author (featured article)",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "author_label",
+      "label": "Author label",
+      "info": "Static text shown as the byline wherever an article author would appear (e.g. featured article). Does not pull from Shopify's article author field.",
+      "default": "CAST"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_date",
+      "label": "Show date (featured article)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_reading_time",
+      "label": "Show reading time (featured article)",
+      "default": true,
+      "info": "Calculated automatically from the article's content. Minimum 1 min read."
+    },
+    {
+      "type": "text",
+      "id": "reading_time_label",
+      "label": "Reading time label text",
+      "default": "min read"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_fallback_excerpt",
+      "label": "Auto-generate excerpt when article has none",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "read_label",
+      "label": "Featured article link text",
+      "default": "Read article"
+    },
+    {
+      "type": "text",
+      "id": "read_label_grid",
+      "label": "Grid card link text",
+      "default": "Read"
+    },
+    {
+      "type": "header",
+      "content": "Color"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "range",
+      "id": "border_opacity",
+      "label": "Divider line strength",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "unit": "%",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "hover_opacity",
+      "label": "Hover fade strength",
+      "min": 50,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 85
+    },
+    {
+      "type": "header",
+      "content": "Typography — Heading sizes"
+    },
+    {
+      "type": "range",
+      "id": "heading_size_desktop",
+      "label": "Page heading size — Desktop",
+      "min": 24,
+      "max": 64,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "heading_size_mobile",
+      "label": "Page heading size — Mobile",
+      "min": 20,
+      "max": 44,
+      "step": 1,
+      "unit": "px",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "featured_headline_size_desktop",
+      "label": "Featured headline size — Desktop",
+      "min": 18,
+      "max": 48,
+      "step": 1,
+      "unit": "px",
+      "default": 34
+    },
+    {
+      "type": "range",
+      "id": "featured_headline_size_mobile",
+      "label": "Featured headline size — Mobile",
+      "min": 16,
+      "max": 36,
+      "step": 1,
+      "unit": "px",
+      "default": 22
+    },
+    {
+      "type": "range",
+      "id": "grid_title_size_desktop",
+      "label": "Grid heading size — Desktop",
+      "min": 14,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 22
+    },
+    {
+      "type": "range",
+      "id": "grid_title_size_mobile",
+      "label": "Grid heading size — Mobile",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "card_title_size_desktop",
+      "label": "Card title size — Desktop",
+      "min": 12,
+      "max": 22,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "card_title_size_mobile",
+      "label": "Card title size — Mobile",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Spacing — Page header"
+    },
+    {
+      "type": "range",
+      "id": "header_padding_top_desktop",
+      "label": "Top padding — Desktop",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "header_padding_bottom_desktop",
+      "label": "Bottom padding — Desktop",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "header_padding_top_mobile",
+      "label": "Top padding — Mobile",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "header_padding_bottom_mobile",
+      "label": "Bottom padding — Mobile",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "Spacing — Featured article"
+    },
+    {
+      "type": "range",
+      "id": "featured_padding_top_desktop",
+      "label": "Section top padding — Desktop",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "featured_padding_bottom_desktop",
+      "label": "Section bottom padding — Desktop",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "featured_padding_top_mobile",
+      "label": "Section top padding — Mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "featured_padding_bottom_mobile",
+      "label": "Section bottom padding — Mobile",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "featured_content_padding_desktop",
+      "label": "Text content padding — Desktop",
+      "min": 24,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "featured_content_padding_mobile",
+      "label": "Text content padding — Mobile",
+      "min": 16,
+      "max": 64,
+      "step": 4,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Spacing — Featured image height"
+    },
+    {
+      "type": "range",
+      "id": "featured_image_height_desktop",
+      "label": "Image height — Desktop",
+      "min": 320,
+      "max": 800,
+      "step": 8,
+      "unit": "px",
+      "default": 560
+    },
+    {
+      "type": "range",
+      "id": "featured_image_height_mobile",
+      "label": "Image height — Mobile",
+      "min": 200,
+      "max": 480,
+      "step": 8,
+      "unit": "px",
+      "default": 280
+    },
+    {
+      "type": "header",
+      "content": "Spacing — Grid section"
+    },
+    {
+      "type": "range",
+      "id": "grid_padding_top_desktop",
+      "label": "Section top padding — Desktop",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "grid_padding_bottom_desktop",
+      "label": "Section bottom padding — Desktop",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "grid_padding_top_mobile",
+      "label": "Section top padding — Mobile",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "grid_padding_bottom_mobile",
+      "label": "Section bottom padding — Mobile",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "grid_gap_desktop",
+      "label": "Gap between cards — Desktop",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "grid_gap_mobile",
+      "label": "Gap between cards — Mobile",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 2
+    },
+    {
+      "type": "header",
+      "content": "Spacing — Card"
+    },
+    {
+      "type": "range",
+      "id": "card_content_padding_desktop",
+      "label": "Card text padding — Desktop",
+      "min": 12,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "card_content_padding_mobile",
+      "label": "Card text padding — Mobile",
+      "min": 12,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "select",
+      "id": "card_image_ratio_desktop",
+      "label": "Card image ratio — Desktop",
+      "options": [
+        { "value": "1.5", "label": "3:2 (mockup default)" },
+        { "value": "1.778", "label": "16:9" },
+        { "value": "1", "label": "1:1 Square" },
+        { "value": "1.333", "label": "4:3" }
+      ],
+      "default": "1.5"
+    },
+    {
+      "type": "select",
+      "id": "card_image_ratio_mobile",
+      "label": "Card image ratio — Mobile",
+      "options": [
+        { "value": "1.5", "label": "3:2 (mockup default)" },
+        { "value": "1.778", "label": "16:9" },
+        { "value": "1", "label": "1:1 Square" },
+        { "value": "1.333", "label": "4:3" }
+      ],
+      "default": "1.5"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Journal index",
+      "category": "Blog"
+    }
+  ]
+}
+{% endschema %}

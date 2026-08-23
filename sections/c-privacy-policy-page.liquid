@@ -1,0 +1,866 @@
+{% comment %}
+  ────────────────────────────────────────────────
+  CAST — Policy Page (c-policy-page)
+  Simple, reusable bilingual (EN/FR) legal/policy page section.
+  Use for: Privacy Policy, Terms of Service, Shipping Policy,
+  Return Policy, Cookie Policy, Accessibility Statement, or any
+  other legal document.
+
+  Structure:
+   • One "intro" block (title, effective date, intro text)
+   • Unlimited "section" blocks (numbered/unnumbered sections)
+   Each block carries BOTH English and French content side by side,
+   toggled instantly via the language switcher — no page reload.
+
+  Features (kept intentionally minimal):
+   • Instant EN/FR toggle, deep-linkable via ?lang=, remembered for
+     the browsing session (sessionStorage), full keyboard support
+   • Auto-hides the switcher if no block has French content filled in
+   • Single-column, full-width reading layout on every screen size —
+     no sidebar, no sticky elements, no scroll effects
+   • Fully theme-integrated: color scheme picker, CAST typography
+  ────────────────────────────────────────────────
+{% endcomment %}
+
+{%- liquid
+  assign sid = section.id
+  assign intro_block = null
+  assign section_blocks = section.blocks | where: 'type', 'section'
+
+  for block in section.blocks
+    if block.type == 'intro'
+      assign intro_block = block
+    endif
+  endfor
+
+  assign has_french = false
+  for block in section_blocks
+    if block.settings.heading_fr != blank or block.settings.content_fr != blank
+      assign has_french = true
+    endif
+  endfor
+  if intro_block and intro_block.settings.title_fr != blank
+    assign has_french = true
+  endif
+
+  assign show_switcher = false
+  if section.settings.show_language_switcher and has_french
+    assign show_switcher = true
+  endif
+-%}
+
+<section
+  class="c-policy color-{{ section.settings.color_scheme }}"
+  id="c-policy-{{ sid }}"
+  data-default-lang="{{ section.settings.default_language }}"
+  data-has-french="{{ has_french }}"
+>
+
+  <div class="c-policy__inner{% if section.settings.layout_width == 'contained' %} c-policy__inner--contained{% endif %}">
+
+    {%- comment -%} ── Header ── {%- endcomment -%}
+    <div class="c-policy__header">
+
+      {%- if intro_block -%}
+        {%- if intro_block.settings.title_en != blank -%}
+          <h1 class="c-policy__title" data-lang="en">{{ intro_block.settings.title_en | escape }}</h1>
+        {%- endif -%}
+        {%- if intro_block.settings.title_fr != blank -%}
+          <h1 class="c-policy__title" data-lang="fr">{{ intro_block.settings.title_fr | escape }}</h1>
+        {%- endif -%}
+
+        {%- if intro_block.settings.effective_date_en != blank -%}
+          <p class="c-policy__date" data-lang="en">{{ intro_block.settings.effective_date_en | escape }}</p>
+        {%- endif -%}
+        {%- if intro_block.settings.effective_date_fr != blank -%}
+          <p class="c-policy__date" data-lang="fr">{{ intro_block.settings.effective_date_fr | escape }}</p>
+        {%- endif -%}
+      {%- endif -%}
+
+      {%- if show_switcher -%}
+        <div class="c-policy__lang-switch" role="group" aria-label="Language / Langue">
+          <button type="button" class="c-policy__lang-btn" data-lang-btn="en" aria-pressed="false">English</button>
+          <button type="button" class="c-policy__lang-btn" data-lang-btn="fr" aria-pressed="false">Français</button>
+        </div>
+      {%- endif -%}
+
+      {%- if intro_block and intro_block.settings.intro_en != blank -%}
+        <div class="c-policy__intro" data-lang="en">{{ intro_block.settings.intro_en }}</div>
+      {%- endif -%}
+      {%- if intro_block and intro_block.settings.intro_fr != blank -%}
+        <div class="c-policy__intro" data-lang="fr">{{ intro_block.settings.intro_fr }}</div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} ── Content: simple single column, full width ── {%- endcomment -%}
+    <div class="c-policy__content">
+      {%- for block in section_blocks -%}
+        <div class="c-policy__section">
+
+          {%- if block.settings.heading_en != blank -%}
+            <h2 class="c-policy__heading" data-lang="en">{{ block.settings.heading_en | escape }}</h2>
+          {%- endif -%}
+          {%- if block.settings.heading_fr != blank -%}
+            <h2 class="c-policy__heading" data-lang="fr">{{ block.settings.heading_fr | escape }}</h2>
+          {%- endif -%}
+
+          {%- if block.settings.content_en != blank -%}
+            <div class="c-policy__rte" data-lang="en">{{ block.settings.content_en }}</div>
+          {%- endif -%}
+          {%- if block.settings.content_fr != blank -%}
+            <div class="c-policy__rte" data-lang="fr">{{ block.settings.content_fr }}</div>
+          {%- endif -%}
+
+        </div>
+      {%- endfor -%}
+    </div>
+
+  </div>
+
+</section>
+
+<style>
+  #c-policy-{{ sid }} {
+    --cp-pad-top-d:     {{ section.settings.padding_top_desktop }}px;
+    --cp-pad-bottom-d:  {{ section.settings.padding_bottom_desktop }}px;
+    --cp-pad-top-m:     {{ section.settings.padding_top_mobile }}px;
+    --cp-pad-bottom-m:  {{ section.settings.padding_bottom_mobile }}px;
+    --cp-max-width:     {{ section.settings.content_max_width }}px;
+    --cp-heading-space: {{ section.settings.heading_spacing }}px;
+    --cp-para-space:    {{ section.settings.paragraph_spacing }}px;
+    background: rgb(var(--color-background));
+    color: rgba(var(--color-foreground), 0.85);
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Language visibility ── */
+  #c-policy-{{ sid }} [data-lang] { display: none; }
+  #c-policy-{{ sid }}[data-lang-active="en"] [data-lang="en"] { display: revert; }
+  #c-policy-{{ sid }}[data-lang-active="fr"] [data-lang="fr"] { display: revert; }
+  #c-policy-{{ sid }} h1[data-lang],
+  #c-policy-{{ sid }} .c-policy__heading[data-lang] { display: none; }
+  #c-policy-{{ sid }}[data-lang-active="en"] h1.c-policy__title[data-lang="en"],
+  #c-policy-{{ sid }}[data-lang-active="en"] .c-policy__heading[data-lang="en"] { display: block; }
+  #c-policy-{{ sid }}[data-lang-active="fr"] h1.c-policy__title[data-lang="fr"],
+  #c-policy-{{ sid }}[data-lang-active="fr"] .c-policy__heading[data-lang="fr"] { display: block; }
+
+  /* ── Inner wrapper ── */
+  #c-policy-{{ sid }} .c-policy__inner {
+    padding: var(--cp-pad-top-d) 32px var(--cp-pad-bottom-d);
+  }
+  #c-policy-{{ sid }} .c-policy__inner--contained {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+#c-policy-{{ sid }} .c-policy__header {
+  width: 100%;
+  max-width: none;
+  margin: 0 0 56px;
+  text-align: left;
+}
+  #c-policy-{{ sid }} .c-policy__title {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 300;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: rgb(var(--color-foreground));
+    margin: 0 0 16px;
+    text-wrap: pretty;
+  }
+
+  #c-policy-{{ sid }} .c-policy__date {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: rgba(var(--color-foreground), 0.55);
+    margin: 0 0 28px;
+    font-weight: 300;
+  }
+
+  /* ── Language switcher (the one feature that stays) ── */
+  #c-policy-{{ sid }} .c-policy__lang-switch {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgba(var(--color-foreground), 0.14);
+    margin-bottom: 32px;
+  }
+  #c-policy-{{ sid }} .c-policy__lang-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px 18px;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(var(--color-foreground), 0.55);
+    transition: background 0.2s ease, color 0.2s ease;
+    border-radius: 2px;
+  }
+  #c-policy-{{ sid }} .c-policy__lang-btn[aria-pressed="true"] {
+    background: rgb(var(--color-foreground));
+    color: rgb(var(--color-background));
+  }
+  @media (hover: hover) and (pointer: fine) {
+    #c-policy-{{ sid }} .c-policy__lang-btn:not([aria-pressed="true"]):hover {
+      color: rgb(var(--color-foreground));
+    }
+  }
+  #c-policy-{{ sid }} .c-policy__lang-btn:focus-visible {
+    outline: 2px solid rgba(var(--color-foreground), 0.6);
+    outline-offset: 2px;
+    z-index: 1;
+    position: relative;
+  }
+
+  #c-policy-{{ sid }} .c-policy__intro p {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.8;
+    color: rgba(var(--color-foreground), 0.7);
+    font-weight: 300;
+    margin: 0 0 var(--cp-para-space);
+  }
+  #c-policy-{{ sid }} .c-policy__intro p:last-child { margin-bottom: 0; }
+  #c-policy-{{ sid }} .c-policy__intro strong { font-weight: 500; }
+
+  /* ── Content: single column, full width, comfortable reading measure ── */
+ #c-policy-{{ sid }} .c-policy__content {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+  #c-policy-{{ sid }} .c-policy__section {
+     margin-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(var(--color-foreground), 0.08);
+  }
+  #c-policy-{{ sid }} .c-policy__section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  #c-policy-{{ sid }} .c-policy__heading {
+    font-size: clamp(17px, 2vw, 21px);
+    font-weight: 300;
+    letter-spacing: -0.005em;
+    color: rgb(var(--color-foreground));
+    margin: 0 0 var(--cp-heading-space);
+    text-wrap: pretty;
+  }
+
+  /* ── Rich text body ── */
+  #c-policy-{{ sid }} .c-policy__rte {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.8;
+    color: rgba(var(--color-foreground), 0.7);
+    font-weight: 300;
+  }
+  #c-policy-{{ sid }} .c-policy__rte p {
+    margin: 0 0 var(--cp-para-space);
+    text-wrap: pretty;
+  }
+  #c-policy-{{ sid }} .c-policy__rte p:last-child { margin-bottom: 0; }
+
+  #c-policy-{{ sid }} .c-policy__rte h3 {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(var(--color-foreground));
+    font-weight: 400;
+    margin: 32px 0 14px;
+  }
+  #c-policy-{{ sid }} .c-policy__rte h3:first-child { margin-top: 0; }
+
+  #c-policy-{{ sid }} .c-policy__rte ul,
+  #c-policy-{{ sid }} .c-policy__rte ol {
+    margin: 0 0 var(--cp-para-space);
+    padding-left: 22px;
+  }
+  #c-policy-{{ sid }} .c-policy__rte ul ul,
+  #c-policy-{{ sid }} .c-policy__rte ol ol,
+  #c-policy-{{ sid }} .c-policy__rte ul ol,
+  #c-policy-{{ sid }} .c-policy__rte ol ul {
+    margin: 10px 0 0;
+  }
+  #c-policy-{{ sid }} .c-policy__rte li {
+    margin-bottom: 12px;
+    line-height: 1.65;
+  }
+  #c-policy-{{ sid }} .c-policy__rte li:last-child { margin-bottom: 0; }
+
+  #c-policy-{{ sid }} .c-policy__rte strong { font-weight: 500; color: rgb(var(--color-foreground)); }
+  #c-policy-{{ sid }} .c-policy__rte em { font-style: italic; }
+
+  #c-policy-{{ sid }} .c-policy__rte a {
+    color: rgb(var(--color-foreground));
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    transition: opacity 0.2s ease;
+  }
+  #c-policy-{{ sid }} .c-policy__rte a:hover { opacity: 0.6; }
+  #c-policy-{{ sid }} .c-policy__rte a:focus-visible {
+    outline: 2px solid rgba(var(--color-foreground), 0.6);
+    outline-offset: 2px;
+  }
+
+  #c-policy-{{ sid }} .c-policy__rte table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 var(--cp-para-space);
+    font-size: 13.5px;
+  }
+  #c-policy-{{ sid }} .c-policy__rte th,
+  #c-policy-{{ sid }} .c-policy__rte td {
+    border: 1px solid rgba(var(--color-foreground), 0.12);
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+  #c-policy-{{ sid }} .c-policy__rte th {
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: rgb(var(--color-foreground));
+    background: rgba(var(--color-foreground), 0.03);
+  }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 989px) {
+    #c-policy-{{ sid }} .c-policy__inner { padding: var(--cp-pad-top-d) 24px var(--cp-pad-bottom-d); }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 749px) {
+    #c-policy-{{ sid }} .c-policy__inner { padding: var(--cp-pad-top-m) 16px var(--cp-pad-bottom-m); }
+    #c-policy-{{ sid }} .c-policy__lang-switch { width: 100%; }
+    #c-policy-{{ sid }} .c-policy__lang-btn { flex: 1; }
+  }
+</style>
+
+<script>
+(function () {
+  var root = document.getElementById('c-policy-{{ sid }}');
+  if (!root || root.dataset.cpInit) return;
+  root.dataset.cpInit = '1';
+
+  var storageKey = 'cast-policy-lang';
+  var defaultLang = root.dataset.defaultLang || 'en';
+  var hasFrench = root.dataset.hasFrench === 'true';
+
+  /* ── Language: session-only (sessionStorage), URL param, keyboard nav ── */
+  function getInitialLang() {
+    if (!hasFrench) return 'en';
+    var params = new URLSearchParams(window.location.search);
+    var urlLang = params.get('lang');
+    if (urlLang === 'en' || urlLang === 'fr') return urlLang;
+    try {
+      var stored = window.sessionStorage.getItem(storageKey);
+      if (stored === 'en' || stored === 'fr') return stored;
+    } catch (e) {}
+    return defaultLang === 'fr' ? 'fr' : 'en';
+  }
+
+  var langBtns = Array.prototype.slice.call(root.querySelectorAll('[data-lang-btn]'));
+
+  function setLang(lang, updateUrl) {
+    root.setAttribute('data-lang-active', lang);
+    langBtns.forEach(function (btn) {
+      btn.setAttribute('aria-pressed', btn.dataset.langBtn === lang ? 'true' : 'false');
+    });
+    try { window.sessionStorage.setItem(storageKey, lang); } catch (e) {}
+
+    if (updateUrl) {
+      var url = new URL(window.location.href);
+      url.searchParams.set('lang', lang);
+      window.history.replaceState(null, '', url.toString());
+    }
+  }
+
+  setLang(getInitialLang(), false);
+
+  langBtns.forEach(function (btn, i) {
+    btn.addEventListener('click', function () {
+      setLang(btn.dataset.langBtn, true);
+    });
+    /* Arrow-key navigation between the two language buttons */
+    btn.addEventListener('keydown', function (e) {
+      var targetIndex = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') targetIndex = (i + 1) % langBtns.length;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') targetIndex = (i - 1 + langBtns.length) % langBtns.length;
+      if (e.key === 'Home') targetIndex = 0;
+      if (e.key === 'End') targetIndex = langBtns.length - 1;
+      if (targetIndex !== null) {
+        e.preventDefault();
+        var target = langBtns[targetIndex];
+        target.focus();
+        setLang(target.dataset.langBtn, true);
+      }
+    });
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Policy page",
+  "tag": "section",
+  "class": "c-policy-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Language"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_language_switcher",
+      "label": "Show language switcher",
+      "default": true,
+      "info": "Automatically hidden if no block has French content filled in."
+    },
+    {
+      "type": "select",
+      "id": "default_language",
+      "label": "Default language",
+      "options": [
+        {
+          "value": "en",
+          "label": "English"
+        },
+        {
+          "value": "fr",
+          "label": "Français"
+        }
+      ],
+      "default": "en",
+      "info": "Used only if the visitor has no saved preference and no ?lang= in the URL."
+    },
+    {
+      "type": "header",
+      "content": "Color"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "layout_width",
+      "label": "Section width",
+      "options": [
+        {
+          "value": "full",
+          "label": "Full width (matches site sections)"
+        },
+        {
+          "value": "contained",
+          "label": "Contained (max 1400px)"
+        }
+      ],
+      "default": "full"
+    },
+    {
+      "type": "range",
+      "id": "content_max_width",
+      "label": "Content max width",
+      "min": 480,
+      "max": 900,
+      "step": 10,
+      "unit": "px",
+      "default": 680
+    },
+    {
+      "type": "range",
+      "id": "heading_spacing",
+      "label": "Space below headings",
+      "min": 8,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "paragraph_spacing",
+      "label": "Space between paragraphs",
+      "min": 12,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 22
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_desktop",
+      "label": "Top padding",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_desktop",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 120
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top_mobile",
+      "label": "Top padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom_mobile",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "intro",
+      "name": "Intro / Header",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "header",
+          "content": "English"
+        },
+        {
+          "type": "text",
+          "id": "title_en",
+          "label": "Title (EN)",
+          "default": "Privacy Policy"
+        },
+        {
+          "type": "text",
+          "id": "effective_date_en",
+          "label": "Effective date (EN)",
+          "default": "Effective Date: June 1, 2026"
+        },
+        {
+          "type": "richtext",
+          "id": "intro_en",
+          "label": "Intro text (EN)"
+        },
+        {
+          "type": "header",
+          "content": "Français"
+        },
+        {
+          "type": "text",
+          "id": "title_fr",
+          "label": "Title (FR)"
+        },
+        {
+          "type": "text",
+          "id": "effective_date_fr",
+          "label": "Effective date (FR)"
+        },
+        {
+          "type": "richtext",
+          "id": "intro_fr",
+          "label": "Intro text (FR)"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "name": "Numbered section",
+      "settings": [
+        {
+          "type": "header",
+          "content": "English"
+        },
+        {
+          "type": "text",
+          "id": "heading_en",
+          "label": "Heading (EN)"
+        },
+        {
+          "type": "richtext",
+          "id": "content_en",
+          "label": "Content (EN)"
+        },
+        {
+          "type": "header",
+          "content": "Français"
+        },
+        {
+          "type": "text",
+          "id": "heading_fr",
+          "label": "Heading (FR)",
+          "info": "Leave blank if this document has no French version."
+        },
+        {
+          "type": "richtext",
+          "id": "content_fr",
+          "label": "Content (FR)"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Policy page",
+      "category": "Legal",
+      "blocks": [
+        {
+          "type": "intro",
+          "settings": {
+            "title_en": "Privacy Policy",
+            "effective_date_en": "Effective Date: June 1, 2026",
+            "intro_en": "<p>Cast ('Cast', 'we', 'our', or 'us') is committed to protecting your privacy and handling your personal information responsibly. This Privacy Policy explains how we collect, use, disclose, store, and protect your personal information when you visit our website, purchase our products, subscribe to our communications, or otherwise interact with us.</p><p>This Privacy Policy is intended to comply with applicable Canadian privacy laws, including PIPEDA, applicable provincial privacy legislation including Québec's Law 25 where applicable, and relevant U.S. privacy laws that may apply.</p><p>By using our website or purchasing our products, you acknowledge that you have read this Privacy Policy.</p>",
+            "title_fr": "Politique de confidentialité",
+            "effective_date_fr": "Date d'entrée en vigueur : 1 jun 2026",
+            "intro_fr": "<p>Chez Cast (« Cast », « nous », « notre » ou « nos »), nous nous engageons à protéger votre vie privée et à traiter vos renseignements personnels de manière responsable. La présente Politique de confidentialité explique comment nous recueillons, utilisons, communiquons, conservons et protégeons vos renseignements personnels lorsque vous visitez notre site Web, achetez nos produits, vous abonnez à nos communications ou interagissez autrement avec nous.</p><p>La présente Politique de confidentialité vise à respecter les lois canadiennes applicables en matière de protection des renseignements personnels, notamment la Loi sur la protection des renseignements personnels et les documents électroniques (LPRPDE), les lois provinciales applicables, y compris la Loi 25 du Québec, lorsque celle-ci s'applique, ainsi que les lois américaines pertinentes pouvant s'appliquer aux visiteurs de notre site Web.</p><p>En utilisant notre site Web ou en achetant nos produits, vous reconnaissez avoir pris connaissance de la présente Politique de confidentialité.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "1. Our Privacy Principles",
+            "content_en": "<ul><li>We collect only the information reasonably necessary for legitimate business purposes.</li><li>We explain why information is collected before or at the time it is collected.</li><li>We obtain consent where required by law.</li><li>We protect personal information using appropriate administrative, technical, and physical safeguards.</li><li>We provide reasonable access to your personal information upon request.</li><li>We retain information only as long as necessary to fulfil the purposes described in this Policy or as required by law.</li></ul>",
+            "heading_fr": "1. Nos principes en matière de confidentialité",
+            "content_fr": "<p>Nous nous engageons à traiter vos renseignements personnels selon les principes suivants :</p><ul><li>Nous recueillons uniquement les renseignements raisonnablement nécessaires à des fins commerciales légitimes.</li><li>Nous expliquons pourquoi les renseignements sont recueillis avant ou au moment de leur collecte.</li><li>Nous obtenons votre consentement lorsque la loi l'exige.</li><li>Nous protégeons les renseignements personnels au moyen de mesures de sécurité administratives, techniques et physiques appropriées.</li><li>Nous vous donnons un accès raisonnable à vos renseignements personnels sur demande.</li><li>Nous conservons les renseignements personnels uniquement pendant la durée nécessaire à la réalisation des objectifs décrits dans la présente politique ou conformément aux exigences légales.</li></ul>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "2. Information We Collect",
+            "content_en": "<p>Information you provide may include your name, billing and shipping addresses, email address, telephone number, account information, order history, reviews, surveys, customer service communications, and optional demographic information.</p><p>Payments are securely processed through third-party payment providers. Cast does not store complete credit card numbers or payment credentials.</p><p>We may also automatically collect IP address, browser type, device information, operating system, pages viewed, shopping cart activity, and general location information derived from your IP address.</p><p>We may receive information from trusted service providers including Shopify, payment processors, Google, Meta, Klaviyo, analytics providers, and advertising partners.</p><p>We may also collect information when you subscribe to our email list, create an account, participate in promotions, or otherwise communicate with us.</p>",
+            "heading_fr": "2. Les renseignements que nous recueillons",
+            "content_fr": "<p>Selon la manière dont vous interagissez avec Cast, nous pouvons recueillir les renseignements suivants.</p><h3>Renseignements que vous fournissez</h3><p>Ils peuvent notamment comprendre :</p><ul><li>Votre nom.</li><li>Votre adresse de facturation.</li><li>Votre adresse de livraison.</li><li>Votre adresse courriel.</li><li>Votre numéro de téléphone.</li><li>Les renseignements liés à votre compte.</li><li>Votre historique de commandes.</li><li>Vos avis sur les produits.</li><li>Vos réponses à des sondages.</li><li>Vos communications avec notre service à la clientèle.</li><li>Les renseignements que vous choisissez de nous transmettre par l'intermédiaire de formulaires ou par courriel.</li><li>Les renseignements démographiques facultatifs que vous choisissez de fournir.</li></ul><h3>Renseignements relatifs au paiement</h3><p>Les paiements sont traités de façon sécurisée par des fournisseurs de services de paiement tiers.</p><p>Cast ne conserve pas les numéros complets de cartes de crédit ni les renseignements de paiement.</p><h3>Renseignements recueillis automatiquement</h3><p>Nous pouvons également recueillir automatiquement certains renseignements, notamment :</p><ul><li>L'adresse IP.</li><li>Le type de navigateur.</li><li>Les renseignements sur l'appareil utilisé.</li><li>Le système d'exploitation.</li><li>Les pages consultées.</li><li>Les produits consultés.</li><li>L'activité du panier d'achat.</li><li>Les renseignements généraux sur votre emplacement dérivés de votre adresse IP.</li></ul><h3>Renseignements provenant de tiers</h3><p>Nous pouvons recevoir des renseignements provenant de fournisseurs de services de confiance, notamment :</p><ul><li>Shopify</li><li>Les fournisseurs de services de paiement.</li><li>Google</li><li>Meta</li><li>Klaviyo</li><li>Les fournisseurs de services d'analyse.</li><li>Les partenaires publicitaires.</li></ul><p>Nous pouvons également recueillir des renseignements lorsque vous vous abonnez à notre liste de diffusion, créez un compte, participez à des promotions ou communiquez autrement avec nous.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "3. How We Use Your Information",
+            "content_en": "<p>We use personal information to process orders, process payments, arrange shipping, provide customer support, improve our website and services, prevent fraud, conduct research, improve products, and comply with legal obligations.</p><p>Where you provide express consent, we may send marketing communications. You may unsubscribe at any time using the unsubscribe link in our emails or by contacting us directly.</p><p>We will not use your information for materially different purposes without additional consent where required by law.</p>",
+            "heading_fr": "3. Utilisation de vos renseignements",
+            "content_fr": "<p>Nous utilisons vos renseignements personnels afin de :</p><ul><li>Traiter les commandes.</li><li>Traiter les paiements.</li><li>Organiser l'expédition.</li><li>Offrir un service à la clientèle.</li><li>Améliorer notre site Web et nos services.</li><li>Prévenir la fraude.</li><li>Réaliser des recherches et des sondages.</li><li>Améliorer nos produits.</li><li>Respecter nos obligations légales et réglementaires.</li></ul><p>Lorsque vous y avez expressément consenti, nous pouvons également vous envoyer des communications marketing, des annonces de produits ou d'autres renseignements promotionnels.</p><p>Vous pouvez retirer votre consentement en tout temps en utilisant le lien de désabonnement figurant dans nos courriels ou en communiquant directement avec nous.</p><p>Nous n'utiliserons pas vos renseignements personnels à des fins sensiblement différentes de celles décrites dans la présente Politique sans obtenir votre consentement supplémentaire lorsque la loi l'exige.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "4. Cookies and Similar Technologies",
+            "content_en": "<p>Our website uses cookies and similar technologies to operate the website, understand visitor behaviour, remember preferences, and improve your experience.</p><p>Essential cookies are required for website functionality. Other cookies are used only where permitted by law and, where required, with your consent.</p><p>Please see our Cookie Policy for more information.</p>",
+            "heading_fr": "4. Témoins et technologies similaires",
+            "content_fr": "<p>Notre site Web utilise des témoins (« cookies ») et d'autres technologies similaires afin d'assurer son fonctionnement, de comprendre la manière dont les visiteurs l'utilisent, de mémoriser leurs préférences et d'améliorer leur expérience.</p><p>Certains témoins sont essentiels au fonctionnement du site Web.</p><p>Les autres témoins sont utilisés uniquement lorsque la loi le permet et, lorsque cela est requis, avec votre consentement.</p><p>Veuillez consulter notre Politique relative aux témoins pour obtenir de plus amples renseignements.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "5. Sharing Your Information",
+            "content_en": "<p>We do not sell your personal information.</p><p>We may share information with Shopify and other service providers, payment processors, shipping carriers, email providers, analytics providers, professional advisors, legal authorities where required, or successors in connection with a business transaction.</p>",
+            "heading_fr": "5. Communication de vos renseignements",
+            "content_fr": "<p>Nous ne vendons pas vos renseignements personnels.</p><p>Nous pouvons toutefois communiquer vos renseignements aux personnes ou organisations suivantes lorsque cela est raisonnablement nécessaire :</p><ul><li>Shopify et d'autres fournisseurs de services de commerce électronique.</li><li>Les fournisseurs de services de paiement.</li><li>Les transporteurs.</li><li>Les fournisseurs de services de courriel.</li><li>Les fournisseurs de services d'analyse.</li><li>Les conseillers professionnels.</li><li>Les autorités lorsque la loi l'exige.</li><li>Les acquéreurs ou successeurs dans le cadre d'une fusion, d'une acquisition, d'un financement ou de la vente de tout ou partie de notre entreprise.</li></ul>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "6. User-Generated Content",
+            "content_en": "<p>If you voluntarily submit a review, testimonial, or other content directly to Cast, or separately grant permission for us to use publicly shared content, you grant Cast permission to use that content for promotional purposes. You may request removal of your content by contacting us.</p>",
+            "heading_fr": "6. Contenu généré par les utilisateurs",
+            "content_fr": "<p>Si vous nous soumettez volontairement un avis, un témoignage ou tout autre contenu, ou si vous nous autorisez séparément à utiliser un contenu que vous avez publié, vous accordez à Cast la permission de reproduire, d'afficher et d'utiliser ce contenu à des fins commerciales et promotionnelles.</p><p>Vous pouvez demander le retrait de votre contenu en communiquant avec nous. Nous déploierons des efforts raisonnables pour donner suite à votre demande lorsque cela est possible.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "7. International Transfers",
+            "content_en": "<p>Some of our service providers may store or process personal information outside Canada, including in the United States or other jurisdictions. When this occurs, your information may be subject to the laws of those jurisdictions. We take reasonable steps to ensure service providers protect personal information through contractual and organizational safeguards.</p>",
+            "heading_fr": "7. Transferts internationaux",
+            "content_fr": "<p>Certains de nos fournisseurs de services peuvent stocker ou traiter vos renseignements personnels à l'extérieur du Canada, notamment aux États-Unis ou dans d'autres territoires.</p><p>Dans un tel cas, vos renseignements peuvent être assujettis aux lois de ces territoires.</p><p>Nous prenons des mesures raisonnables afin de nous assurer que nos fournisseurs de services protègent les renseignements personnels au moyen de mesures contractuelles et organisationnelles appropriées.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "8. Your Privacy Rights",
+            "content_en": "<p>You may request access to your personal information, request corrections, withdraw consent where permitted by law, request deletion where applicable, and request a portable copy of your information where legally available. We may verify your identity before processing requests.</p>",
+            "heading_fr": "8. Vos droits en matière de confidentialité",
+            "content_fr": "<p>Sous réserve des lois applicables, vous pouvez :</p><ul><li>Demander l'accès à vos renseignements personnels.</li><li>Demander la correction de renseignements inexacts.</li><li>Retirer votre consentement lorsque cela est permis par la loi.</li><li>Demander la suppression de vos renseignements personnels lorsque cela est applicable.</li><li>Demander une copie portable de vos renseignements lorsque la loi le prévoit.</li></ul><p>Nous pourrons vérifier votre identité avant de traiter votre demande.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "9. California and Other U.S. Residents",
+            "content_en": "<p>If applicable law provides additional privacy rights, including rights to know, access, delete, or opt out of the sale or sharing of personal information, Cast will honour those rights. Cast does not sell personal information.</p>",
+            "heading_fr": "9. Résidents de la Californie et d'autres États américains",
+            "content_fr": "<p>Lorsque les lois applicables accordent des droits supplémentaires en matière de protection des renseignements personnels, notamment le droit d'être informé, d'accéder à ses renseignements, de les supprimer ou de refuser leur vente ou leur communication, Cast respectera ces droits.</p><p>Cast ne vend pas les renseignements personnels.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "10. Data Retention",
+            "content_en": "<p>We retain personal information only as long as reasonably necessary to fulfil the purposes described in this Policy, comply with legal obligations, resolve disputes, and enforce our agreements. Information is securely deleted or anonymized when no longer required.</p>",
+            "heading_fr": "10. Conservation des renseignements",
+            "content_fr": "<p>Nous conservons les renseignements personnels uniquement pendant la période raisonnablement nécessaire pour atteindre les objectifs décrits dans la présente Politique, respecter nos obligations légales, régler les différends et faire appliquer nos ententes.</p><p>Lorsque les renseignements ne sont plus nécessaires, ils sont supprimés de façon sécuritaire ou rendus anonymes.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "11. Security",
+            "content_en": "<p>We use administrative, technical, and physical safeguards designed to protect personal information, including secure payment processing, restricted access controls, encryption where appropriate, and ongoing review of our security practices. No method of transmission or storage is completely secure, and we cannot guarantee absolute security.</p>",
+            "heading_fr": "11. Sécurité",
+            "content_fr": "<p>Nous mettons en œuvre des mesures de protection administratives, techniques et physiques destinées à protéger les renseignements personnels, notamment :</p><ul><li>Le traitement sécurisé des paiements.</li><li>Des contrôles d'accès limités.</li><li>Le chiffrement, lorsque cela est approprié.</li><li>La révision continue de nos pratiques en matière de sécurité.</li></ul><p>Aucune méthode de transmission sur Internet ni aucun système de stockage n'est entièrement sécuritaire. Par conséquent, nous ne pouvons garantir une sécurité absolue.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "12. Children's Privacy",
+            "content_en": "<p>Our products and services are not directed to children under 16 years of age. We do not knowingly collect personal information from children without appropriate parental or guardian consent where required by law.</p>",
+            "heading_fr": "12. Protection des renseignements des enfants",
+            "content_fr": "<p>Nos produits et nos services ne sont pas destinés aux enfants de moins de 16 ans.</p><p>Nous ne recueillons pas sciemment de renseignements personnels auprès d'enfants sans le consentement approprié d'un parent ou d'un tuteur lorsque la loi l'exige.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "13. Changes to this Privacy Policy",
+            "content_en": "<p>We may update this Privacy Policy from time to time to reflect changes in our business, technology, or legal obligations. The Effective Date at the top of this Policy indicates the latest revision. Material changes will be communicated where required by law.</p>",
+            "heading_fr": "13. Modifications de la présente Politique de confidentialité",
+            "content_fr": "<p>Nous pouvons modifier la présente Politique de confidentialité de temps à autre afin de refléter l'évolution de nos activités, de nos technologies ou de nos obligations légales.</p><p>La date d'entrée en vigueur indiquée au début de la présente Politique correspond à sa version la plus récente.</p><p>Lorsque la loi l'exige, nous communiquerons les modifications importantes.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "14. Contact Us",
+            "content_en": "<p>Privacy Officer<br>Cast<br><a href='https://www.google.com/maps/search/?api=1&query=205-383+Sorauren+Avenue+Toronto+ON+M6R+0A4+Canada' target='_blank' rel='noopener noreferrer'>205-383 Sorauren Avenue<br>Toronto, ON M6R 0A4<br>Canada</a></p><p>Email: <a href='mailto:info@castintention.com'>info@castintention.com</a></p><p>If you have questions about this Privacy Policy or wish to exercise your privacy rights, please contact our Privacy Officer.</p>",
+            "heading_fr": "14. Nous joindre",
+            "content_fr": "<p>Responsable de la protection des renseignements personnels</p><p>Cast<br><a href='https://www.google.com/maps/search/?api=1&query=205-383+Sorauren+Avenue+Toronto+ON+M6R+0A4+Canada' target='_blank' rel='noopener noreferrer'>205-383 Sorauren Avenue<br>Toronto, ON M6R 0A4<br>Canada</a></p><p>Courriel : <a href='mailto:info@castintention.com'>info@castintention.com</a></p><p>Si vous avez des questions concernant la présente Politique de confidentialité ou si vous souhaitez exercer vos droits en matière de protection des renseignements personnels, veuillez communiquer avec notre responsable de la protection des renseignements personnels.</p>"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cookie Policy",
+      "category": "Legal",
+      "blocks": [
+        {
+          "type": "intro",
+          "settings": {
+            "title_en": "Cookie Policy",
+            "effective_date_en": "Effective Date: June 1, 2026",
+            "intro_en": "<p>This Cookie Policy explains how Cast (\"Cast\", \"we\", \"our\", or \"us\") uses cookies and similar technologies when you visit our website or interact with our digital services.</p><p>This Policy should be read alongside our Privacy Policy.</p>",
+            "title_fr": "Politique relative aux témoins (cookies)",
+            "effective_date_fr": "Date d'entrée en vigueur : 1 jun 2026",
+            "intro_fr": "<p>La présente Politique relative aux témoins (« cookies ») explique comment Cast (« Cast », « nous », « notre » ou « nos ») utilise les témoins et les technologies similaires lorsque vous visitez notre site Web ou interagissez avec nos services numériques.</p><p>La présente politique doit être lue conjointement avec notre Politique de confidentialité.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "1. What Are Cookies?",
+            "content_en": "<p>Cookies are small text files placed on your device when you visit a website. They help websites remember your preferences, improve functionality, measure website performance, and deliver a more personalized browsing experience.</p><p>Some cookies are essential for our website to function properly. Others help us understand how visitors use our website or allow us to provide more relevant communications and advertising.</p>",
+            "heading_fr": "1. Que sont les témoins?",
+            "content_fr": "<p>Les témoins sont de petits fichiers texte enregistrés sur votre appareil lorsque vous visitez un site Web. Ils permettent aux sites Web de mémoriser vos préférences, d'améliorer leur fonctionnement, de mesurer leur performance et de vous offrir une expérience de navigation plus personnalisée.</p><p>Certains témoins sont essentiels au bon fonctionnement de notre site Web. D'autres nous permettent de comprendre comment les visiteurs utilisent notre site ou de vous proposer des communications et des publicités plus pertinentes.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "2. Types of Cookies We Use",
+            "content_en": "<h3>Essential Cookies</h3><p>These cookies are necessary for the operation of our website.</p><p>They enable core functionality such as:</p><ul><li>Shopping cart functionality</li><li>Secure checkout</li><li>Website security</li><li>User authentication</li><li>Session management</li></ul><p>Because these cookies are essential, they cannot be disabled through our website.</p><h3>Analytics Cookies</h3><p>Analytics cookies help us understand how visitors interact with our website.</p><p>They allow us to measure:</p><ul><li>Website traffic</li><li>Popular pages</li><li>Time spent on pages</li><li>Navigation patterns</li><li>Website performance</li></ul><p>This information helps us improve the customer experience.</p><p>Examples may include:</p><ul><li>Google Analytics</li><li>Shopify Analytics</li></ul><p>Where required by law, these cookies are used only after you have provided consent.</p><h3>Functional Cookies</h3><p>Functional cookies remember your preferences, including:</p><ul><li>Language selection</li><li>Region</li><li>Saved shopping cart</li><li>User preferences</li></ul><p>These cookies allow the website to provide a more personalized experience.</p><h3>Marketing Cookies</h3><p>Marketing cookies help us measure advertising performance and deliver more relevant marketing communications.</p><p>These cookies may be used by advertising partners such as:</p><ul><li>Meta</li><li>Google</li><li>Klaviyo</li></ul><p>Marketing cookies may collect information about your interactions with our website and advertisements.</p><p>Where required by law, these cookies are used only after you have provided consent.</p>",
+            "heading_fr": "2. Les types de témoins que nous utilisons",
+            "content_fr": "<h3>Témoins essentiels</h3><p>Ces témoins sont nécessaires au fonctionnement de notre site Web.</p><p>Ils permettent notamment :</p><ul><li>Le fonctionnement du panier d'achat.</li><li>Le traitement sécurisé des commandes.</li><li>La sécurité du site Web.</li><li>L'authentification des utilisateurs.</li><li>La gestion des sessions.</li></ul><p>Puisqu'ils sont essentiels au fonctionnement du site, ces témoins ne peuvent pas être désactivés à partir de notre site Web.</p><h3>Témoins d'analyse</h3><p>Les témoins d'analyse nous aident à comprendre la façon dont les visiteurs utilisent notre site Web.</p><p>Ils nous permettent notamment de mesurer :</p><ul><li>Le trafic sur le site Web.</li><li>Les pages les plus consultées.</li><li>Le temps passé sur les pages.</li><li>Les habitudes de navigation.</li><li>La performance du site Web.</li></ul><p>Ces renseignements nous permettent d'améliorer l'expérience offerte à nos visiteurs.</p><p>Par exemple :</p><ul><li>Google Analytics</li><li>Shopify Analytics</li></ul><p>Lorsque la loi l'exige, ces témoins ne sont utilisés qu'après avoir obtenu votre consentement.</p><h3>Témoins fonctionnels</h3><p>Les témoins fonctionnels mémorisent vos préférences, notamment :</p><ul><li>La langue sélectionnée.</li><li>Votre région.</li><li>Le contenu de votre panier.</li><li>Vos préférences d'utilisation.</li></ul><p>Ils nous permettent de vous offrir une expérience plus personnalisée.</p><h3>Témoins publicitaires</h3><p>Les témoins publicitaires nous permettent de mesurer la performance de nos campagnes marketing et de diffuser des communications publicitaires plus pertinentes.</p><p>Ils peuvent être utilisés par des partenaires publicitaires tels que :</p><ul><li>Meta</li><li>Google</li><li>Klaviyo</li></ul><p>Ces témoins peuvent recueillir des renseignements sur vos interactions avec notre site Web et nos publicités.</p><p>Lorsque la loi l'exige, ils ne sont utilisés qu'après avoir obtenu votre consentement.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "3. Third-Party Cookies",
+            "content_en": "<p>Some cookies are placed by trusted third-party providers that help us operate our business.</p><p>These providers may include:</p><ul><li>Shopify</li><li>Google</li><li>Meta</li><li>Klaviyo</li><li>Payment providers</li><li>Analytics providers</li></ul><p>Each provider manages its own privacy practices. We encourage you to review their respective privacy policies for additional information.</p>",
+            "heading_fr": "3. Témoins de tiers",
+            "content_fr": "<p>Certains témoins sont déposés par des fournisseurs de services de confiance qui nous aident à exploiter notre entreprise.</p><p>Ces fournisseurs peuvent notamment comprendre :</p><ul><li>Shopify</li><li>Google</li><li>Meta</li><li>Klaviyo</li><li>Des fournisseurs de services de paiement.</li><li>Des fournisseurs de services d'analyse.</li></ul><p>Chaque fournisseur applique sa propre politique de confidentialité. Nous vous encourageons à consulter leurs politiques respectives pour obtenir de plus amples renseignements.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "4. Your Cookie Choices",
+            "content_en": "<p>When you first visit our website, you may be presented with a cookie banner or consent manager that allows you to choose which non-essential cookies you wish to accept.</p><p>You may also control cookies by:</p><ul><li>Adjusting your browser settings</li><li>Deleting stored cookies</li><li>Blocking future cookies</li><li>Updating your preferences through our cookie consent tool, where available</li></ul><p>Please note that disabling certain cookies may affect the functionality of our website.</p>",
+            "heading_fr": "4. Vos choix concernant les témoins",
+            "content_fr": "<p>Lors de votre première visite sur notre site Web, une bannière de consentement ou un outil de gestion des témoins peut vous être présenté afin de vous permettre de choisir les témoins non essentiels que vous acceptez.</p><p>Vous pouvez également gérer les témoins en :</p><ul><li>Modifiant les paramètres de votre navigateur.</li><li>Supprimant les témoins enregistrés.</li><li>Bloquant les futurs témoins.</li><li>Mettant à jour vos préférences au moyen de notre outil de gestion des témoins, lorsqu'il est disponible.</li></ul><p>Veuillez noter que la désactivation de certains témoins pourrait limiter le fonctionnement de certaines fonctionnalités de notre site Web.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "5. Do Not Track Signals",
+            "content_en": "<p>Some browsers include a \"Do Not Track\" (DNT) feature.</p><p>Because there is currently no universally accepted standard governing DNT signals, our website may not respond to every browser-based DNT request. Where required by applicable law, we honour legally recognized privacy preference signals.</p>",
+            "heading_fr": "5. Signaux « Do Not Track »",
+            "content_fr": "<p>Certains navigateurs offrent une fonctionnalité appelée « Do Not Track » (DNT).</p><p>Comme il n'existe actuellement aucune norme universellement reconnue régissant ces signaux, notre site Web pourrait ne pas répondre à toutes les demandes DNT transmises par les navigateurs. Lorsque la loi applicable l'exige, nous respectons les signaux de préférence en matière de confidentialité reconnus par la loi.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "6. Changes to This Policy",
+            "content_en": "<p>We may update this Cookie Policy from time to time to reflect changes in technology, legal requirements, or our business practices.</p><p>The Effective Date at the top of this Policy indicates the most recent version.</p>",
+            "heading_fr": "6. Modifications de la présente politique",
+            "content_fr": "<p>Nous pouvons modifier la présente Politique relative aux témoins de temps à autre afin de tenir compte des changements apportés à nos technologies, de nos obligations légales ou de nos pratiques commerciales.</p><p>La date d'entrée en vigueur indiquée au début de la présente politique correspond à sa version la plus récente.</p>"
+          }
+        },
+        {
+          "type": "section",
+          "settings": {
+            "heading_en": "7. Contact Us",
+            "content_en": "<p>If you have questions about this Cookie Policy or our use of cookies, please contact:</p><p>Privacy Officer<br>Cast<br><a href='https://www.google.com/maps/search/?api=1&query=205-383+Sorauren+Avenue+Toronto+ON+M6R+0A4+Canada' target='_blank' rel='noopener noreferrer'>205-383 Sorauren Avenue<br>Toronto, ON M6R 0A4<br>Canada</a></p><p>Email: <a href='mailto:info@castintention.com'>info@castintention.com</a></p>",
+            "heading_fr": "7. Nous joindre",
+            "content_fr": "<p>Si vous avez des questions concernant la présente Politique relative aux témoins ou notre utilisation des témoins, veuillez communiquer avec :</p><p>Responsable de la protection des renseignements personnels</p><p>Cast<br><a href='https://www.google.com/maps/search/?api=1&query=205-383+Sorauren+Avenue+Toronto+ON+M6R+0A4+Canada' target='_blank' rel='noopener noreferrer'>205-383 Sorauren Avenue<br>Toronto, ON M6R 0A4<br>Canada</a></p><p>Courriel : <a href='mailto:info@castintention.com'>info@castintention.com</a></p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

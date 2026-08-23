@@ -1,0 +1,210 @@
+{% comment %}
+  CAST — Journal Article Header
+  File: sections/c-article-header.liquid
+
+  Dynamic sources:
+  - article.title — Shopify native
+  - article.author — Shopify native
+  - article.published_at — Shopify native
+  - blog.title — Shopify native
+  - Read time — article metafield cast.read_time (optional)
+  - All fade-up on load
+{% endcomment %}
+
+<div
+  class="c-article-header"
+  id="c-article-header-{{ section.id }}"
+>
+
+  <p class="c-article-header__label">
+    {{ blog.title | default: section.settings.label }}
+  </p>
+
+  <h1 class="c-article-header__headline">{{ article.title }}</h1>
+
+  <div class="c-article-header__meta">
+    {% if article.author != blank %}
+      <span class="c-article-header__byline">{{ article.author }}</span>
+      <div class="c-article-header__sep" aria-hidden="true"></div>
+    {% endif %}
+
+    <span class="c-article-header__date">
+      {{ article.published_at | date: '%B %Y' }}
+    </span>
+
+    {%- assign read_time = article.metafields.cast.read_time.value -%}
+    {% if read_time != blank %}
+      <div class="c-article-header__sep" aria-hidden="true"></div>
+      <span class="c-article-header__date">{{ read_time }}</span>
+    {% elsif section.settings.read_time != blank %}
+      <div class="c-article-header__sep" aria-hidden="true"></div>
+      <span class="c-article-header__date">{{ section.settings.read_time }}</span>
+    {% endif %}
+  </div>
+
+</div>
+
+<style>
+ #c-article-header-{{ section.id }},
+  #c-article-header-{{ section.id }}-wrapper {
+    --ah-bg:   {{ section.settings.bg_color }};
+    --ah-text: {{ section.settings.text_color }};
+    --ah-muted:{{ section.settings.muted_color }};
+  }
+
+  .c-article-header-wrapper {
+    background: {{ section.settings.bg_color }};
+  }
+
+  .c-article-header {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 80px 40px 56px;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-article-header__label {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ah-muted);
+    font-weight: 300;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    opacity: 0;
+    animation: c-ah-up 0.7s ease 0.05s forwards;
+  }
+
+  .c-article-header__label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--ah-muted);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  .c-article-header__headline {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 300;
+    line-height: 1.12;
+    color: var(--ah-text);
+    letter-spacing: -0.02em;
+    margin-bottom: 28px;
+    font-family: 'Work Sans', sans-serif;
+    opacity: 0;
+    animation: c-ah-up 0.7s ease 0.18s forwards;
+  }
+
+  .c-article-header__meta {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding-top: 24px;
+    border-top: 1.5px solid rgba(0,0,0,0.14);
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: c-ah-up 0.7s ease 0.30s forwards;
+  }
+
+  .c-article-header__byline {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ah-muted);
+    font-weight: 300;
+  }
+
+  .c-article-header__date {
+    font-size: 11px;
+    color: var(--ah-muted);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+  }
+
+  .c-article-header__sep {
+    width: 1px;
+    height: 12px;
+    background: rgba(0,0,0,0.2);
+    flex-shrink: 0;
+  }
+
+  @keyframes c-ah-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .c-article-header__label,
+    .c-article-header__headline,
+    .c-article-header__meta {
+      animation: none;
+      opacity: 1;
+    }
+  }
+
+  @media screen and (max-width: 640px) {
+    .c-article-header {
+      padding: 56px 24px 0px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Article Header",
+  "tag": "div",
+  "class": "c-article-header-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "text",
+      "id": "label",
+      "label": "Label fallback",
+      "default": "Journals",
+      "info": "Used if blog.title is blank"
+    },
+    {
+      "type": "text",
+      "id": "read_time",
+      "label": "Read time fallback",
+      "default": "4 min read",
+      "info": "Used if cast.read_time metafield is blank. e.g. '4 min read'"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Headline color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Meta / label color",
+      "default": "#666666"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Article Header",
+      "settings": {
+        "label": "Journals",
+        "read_time": "4 min read"
+      }
+    }
+  ]
+}
+{% endschema %}

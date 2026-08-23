@@ -1,0 +1,288 @@
+{% comment %}
+  CAST — Formulation / Why It Works
+  File: sections/c-formulation-why.liquid
+
+  Features:
+  - 2 column: left = label + headline, right = body text + CTA
+  - All text editable in theme editor
+  - Colors, spacing desktop/tablet/mobile all controllable
+  - Optional image instead of or alongside text (future-proof)
+  - No JS needed
+{% endcomment %}
+
+<section
+  class="c-formulation-why"
+  id="c-formulation-why-{{ section.id }}"
+>
+
+  {%- comment -%} ── LEFT: Label + Headline ── {%- endcomment -%}
+  <div class="c-formulation-why__left">
+
+    {% if section.settings.section_label != blank %}
+      <p class="c-formulation-why__label">{{ section.settings.section_label }}</p>
+    {% endif %}
+
+    {% if section.settings.headline != blank %}
+      <h2 class="c-formulation-why__headline">{{ section.settings.headline }}</h2>
+    {% endif %}
+
+  </div>
+
+  {%- comment -%} ── RIGHT: Body + CTA ── {%- endcomment -%}
+  <div class="c-formulation-why__right">
+
+    {% if section.settings.body_text != blank %}
+      <p class="c-formulation-why__body">{{ section.settings.body_text }}</p>
+    {% endif %}
+
+    {% if section.settings.cta_text != blank and section.settings.cta_link != blank %}
+      <a href="{{ section.settings.cta_link }}" class="c-formulation-why__cta">
+        {{ section.settings.cta_text }}
+      </a>
+    {% endif %}
+
+  </div>
+
+</section>
+
+<style>
+  #c-formulation-why-{{ section.id }} {
+    --fw-bg:              {{ section.settings.bg_color }};
+    --fw-text:            {{ section.settings.text_color }};
+    --fw-muted:           {{ section.settings.muted_color }};
+    --fw-gap:             {{ section.settings.col_gap }}px;
+    --fw-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --fw-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --fw-padding-mobile:  {{ section.settings.padding_mobile }}px;
+  }
+
+  /* ── Section ── */
+  .c-formulation-why {
+    padding: var(--fw-padding-desktop) 80px;
+    background: var(--fw-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1px solid rgba(0,0,0,0.06);
+    {% endif %}
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--fw-gap);
+    align-items: center;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Left ── */
+  .c-formulation-why__label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--fw-muted);
+    margin-bottom: 16px;
+    font-weight: 300;
+  }
+
+  .c-formulation-why__headline {
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 300;
+    line-height: 1.35;
+    color: var(--fw-text);
+    letter-spacing: -0.01em;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Right ── */
+  .c-formulation-why__body {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--fw-muted);
+    font-weight: 300;
+    margin-bottom: 36px;
+  }
+
+  .c-formulation-why__cta {
+    display: inline-block;
+    padding: 14px 36px;
+    background: transparent;
+    color: var(--fw-text);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid rgba(0,0,0,0.25);
+    transition: border-color 0.2s ease, background 0.2s ease;
+    width: fit-content;
+  }
+
+  .c-formulation-why__cta:hover {
+    border-color: var(--fw-text);
+    background: rgba(0,0,0,0.03);
+  }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 900px) {
+    .c-formulation-why {
+      padding: var(--fw-padding-tablet) 48px;
+      gap: 48px;
+    }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 640px) {
+    .c-formulation-why {
+      padding: var(--fw-padding-mobile) 24px;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .c-formulation-why__cta {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Formulation",
+  "tag": "section",
+  "class": "c-formulation-why-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Left column"
+    },
+    {
+      "type": "text",
+      "id": "section_label",
+      "label": "Section label",
+      "default": "Why it works"
+    },
+    {
+      "type": "textarea",
+      "id": "headline",
+      "label": "Headline",
+      "default": "Designed to engage olfactory pathways associated with autonomic activity."
+    },
+    {
+      "type": "header",
+      "content": "Right column"
+    },
+    {
+      "type": "textarea",
+      "id": "body_text",
+      "label": "Body text",
+      "default": "Each Cast formula begins with plant chemistry. A 16-hour herbal infusion extracts non-volatile botanical compounds before volatile plant molecules are layered in to activate receptors in the nasal cavity and send signals to brain regions connected to nervous system regulation. With consistent use, your nervous system responds more quickly over time."
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "default": "Learn more"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Headline & CTA color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Label & body text color",
+      "default": "#666666"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "range",
+      "id": "col_gap",
+      "label": "Column gap — Desktop",
+      "min": 24,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 56
+    }
+  ],
+  "presets": [
+    {
+      "name": "Formulation",
+      "settings": {
+        "section_label": "Why it works",
+        "headline": "Designed to engage olfactory pathways associated with autonomic activity.",
+        "body_text": "Each Cast formula begins with plant chemistry. A 16-hour herbal infusion extracts non-volatile botanical compounds before volatile plant molecules are layered in to activate receptors in the nasal cavity and send signals to brain regions connected to nervous system regulation. With consistent use, your nervous system responds more quickly over time.",
+        "cta_text": "Learn more",
+        "show_border_top": true
+      }
+    }
+  ]
+}
+{% endschema %}

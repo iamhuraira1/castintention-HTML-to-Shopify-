@@ -1,0 +1,362 @@
+{% comment %}
+  CAST — Journal Product Moment
+  File: sections/c-article-product-moment.liquid
+
+  Features:
+  - 2 col: left = product image, right = info
+  - Product picker — image, title, price, URL from Shopify
+  - Custom label, short description, CTA text — editable
+  - Price override option
+  - Light grey background — stands out from article body
+  - Mobile: stacked
+  - No JS
+
+  FIX (2026-08): border-top was 1.5px / rgba(0,0,0,0.14) — noticeably
+  heavier and darker than the border standard used everywhere else on
+  the site (homepage sections + Journals index both use
+  1px solid rgba(0,0,0,0.06-0.08)). Normalized to match.
+{% endcomment %}
+
+{% if section.settings.product != blank or section.settings.image != blank %}
+<section
+  class="c-article-product"
+  id="c-article-product-{{ section.id }}"
+>
+
+  {%- comment -%} Left: Image {%- endcomment -%}
+  <div class="c-article-product__image-col">
+    {% if section.settings.image != blank %}
+      <img
+        src="{{ section.settings.image | image_url: width: 800 }}"
+        alt="{{ section.settings.product_name | default: 'Product' | escape }}"
+        width="{{ section.settings.image.width }}"
+        height="{{ section.settings.image.height }}"
+        loading="lazy"
+        class="c-article-product__image"
+      >
+    {% elsif section.settings.product != blank and section.settings.product.featured_image != blank %}
+      <img
+        src="{{ section.settings.product.featured_image | image_url: width: 800 }}"
+        alt="{{ section.settings.product.title | escape }}"
+        width="{{ section.settings.product.featured_image.width }}"
+        height="{{ section.settings.product.featured_image.height }}"
+        loading="lazy"
+        class="c-article-product__image"
+      >
+    {% else %}
+      <div class="c-article-product__image-placeholder">
+        {{ 'product-1' | placeholder_svg_tag: 'c-article-product__placeholder-svg' }}
+      </div>
+    {% endif %}
+  </div>
+
+  {%- comment -%} Right: Content {%- endcomment -%}
+  <div class="c-article-product__content">
+
+    {% if section.settings.label != blank %}
+      <p class="c-article-product__label">{{ section.settings.label }}</p>
+    {% endif %}
+
+    {%- assign product_name = section.settings.product_name -%}
+    {%- if product_name == blank and section.settings.product != blank -%}
+      {%- assign product_name = section.settings.product.title -%}
+    {%- endif -%}
+    {% if product_name != blank %}
+      <p class="c-article-product__name">{{ product_name }}</p>
+    {% endif %}
+
+    {% if section.settings.short_description != blank %}
+      <p class="c-article-product__body">{{ section.settings.short_description }}</p>
+    {% endif %}
+
+  {%- assign price_text = section.settings.price_override -%}
+
+{%- if price_text == blank and section.settings.product != blank -%}
+  {%- assign price_text = section.settings.product.price | money -%}
+
+  {%- assign size_label = section.settings.product.metafields.cast.size_label.value -%}
+
+  {%- if size_label != blank -%}
+    {%- assign price_text = price_text | append: ' | ' | append: size_label -%}
+  {%- endif -%}
+{%- endif -%}
+    {% if price_text != blank %}
+      <p class="c-article-product__price">{{ price_text }}</p>
+    {% endif %}
+
+    {% if section.settings.cta_text != blank %}
+      {%- assign cta_url = section.settings.cta_link -%}
+      {%- if cta_url == blank and section.settings.product != blank -%}
+        {%- assign cta_url = section.settings.product.url -%}
+      {%- endif -%}
+      <a href="{{ cta_url | default: '#' }}" class="c-article-product__cta">
+        {{ section.settings.cta_text }}
+      </a>
+    {% endif %}
+
+  </div>
+
+</section>
+{% endif %}
+
+<style>
+  #c-article-product-{{ section.id }} {
+    --ap-bg:      {{ section.settings.bg_color }};
+    --ap-text:    {{ section.settings.text_color }};
+    --ap-muted:   {{ section.settings.muted_color }};
+    --ap-image-bg:{{ section.settings.image_bg_color }};
+    --ap-btn-bg:  {{ section.settings.btn_bg_color }};
+    --ap-btn-text:{{ section.settings.btn_text_color }};
+  }
+
+ .c-article-product {
+  background: var(--ap-bg);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 420px;
+  font-family: 'Work Sans', sans-serif;
+}
+
+  /* Image col */
+  .c-article-product__image-col {
+    background: var(--ap-image-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 48px;
+  }
+
+.c-article-product__image {
+  width: auto;
+  max-width: 380px;
+  max-height: 500px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+.c-article-product__image-col {
+  background: var(--ap-image-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 60px;
+}
+
+  .c-article-product__image-placeholder {
+    width: 60%;
+    opacity: 0.3;
+  }
+
+  .c-article-product__placeholder-svg {
+    width: 100%;
+    height: auto;
+  }
+
+  /* Content col */
+  .c-article-product__content {
+  padding: 80px;
+  max-width: 520px;
+  justify-content: center;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .c-article-product__label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ap-muted);
+    margin-bottom: 0px;
+    font-weight: 300;
+  }
+
+  .c-article-product__name {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ap-text);
+    font-weight: 300;
+    margin: 9px 0;
+  }
+
+  .c-article-product__body {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--ap-muted);
+    font-weight: 300;
+    margin-bottom: 0px;
+    margin-top: 0px;
+  }
+
+  .c-article-product__price {
+    font-size: 13px;
+    color: var(--ap-muted);
+    font-weight: 300;
+    margin-bottom: 36px;
+  }
+
+  .c-article-product__cta {
+    display: inline-block;
+    padding: 16px 40px;
+    background: var(--ap-btn-bg);
+    color: var(--ap-btn-text);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: opacity 0.2s;
+    width: fit-content;
+    border: none;
+  }
+
+  .c-article-product__cta:hover { opacity: 0.85; }
+
+  /* Mobile */
+  @media screen and (max-width: 640px) {
+    .c-article-product {
+      grid-template-columns: 1fr;
+      min-height: unset;
+    }
+
+    .c-article-product__image-col {
+      padding: 40px 24px;
+      min-height: 300px;
+    }
+
+    .c-article-product__content {
+      padding: 40px 24px 56px;
+    }
+
+    .c-article-product__cta {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Article Product Moment",
+  "tag": "section",
+  "class": "c-article-product-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Product"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Featured product"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Custom image",
+      "info": "Overrides product image if set."
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "label",
+      "label": "Label",
+      "default": "Featured in this journal"
+    },
+    {
+      "type": "text",
+      "id": "product_name",
+      "label": "Product name override",
+      "info": "Leave blank to use product title."
+    },
+    {
+      "type": "textarea",
+      "id": "short_description",
+      "label": "Short description",
+      "default": "Formulated for nightly use. Supports your nervous system's shift into rest through olfactory-limbic pathways connected to nervous system activity."
+    },
+    {
+      "type": "text",
+      "id": "price_override",
+      "label": "Price (manual)",
+      "info": "Leave blank to use product price."
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Size label",
+      "info": "Shown with product price e.g. '100mL / 3.4 fl oz'"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "default": "Shop now"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link",
+      "info": "Leave blank to use product URL."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Section background",
+      "default": "#EEEBE6"
+    },
+    {
+      "type": "color",
+      "id": "image_bg_color",
+      "label": "Image area background",
+      "default": "#E2DDD1"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted / label color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg_color",
+      "label": "Button background",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "color",
+      "id": "btn_text_color",
+      "label": "Button text",
+      "default": "#F9F8F6"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Article Product Moment",
+      "settings": {
+        "label": "Featured in this journal",
+        "short_description": "Formulated for nightly use. Supports your nervous system's shift into rest through olfactory-limbic pathways connected to nervous system activity.",
+        "cta_text": "Shop now"
+      }
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,216 @@
+{% comment %}
+  CAST — Collection Page Header
+  File: sections/c-collection-header.liquid
+
+  Features:
+  - Collection title from Shopify (collection.title)
+  - Product count from Shopify (collection.products_count)
+  - Label with line — editable
+  - Colors, padding customizable
+  - No JS needed
+{% endcomment %}
+
+<div
+  class="c-col-header"
+  id="c-col-header-{{ section.id }}"
+>
+  <div class="c-col-header__left">
+
+    {% if section.settings.page_label != blank %}
+      <p class="c-col-header__label">{{ section.settings.page_label }}</p>
+    {% endif %}
+
+    <h1 class="c-col-header__headline">
+      {{ collection.title | default: 'The Collection' }}
+    </h1>
+
+  </div>
+
+  <p class="c-col-header__count">
+    {{ collection.products_count }}
+    {% if collection.products_count == 1 %}product{% else %}products{% endif %}
+  </p>
+
+</div>
+
+<style>
+  #c-col-header-{{ section.id }} {
+    --ch-bg:              {{ section.settings.bg_color }};
+    --ch-text:            {{ section.settings.text_color }};
+    --ch-muted:           {{ section.settings.muted_color }};
+    --ch-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --ch-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --ch-padding-mobile:  {{ section.settings.padding_mobile }}px;
+  }
+
+  .c-col-header {
+    padding: 0px 48px 48px 80px;
+    background: var(--ch-bg);
+    border-bottom: 1.5px solid rgba(0,0,0,0.1);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-col-header__left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top:5%;
+  }
+
+  .c-col-header__label {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ch-muted);
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin:0;
+  }
+
+  .c-col-header__label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--ch-muted);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  .c-col-header__headline {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 300;
+    color: var(--ch-text);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    font-family: 'Work Sans', sans-serif;
+    margin:0;
+  }
+
+  .c-col-header__count {
+    font-size: 11px;
+    color: var(--ch-muted);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    align-self: flex-end;
+  margin:0;
+  }
+
+  @media screen and (max-width: 900px) {
+    .c-col-header {
+      padding: 0px 32px 24px 24px;
+    }
+  }
+
+  @media screen and (max-width: 640px) {
+    .c-col-header {
+      padding: 0px 32px 24px 24px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .c-col-header__left {
+    margin-top: 10%;
+}
+
+    .c-col-header__count {
+      align-self: flex-start;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Collection Header",
+  "tag": "div",
+  "class": "c-col-header-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "text",
+      "id": "page_label",
+      "label": "Label",
+      "default": "Shop",
+      "info": "Small label above collection title"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Headline color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Label & count color",
+      "default": "#666666"
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top — Desktop",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top — Tablet",
+      "min": 32,
+      "max": 96,
+      "step": 8,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top — Mobile",
+      "min": 24,
+      "max": 80,
+      "step": 8,
+      "unit": "px",
+      "default": 40
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection Header",
+      "settings": {
+        "page_label": "Shop"
+      }
+    }
+  ]
+}
+{% endschema %}

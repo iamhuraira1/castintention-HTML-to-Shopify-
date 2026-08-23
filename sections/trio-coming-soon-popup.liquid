@@ -1,0 +1,661 @@
+{% comment %}
+  CAST — The Trio Coming Soon Popup
+  Klaviyo-connected, 3-second delay, cookie-based dismiss logic
+
+  HOW TO INSTALL:
+  1. Shopify Admin → Online Store → Themes → Edit code
+  2. Sections folder → Add a new section → name it "trio-coming-soon-popup"
+  3. Paste this whole file in
+  4. Open theme.liquid, right before </body> add:
+     {% section 'trio-coming-soon-popup' %}
+  5. In Theme Customizer, find this section and paste your Klaviyo List ID
+     into the "Klaviyo List ID" setting (or hardcode it below where marked)
+
+  FIX (2026-08 #1): the popup dropped to a single stacked column at
+  anything ≤640px, which meant mid-width devices (e.g. Surface Duo,
+  540px) got the stacked mobile layout instead of the side-by-side
+  layout used on the live site. Nicole asked for "side by side, the
+  same way it is on the website" at these widths too.
+
+  Now there are three tiers:
+   - Desktop (≥768px): full 2-column layout, original sizing.
+   - Compact 2-column (481–767px): still 2-column/side-by-side, just
+     smaller padding + image sizing so it isn't cramped. Covers
+     Surface Duo and similar in-between widths.
+   - Stacked mobile (≤480px): true phone widths only — image on top,
+     form below. This is the only tier that stacks now.
+
+  FIX (2026-08 #2): in the compact 2-column tier, the image panel
+  (.ctp-image) stretches to match the form column's height (CSS Grid
+  default row-stretch behavior) — and at this narrower width the
+  form text wraps more, so the panel got taller. The headline copy
+  was pinned at top:35% and the bottle image was pinned to bottom:0,
+  independently of each other, so as the panel grew taller the gap
+  between them grew too — that's what pushed the bottle image down.
+  Fixed by switching that tier to a centered flex column so the
+  headline + bottle image move together as one group regardless of
+  how tall the panel stretches. Also added a smaller headline size
+  for this tier (clamp 18-24px vs desktop's 22-30px) so the copy is
+  proportional to the narrower panel.
+
+  FIX (2026-08 #3): on true mobile (≤480px), the form panel had
+  `padding: 0 25px` (zero top/bottom padding) and the subhead/body/
+  input-label all had `margin-bottom: 0` — so "COMING SOON" sat
+  jammed against the image panel above it with no breathing room,
+  and the card copy bunched together with no gaps. Restored
+  reasonable (smaller-than-desktop, non-zero) padding and spacing.
+{% endcomment %}
+
+{%- assign klaviyo_list_id = section.settings.klaviyo_list_id -%}
+{%- assign popup_delay_seconds = section.settings.popup_delay | default: 3 -%}
+{%- assign cookie_days = section.settings.cookie_days | default: 7 -%}
+{%- assign custom_image = section.settings.popup_image -%}
+
+<style>
+  #cast-trio-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+    font-family: 'Work Sans', sans-serif;
+  }
+  #cast-trio-popup-overlay.is-visible { display: flex; }
+
+  #cast-trio-popup-overlay * { box-sizing: border-box; }
+
+  .ctp-popup {
+    display: grid;
+    grid-template-columns: 0.82fr 1fr;
+    width: 100%;
+    max-width: 860px;
+    max-height: 90vh;
+    background: #F9F8F6;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ctp-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    opacity: 0.45;
+    transition: opacity 0.2s;
+    padding: 0;
+  }
+  .ctp-close:hover { opacity: 1; }
+  .ctp-close svg { width: 16px; height: 16px; stroke: #1a1a1a; stroke-width: 1.5; fill: none; }
+
+  /* IMAGE PANEL */
+  .ctp-image {
+    position: relative;
+    min-height: 520px;
+    background: #05102A;
+    overflow: hidden;
+  }
+  .ctp-image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1208 0%, #2a1a08 35%, #0d1a2e 70%, #05102a 100%);
+  }
+  .ctp-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 60% 40%, rgba(139,82,19,0.42) 0%, transparent 58%),
+      radial-gradient(ellipse at 30% 75%, rgba(11,31,76,0.5) 0%, transparent 52%);
+    animation: ctp-bgshift 8s ease-in-out infinite alternate;
+  }
+  @keyframes ctp-bgshift {
+    from { opacity: 0.8; transform: scale(1); }
+    to   { opacity: 1; transform: scale(1.04); }
+  }
+
+  .ctp-product-image-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 40px;
+    z-index: 2;
+    max-height: 65%;
+  }
+
+  .ctp-product-image {
+    max-width: 70%;
+    max-height: 280px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+  }
+  .ctp-bottles {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px;
+    padding-bottom: 96px;
+    z-index: 2;
+  }
+  .ctp-bottle { display: flex; flex-direction: column; align-items: center; }
+  .ctp-bottle:nth-child(2) { transform: translateY(-24px); }
+  .ctp-bottle-cap { width: 18px; height: 34px; background: rgba(255,255,255,0.15); border-radius: 2px 2px 0 0; }
+  .ctp-bottle-body { width: 46px; height: 96px; background: linear-gradient(160deg, rgba(139,82,19,0.7) 0%, rgba(92,46,0,0.8) 60%, rgba(139,82,19,0.7) 100%); border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+  .ctp-bottle-label { width: 32px; background: rgba(249,248,246,0.9); padding: 5px 3px; text-align: center; }
+  .ctp-bottle-label span { font-family: 'Work Sans', sans-serif; font-size: 4px; letter-spacing: 0.1em; text-transform: uppercase; color: #000; display: block; line-height: 1.6; }
+
+  .ctp-image-copy { position: absolute; top: 35%; left: 24px; right: 24px; z-index: 3; text-align: center; transform: translateY(-50%); }
+  .ctp-image-headline {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: clamp(22px, 2.8vw, 30px);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.35;
+    color: rgba(249,248,246,0.6);
+    letter-spacing: -0.01em;
+    text-align: center;
+    margin: 0;
+  }
+
+  /* FORM PANEL */
+  .ctp-form {
+    padding: 52px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+  }
+
+  .ctp-form-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #666666;
+    font-weight: 300;
+    margin-bottom: 12px;
+  }
+
+  .ctp-form-headline {
+    font-family: 'Work Sans', sans-serif;
+    font-size: clamp(28px, 3.5vw, 40px);
+    font-weight: 300;
+    line-height: 1.05;
+    color: #000000;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .ctp-form-subhead {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    font-weight: 300;
+    font-style: italic;
+    color: #666666;
+    margin-bottom: 32px;
+  }
+
+  .ctp-form-body {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #666666;
+    font-weight: 300;
+    margin-bottom: 24px;
+  }
+
+  .ctp-privacy {
+    font-size: 9px;
+    color: rgba(0,0,0,0.3);
+    font-weight: 300;
+    line-height: 1.8;
+    margin-bottom: 20px;
+    letter-spacing: 0.01em;
+  }
+  .ctp-privacy a { color: rgba(0,0,0,0.45); text-decoration: underline; }
+
+  .ctp-input-label {
+    width: 100%;
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #666666;
+    font-weight: 300;
+    margin-bottom: 8px;
+  }
+
+  .ctp-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,0.18);
+    font-family: 'Work Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: #1a1a1a;
+    padding: 10px 0;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 12px;
+  }
+  .ctp-input,
+  .ctp-input:focus,
+  .ctp-input:focus-visible,
+  .ctp-input:-webkit-autofill,
+  .ctp-input:-webkit-autofill:hover,
+  .ctp-input:-webkit-autofill:focus {
+    box-shadow: none !important;
+    -webkit-box-shadow: 0 0 0 1000px #F9F8F6 inset !important;
+    -webkit-text-fill-color: #1a1a1a !important;
+    outline: none !important;
+  }
+  .ctp-input:focus { border-bottom-color: #0B1F4C; }
+
+  .ctp-cta {
+    width: 100%;
+    background: #0B1F4C;
+    color: #F9F8F6;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: none;
+    padding: 16px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .ctp-cta:hover { opacity: 0.85; }
+  .ctp-cta:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .ctp-message {
+    font-size: 12px;
+    margin-top: 12px;
+    min-height: 16px;
+    font-family: 'Work Sans', sans-serif;
+  }
+  .ctp-message.success { color: #0B1F4C; }
+  .ctp-message.error { color: #b3261e; }
+
+  #ctp-form { width: 100%; }
+
+  /* ── COMPACT 2-COLUMN — tablets & foldables (e.g. Surface Duo) ──
+     Nicole asked for the popup to stay side by side, the same way
+     it is on the live site, rather than stacking at these
+     in-between widths. Same grid as desktop, lighter padding.
+
+     .ctp-image is switched to a centered flex column here so the
+     headline copy and the bottle image move together as one group
+     — see FIX #2 note at the top of the file for why. */
+  @media screen and (min-width: 481px) and (max-width: 767px) {
+    .ctp-popup {
+      grid-template-columns: 0.85fr 1fr;
+    }
+    .ctp-image {
+      min-height: 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 32px 16px;
+    }
+    .ctp-image-copy {
+      position: relative;
+      top: auto;
+      left: auto;
+      right: auto;
+      transform: none;
+      z-index: 3;
+    }
+    .ctp-product-image-wrap {
+      position: relative;
+      bottom: auto;
+      left: auto;
+      right: auto;
+      padding-bottom: 0;
+      max-height: none;
+      z-index: 2;
+    }
+    .ctp-bottles {
+      position: relative;
+      bottom: auto;
+      left: auto;
+      right: auto;
+      padding-bottom: 0;
+    }
+    .ctp-product-image {
+      max-width: 80%;
+      max-height: 180px;
+    }
+    .ctp-image-headline {
+      font-size: clamp(18px, 3.4vw, 24px);
+    }
+    .ctp-form {
+      padding: 28px 24px;
+    }
+    .ctp-form-headline {
+      font-size: clamp(24px, 5vw, 30px);
+    }
+    .ctp-form-body {
+      margin-bottom: 16px;
+    }
+  }
+
+  /* ── STACKED MOBILE — true phone widths only ──
+     FIX #3: padding was 0 top/bottom and subhead/body/input-label
+     margins were all zeroed, so the card copy sat jammed against
+     the image panel above with no breathing room between lines.
+     Restored non-zero (but still compact) spacing. */
+  @media screen and (max-width: 480px) {
+    .ctp-popup {
+      grid-template-columns: 1fr;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .ctp-image {
+      min-height: auto;
+      height: 150px;
+      display: flex;
+      padding: 5px 20px 0;
+      align-items:center;
+    }
+
+    .ctp-image-copy {
+      position: relative;
+      top: auto;
+      left: auto;
+      right: auto;
+      transform: none;
+    }
+
+    .ctp-product-image-wrap {
+      position: relative;
+      bottom: auto;
+      left: auto;
+      right: auto;
+      padding: 0;
+      max-height: none;
+    }
+
+    .ctp-product-image {
+      display: block;
+      max-width: 180px;
+      max-height: 180px;
+      margin: 0 auto;
+    }
+
+    .ctp-close {
+      top: 5px;
+      right: 5px;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      background: rgba(255,255,255,.85);
+      border-radius: 50%;
+    }
+
+    .ctp-close svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .ctp-form {
+      padding: 32px 24px 40px;
+    }
+
+    .ctp-form-subhead {
+      margin-bottom: 20px;
+    }
+
+    .ctp-form-body {
+      margin-bottom: 16px;
+    }
+
+    .ctp-input-label {
+      margin-bottom: 8px;
+    }
+  }
+</style>
+{% comment %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Spectral:ital,wght@0,300;1,300&display=swap" rel="stylesheet"> {% endcomment %}
+
+<div id="cast-trio-popup-overlay">
+  <template id="ctp-template">
+  <div class="ctp-popup" role="dialog" aria-modal="true" aria-label="The Trio — Coming Soon">
+
+    <button class="ctp-close" id="ctp-close-btn" aria-label="Close">
+      <svg viewBox="0 0 24 24">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <div class="ctp-image">
+      <div class="ctp-image-copy">
+        <h2 class="ctp-image-headline">Three sprays.<br>One complete system.</h2>
+      </div>
+     {%- if custom_image -%}
+  <div class="ctp-product-image-wrap">
+    <img
+      class="ctp-product-image"
+      src="{{ custom_image | image_url: width: 700 }}"
+      srcset="{{ custom_image | image_url: width: 350 }} 350w, {{ custom_image | image_url: width: 700 }} 700w, {{ custom_image | image_url: width: 1000 }} 1000w"
+      sizes="(max-width: 640px) 80vw, 360px"
+      alt="{{ custom_image.alt | default: 'The Trio' | escape }}"
+      width="{{ custom_image.width }}"
+      height="{{ custom_image.height }}"
+    >
+  </div>
+{%- else -%}
+      <div class="ctp-bottles">
+        <div class="ctp-bottle">
+          <div class="ctp-bottle-cap"></div>
+          <div class="ctp-bottle-body"><div class="ctp-bottle-label"><span>CAST</span><span>Sleep</span></div></div>
+        </div>
+        <div class="ctp-bottle">
+          <div class="ctp-bottle-cap"></div>
+          <div class="ctp-bottle-body"><div class="ctp-bottle-label"><span>CAST</span><span>Calm</span></div></div>
+        </div>
+        <div class="ctp-bottle">
+          <div class="ctp-bottle-cap"></div>
+          <div class="ctp-bottle-body"><div class="ctp-bottle-label"><span>CAST</span><span>Clarity</span></div></div>
+        </div>
+      </div>
+      {%- endif -%}
+    </div>
+
+    <div class="ctp-form">
+      <p class="ctp-form-eyebrow">Coming Soon</p>
+      <h3 class="ctp-form-headline">The Trio</h3>
+      <p class="ctp-form-subhead">Room &amp; Linen Sprays</p>
+      <p class="ctp-form-body">Sign up for our emails below to be the first to shop The Trio.</p>
+      <p class="ctp-privacy">By submitting this form you are consenting to receive product updates and marketing emails. You can unsubscribe any time by emailing <a href="mailto:hello@castintention.com">hello@castintention.com</a> or clicking the link at the bottom of our emails. Please read our <a href="/pages/privacy-policy">Privacy Policy</a> for more information on how we use your information.</p>
+
+      <form id="ctp-form" novalidate>
+        <label class="ctp-input-label" for="ctp-email">Email Address</label>
+        <input class="ctp-input" id="ctp-email" name="email" type="email" required>
+        <button class="ctp-cta" type="submit" id="ctp-submit-btn">Notify Me</button>
+        <p class="ctp-message" id="ctp-message" role="status"></p>
+      </form>
+    </div>
+
+  </div>
+  </template>
+</div>
+
+<script>
+(function() {
+  var KLAVIYO_LIST_ID = {{ klaviyo_list_id | json }}; // pulled from section settings
+  var POPUP_DELAY_MS = {{ popup_delay_seconds | times: 1000 }};
+  var COOKIE_DAYS = {{ cookie_days }};
+  var COOKIE_NAME = 'cast_trio_popup_dismissed';
+
+  function getCookie(name) {
+    var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : null;
+  }
+
+  function setCookie(name, value, days) {
+    var expires = new Date();
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+  }
+
+function showPopup() {
+    var overlay = document.getElementById('cast-trio-popup-overlay');
+    var template = document.getElementById('ctp-template');
+    if (template) {
+      overlay.appendChild(template.content.cloneNode(true));
+      template.remove();
+      bindPopupEvents();
+    }
+    overlay.classList.add('is-visible');
+  }
+
+  function bindPopupEvents() {
+    var overlay = document.getElementById('cast-trio-popup-overlay');
+    var closeBtn = document.getElementById('ctp-close-btn');
+    var form = document.getElementById('ctp-form');
+    var submitBtn = document.getElementById('ctp-submit-btn');
+    var messageEl = document.getElementById('ctp-message');
+    var emailInput = document.getElementById('ctp-email');
+
+    closeBtn.addEventListener('click', closeAndRemember);
+
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeAndRemember();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && overlay.classList.contains('is-visible')) closeAndRemember();
+    });
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var email = emailInput.value.trim();
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        messageEl.textContent = 'Please enter a valid email address.';
+        messageEl.className = 'ctp-message error';
+        return;
+      }
+
+      if (!KLAVIYO_LIST_ID) {
+        messageEl.textContent = 'Signup is not configured yet.';
+        messageEl.className = 'ctp-message error';
+        console.warn('CAST Trio Popup: Klaviyo List ID is missing in section settings.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+
+      var formData = new FormData();
+      formData.append('g', KLAVIYO_LIST_ID);
+      formData.append('email', email);
+
+      fetch('https://manage.kmail-lists.com/ajax/subscriptions/subscribe', {
+        method: 'POST',
+        body: formData
+      })
+      .then(function() {
+        messageEl.textContent = "Thanks — you're on the list!";
+        messageEl.className = 'ctp-message success';
+        setCookie(COOKIE_NAME, '1', COOKIE_DAYS);
+        setTimeout(hidePopup, 1800);
+      })
+      .catch(function(err) {
+        console.error('Klaviyo subscribe error:', err);
+        messageEl.textContent = 'Something went wrong. Please try again.';
+        messageEl.className = 'ctp-message error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Notify Me';
+      });
+    });
+  }
+
+  function hidePopup() {
+    var overlay = document.getElementById('cast-trio-popup-overlay');
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.3s ease';
+    setTimeout(function() {
+      overlay.classList.remove('is-visible');
+      overlay.style.opacity = '';
+      overlay.style.transition = '';
+    }, 300);
+  }
+
+  function closeAndRemember() {
+    setCookie(COOKIE_NAME, '1', COOKIE_DAYS);
+    hidePopup();
+  }
+
+// Show only on homepage and only if not dismissed
+if (
+  window.location.pathname === '/' &&
+  !getCookie(COOKIE_NAME)
+) {
+  setTimeout(showPopup, POPUP_DELAY_MS);
+}
+
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Trio Coming Soon Popup",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "popup_image",
+      "label": "Product image (left panel)",
+      "info": "Upload a real product photo here. If left empty, the default illustrated bottles design will show instead."
+    },
+    {
+      "type": "text",
+      "id": "klaviyo_list_id",
+      "label": "Klaviyo List ID",
+      "info": "Found in Klaviyo: Lists & Segments → open your list → check the URL or List Settings."
+    },
+    {
+      "type": "number",
+      "id": "popup_delay",
+      "label": "Delay before showing (seconds)",
+      "default": 3
+    },
+    {
+      "type": "number",
+      "id": "cookie_days",
+      "label": "Days before showing again after close/submit",
+      "default": 7
+    }
+  ]
+}
+{% endschema %}

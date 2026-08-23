@@ -1,0 +1,684 @@
+{% comment %}
+  CAST — Footer
+  File: sections/c-footer.liquid
+
+  Features:
+  - 4 column layout: Brand, Nav menu, Legal menu, Newsletter
+  - Nav + Legal menus pulled from Shopify Admin > Navigation (linklists)
+  - Newsletter: Shopify native email signup form (no app needed)
+  - Social links: editable via blocks (add/remove/reorder)
+  - Copyright text editable, year auto-updates
+  - Brand name + tagline editable
+  - Colors fully customizable
+  - Mobile: stacks to single column
+  - Accessible: semantic footer, nav landmarks
+  - Performance: no JS, no external dependencies
+{% endcomment %}
+
+<footer
+  class="c-footer"
+  id="c-footer-{{ section.id }}"
+  role="contentinfo"
+>
+
+  <div class="c-footer__top">
+
+    {%- comment -%} ── Col 1: Brand ── {%- endcomment -%}
+    <div class="c-footer__brand-col">
+      <a href="{{ routes.root_url }}" class="c-footer__brand-name" aria-label="{{ shop.name }} — Home">
+        {{ section.settings.brand_name | default: shop.name }}
+      </a>
+      {% if section.settings.tagline != blank %}
+        <p class="c-footer__tagline">{{ section.settings.tagline }}</p>
+      {% endif %}
+    </div>
+
+    {%- comment -%} ── Col 2: Navigate menu ── {%- endcomment -%}
+    {% assign nav_menu = linklists[section.settings.nav_menu_handle] %}
+    {% if nav_menu != blank and nav_menu.links.size > 0 %}
+      <div class="c-footer__col">
+        {% if section.settings.nav_menu_title != blank %}
+          <p class="c-footer__col-title">{{ section.settings.nav_menu_title }}</p>
+        {% endif %}
+        <ul class="c-footer__links" role="list">
+         {% for link in nav_menu.links %}
+  <li>
+    <a
+      href="{{ link.url }}"
+      class="c-footer__link"
+      {% if link.url contains 'substack.com' %}
+        target="_blank"
+        rel="noopener noreferrer"
+      {% endif %}
+    >
+      {{ link.title }}
+    </a>
+  </li>
+{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {%- comment -%} ── Col 3: Legal menu ── {%- endcomment -%}
+    {% assign legal_menu = linklists[section.settings.legal_menu_handle] %}
+    {% if legal_menu != blank and legal_menu.links.size > 0 %}
+      <div class="c-footer__col">
+        {% if section.settings.legal_menu_title != blank %}
+          <p class="c-footer__col-title">{{ section.settings.legal_menu_title }}</p>
+        {% endif %}
+        <ul class="c-footer__links" role="list">
+          {% for link in legal_menu.links %}
+            <li>
+              <a href="{{ link.url }}" class="c-footer__link">{{ link.title }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+{% assign legal_menu2 = linklists[section.settings.legal_menu2_handle] %}
+
+{% if legal_menu2 != blank and legal_menu2.links.size > 0 %}
+  <div class="c-footer__col">
+    {% if section.settings.legal_menu2_title != blank %}
+      <p class="c-footer__col-title">
+        {{ section.settings.legal_menu2_title }}
+      </p>
+    {% endif %}
+
+    <ul class="c-footer__links" role="list">
+      {% for link in legal_menu2.links %}
+        <li>
+          <a href="{{ link.url }}" class="c-footer__link">
+            {{ link.title }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+    {%- comment -%} ── Col 4: Newsletter ── {%- endcomment -%}
+    {% if section.settings.show_newsletter %}
+      <div class="c-footer__newsletter-col">
+        {% if section.settings.newsletter_title != blank %}
+          <p class="c-footer__col-title">{{ section.settings.newsletter_title }}</p>
+        {% endif %}
+
+        {% form 'customer', class: 'c-footer__newsletter-form' %}
+          <input type="hidden" name="contact[tags]" value="newsletter">
+          <div class="c-footer__newsletter-row">
+            <input
+              type="email"
+              name="contact[email]"
+              class="c-footer__newsletter-input"
+              placeholder="{{ section.settings.newsletter_placeholder | default: 'Email address' }}"
+              required
+              autocomplete="email"
+              aria-label="Email address"
+            >
+            <button
+              type="submit"
+              class="c-footer__newsletter-btn"
+              aria-label="Subscribe to newsletter"
+            >
+              {{ section.settings.newsletter_btn_text | default: 'Subscribe' }}
+            </button>
+          </div>
+
+          {% if form.posted_successfully? %}
+            <p class="c-footer__newsletter-success">
+              {{ section.settings.newsletter_success | default: 'Thank you for subscribing.' }}
+            </p>
+          {% endif %}
+
+          {% if form.errors %}
+            <p class="c-footer__newsletter-error">
+              {{ form.errors.translated_fields['email'] | capitalize }}
+              {{ form.errors.messages['email'] }}
+            </p>
+          {% endif %}
+        {% endform %}
+      </div>
+    {% endif %}
+
+  </div>
+{% if section.settings.show_disclaimer and section.settings.disclaimer_text != blank %}
+  <div class="c-footer__disclaimer">
+    {{ section.settings.disclaimer_text }}
+  </div>
+{% endif %}
+  {%- comment -%} ── Bottom bar ── {%- endcomment -%}
+  <div class="c-footer__bottom">
+
+    <p class="c-footer__copy">
+      {% if section.settings.copyright_text != blank %}
+        {% assign current_year = 'now' | date: '%Y' %}
+        {{ section.settings.copyright_text | replace: 'YEAR', current_year }}
+      {% else %}
+        &copy; {{ 'now' | date: '%Y' }} {{ shop.name }}. All rights reserved.
+      {% endif %}
+    </p>
+
+    {%- comment -%} Social links from blocks {%- endcomment -%}
+    {% assign social_blocks = section.blocks | where: 'type', 'social_link' %}
+    {% if social_blocks.size > 0 %}
+      <div class="c-footer__social" role="list" aria-label="Social media links">
+        {% for block in social_blocks %}
+          {% if block.settings.label != blank and block.settings.url != blank %}
+            <a
+              href="{{ block.settings.url }}"
+              class="c-footer__social-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="{{ block.settings.label }} — opens in new tab"
+              role="listitem"
+              {{ block.shopify_attributes }}
+            >
+              {{ block.settings.label }}
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  </div>
+
+</footer>
+
+<style>
+  #c-footer-{{ section.id }} {
+    --footer-bg:            {{ section.settings.bg_color }};
+    --footer-brand-color:   {{ section.settings.brand_color }};
+    --footer-tagline-color: {{ section.settings.tagline_color }};
+    --footer-col-title:     {{ section.settings.col_title_color }};
+    --footer-link-color:    {{ section.settings.link_color }};
+    --footer-link-hover:    {{ section.settings.link_hover_color }};
+    --footer-copy-color:    {{ section.settings.copy_color }};
+    --footer-input-bg:      {{ section.settings.input_bg_color }};
+    --footer-btn-bg:        {{ section.settings.btn_bg_color }};
+    --footer-divider:       rgba(255,255,255,0.07);
+    --footer-padding-top:   {{ section.settings.padding_top }}px;
+    --footer-padding-bot:   {{ section.settings.padding_bottom }}px;
+  }
+
+  /* ── Footer wrapper ── */
+  .c-footer {
+    background: var(--footer-bg);
+    padding: var(--footer-padding-top) 80px var(--footer-padding-bot);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+  }
+
+  /* ── Top grid ── */
+  .c-footer__top {
+    display: grid;
+     grid-template-columns:1.5fr 1fr 1fr 1fr 1.5fr;
+    gap: 60px;
+    margin-bottom: 80px;
+  }
+
+  /* ── Brand col ── */
+  .c-footer__brand-name {
+    display: block;
+    font-size: 18px;
+    letter-spacing: 0.25em;
+    color: var(--footer-brand-color);
+    font-weight: 300;
+    margin-bottom: 16px;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .c-footer__brand-name:hover { opacity: 0.7; }
+
+  .c-footer__tagline {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 12px;
+    line-height: 1.6;
+    color: rgba(249,248,246,0.38);
+    font-weight: 300;
+    max-width: 200px;
+  }
+
+  /* ── Link columns ── */
+  .c-footer__col-title {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(249,248,246,0.52);
+    margin-bottom: 20px;
+    font-weight: 300;
+  }
+
+  .c-footer__links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding:0;
+  }
+
+  .c-footer__link {
+    font-size: 13px;
+    color: rgba(249,248,246,0.52);
+    text-decoration: none;
+    font-weight: 300;
+    transition: color 0.2s ease;
+  }
+
+  .c-footer__link:hover { color: var(--footer-link-hover); }
+
+  /* ── Newsletter ── */
+  .c-footer__newsletter-row {
+    display: flex;
+    margin-top: 4px;
+  }
+
+  .c-footer__newsletter-input {
+    flex: 1;
+    background: var(--footer-input-bg);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-right: none;
+    color: #F9F8F6;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 12px;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+
+  .c-footer__newsletter-input::placeholder { color: rgba(249,248,246,0.28); }
+  .c-footer__newsletter-input:focus { border-color: rgba(255,255,255,0.3); }
+/* Chrome Autofill Fix */
+.c-footer__newsletter-input:-webkit-autofill,
+.c-footer__newsletter-input:-webkit-autofill:hover,
+.c-footer__newsletter-input:-webkit-autofill:focus,
+.c-footer__newsletter-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #F9F8F6 !important;
+  -webkit-box-shadow: 0 0 0 1000px #0d1a30 inset !important;
+  box-shadow: 0 0 0 1000px #0d1a30 inset !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Remove focus glow */
+.c-footer__newsletter-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+  .c-footer__newsletter-btn {
+    background: var(--footer-btn-bg);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #F9F8F6;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+    border-radius: 0;
+  }
+
+  .c-footer__newsletter-btn:hover { background: #0e2860; }
+
+  .c-footer__newsletter-success {
+    font-size: 11px;
+    color: rgba(249,248,246,0.55);
+    margin-top: 10px;
+    font-weight: 300;
+  }
+
+  .c-footer__newsletter-error {
+    font-size: 11px;
+    color: rgba(255,100,100,0.8);
+    margin-top: 10px;
+    font-weight: 300;
+  }
+
+  /* ── Bottom bar ── */
+  .c-footer__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 40px;
+    border-top: 1px solid var(--footer-divider);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .c-footer__copy {
+    font-size: 11px;
+    color: var(--footer-copy-color);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+  }
+
+  .c-footer__social {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .c-footer__social-link {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color:rgba(249,248,246,0.32);
+    text-decoration: none;
+    font-weight: 300;
+    transition: color 0.2s ease;
+  }
+
+  .c-footer__social-link:hover { color: var(--footer-link-hover); }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 900px) {
+    .c-footer {
+      padding-left: 48px;
+      padding-right: 48px;
+    }
+
+    .c-footer__top {
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+
+    .c-footer__brand-col {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 640px) {
+    .c-footer {
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+
+    .c-footer__top {
+      grid-template-columns: 1fr;
+      gap: 40px;
+      margin-bottom: 48px;
+    }
+
+    .c-footer__brand-col {
+      grid-column: auto;
+    }
+
+    .c-footer__bottom {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .c-footer__social {
+      gap: 16px;
+    }
+  }
+  .c-footer__disclaimer{
+  max-width: 50%;
+  margin: 0 auto 60px;
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 12px;
+ color: rgba(249, 248, 246, 0.28);
+  line-height: 1.6;
+  text-align: center;
+  font-weight: 300;
+}
+</style>
+
+{% schema %}
+{
+  "name": "Footer",
+  "tag": "footer",
+  "class": "c-footer-wrapper",
+  "limit": 1,
+  "blocks": [
+    {
+      "type": "social_link",
+      "name": "Social link",
+      "limit": 8,
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Platform name",
+          "default": "Instagram",
+          "info": "e.g. Instagram, TikTok, Spotify"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Profile URL"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Brand"
+    },
+    {
+      "type": "text",
+      "id": "brand_name",
+      "label": "Brand name",
+      "default": "CAST",
+      "info": "Displayed in footer. Leave blank to use shop name."
+    },
+    {
+      "type": "textarea",
+      "id": "tagline",
+      "label": "Tagline",
+      "default": "Physiological wellness tools for sleep, calm, and clarity."
+    },
+    {
+      "type": "header",
+      "content": "Navigate menu"
+    },
+    {
+      "type": "text",
+      "id": "nav_menu_title",
+      "label": "Column title",
+      "default": "Navigate"
+    },
+    {
+      "type": "link_list",
+      "id": "nav_menu_handle",
+      "label": "Navigate menu",
+      "default": "footer",
+      "info": "Create this menu in Shopify Admin > Navigation"
+    },
+    {
+      "type": "header",
+      "content": "Legal menu"
+    },
+    {
+      "type": "text",
+      "id": "legal_menu_title",
+      "label": "Column title",
+      "default": "Legal"
+    },
+    {
+      "type": "link_list",
+      "id": "legal_menu_handle",
+      "label": "Legal menu",
+      "default": "footer",
+      "info": "Create this menu in Shopify Admin > Navigation"
+    },
+    {
+  "type": "header",
+  "content": "Legal menu 2"
+},
+{
+  "type": "text",
+  "id": "legal_menu2_title",
+  "label": "Column title",
+  "default": "Legal"
+},
+{
+  "type": "link_list",
+  "id": "legal_menu2_handle",
+  "label": "Legal menu 2"
+},
+    {
+      "type": "header",
+      "content": "Newsletter"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_newsletter",
+      "label": "Show newsletter signup",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "newsletter_title",
+      "label": "Column title",
+      "default": "Newsletter"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_placeholder",
+      "label": "Input placeholder",
+      "default": "Email address"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_btn_text",
+      "label": "Button text",
+      "default": "Subscribe"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_success",
+      "label": "Success message",
+      "default": "Thank you for subscribing."
+    },
+    {
+  "type": "header",
+  "content": "Disclaimer"
+},
+{
+  "type": "checkbox",
+  "id": "show_disclaimer",
+  "label": "Show disclaimer",
+  "default": true
+},
+{
+  "type": "textarea",
+  "id": "disclaimer_text",
+  "label": "Disclaimer text",
+  "default": "The information provided on this website is for informational purposes only and is not intended to diagnose, treat, cure, or prevent any disease or replace professional medical advice."
+},
+    {
+      "type": "header",
+      "content": "Copyright"
+    },
+    {
+      "type": "text",
+      "id": "copyright_text",
+      "label": "Copyright text",
+      "info": "Use YEAR as placeholder for current year e.g. '© YEAR Cast.'. Leave blank for automatic."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#05102A"
+    },
+    {
+      "type": "color",
+      "id": "brand_color",
+      "label": "Brand name",
+      "default": "#c4c0b8"
+    },
+    {
+      "type": "color",
+      "id": "tagline_color",
+      "label": "Tagline",
+      "default": "#5a5850"
+    },
+    {
+      "type": "color",
+      "id": "col_title_color",
+      "label": "Column titles",
+      "default": "#6e6a62"
+    },
+    {
+      "type": "color",
+      "id": "link_color",
+      "label": "Links",
+      "default": "#7a7670"
+    },
+    {
+      "type": "color",
+      "id": "link_hover_color",
+      "label": "Links (hover)",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "copy_color",
+      "label": "Copyright & social",
+      "default": "#484540"
+    },
+    {
+      "type": "color",
+      "id": "input_bg_color",
+      "label": "Newsletter input background",
+      "default": "#0d1a30"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg_color",
+      "label": "Newsletter button background",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom",
+      "min": 24,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "c-Footer",
+      "blocks": [
+        { "type": "social_link", "settings": { "label": "Instagram", "url": "" } },
+        { "type": "social_link", "settings": { "label": "TikTok",    "url": "" } },
+        { "type": "social_link", "settings": { "label": "Facebook",  "url": "" } },
+        { "type": "social_link", "settings": { "label": "Spotify",   "url": "" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

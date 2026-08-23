@@ -1,0 +1,1394 @@
+{% comment %}
+  CAST — Main Product Section (PDP)
+  File: sections/c-main-product.liquid
+
+  Dynamic sources:
+  - product.title, product.type, product.price — Shopify native
+  - product.images — Shopify native gallery
+  - product.variants — Shopify native
+  - FAQ: product metafield cast.faq_1_q, cast.faq_1_a, cast.faq_2_q, cast.faq_2_a
+  - Body text: product metafield cast.body_text
+  - Formulation intro: product metafield cast.formulation_intro
+  - Ingredients: product metafield cast.ingredients
+  - Scent top: product metafield cast.scent_top
+  - Scent middle: product metafield cast.scent_middle
+  - Scent base: product metafield cast.scent_base
+  - Size label: section setting (same for all PDPs)
+{% endcomment %}
+
+{%- assign current_variant = product.selected_or_first_available_variant -%}
+
+<div
+  class="c-pdp"
+  id="c-pdp-{{ section.id }}"
+>
+
+  {%- comment -%} ── LEFT: Image column ── {%- endcomment -%}
+  <div class="c-pdp__images">
+
+  <div class="c-pdp__main-image">
+  {%- if product.featured_image != blank -%}
+    {%- assign main_img = product.featured_image -%}
+    <img
+      id="c-pdp-main-img-{{ section.id }}"
+      src="{{ main_img | image_url: width: 2000 }}"
+      alt="{{ main_img.alt | default: product.title | escape }}"
+      width="{{ main_img.width }}"
+      height="{{ main_img.height }}"
+      loading="eager"
+      fetchpriority="high"
+      class="c-pdp__main-img"
+      style="display:block;"
+    >
+    <video
+      id="c-pdp-main-video-{{ section.id }}"
+      class="c-pdp__main-img"
+      style="display:none;"
+      autoplay
+      loop
+      muted
+      playsinline
+    ></video>
+  {%- else -%}
+    <div class="c-pdp__image-placeholder">
+      {{ 'product-1' | placeholder_svg_tag: 'c-pdp__placeholder-svg' }}
+    </div>
+  {%- endif -%}
+</div>
+
+   {%- if product.media.size > 1 -%}
+  <div class="c-pdp__thumbs">
+    {%- for media in product.media limit: 7 -%}
+      <button
+        class="c-pdp__thumb{% if forloop.first %} is-active{% endif %}"
+        data-media-type="{{ media.media_type }}"
+        data-image-src="{% if media.media_type == 'video' %}{{ media.preview_image | image_url: width: 2000 }}{% else %}{{ media | image_url: width: 2000 }}{% endif %}"
+        data-image-alt="{{ media.alt | default: product.title | escape }}"
+        data-video-url="{% if media.media_type == 'video' %}{{ media.sources[1].url | default: media.sources[0].url }}{% endif %}"
+        aria-label="Media {{ forloop.index }}"
+        aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
+        type="button"
+      >
+        <img
+          src="{% if media.media_type == 'video' %}{{ media.preview_image | image_url: width: 120 }}{% else %}{{ media | image_url: width: 120 }}{% endif %}"
+          alt="{{ media.alt | default: product.title | escape }}"
+          width="64"
+          height="64"
+          loading="lazy"
+        >
+      </button>
+    {%- endfor -%}
+  </div>
+{%- endif -%}
+
+  </div>
+
+  {%- comment -%} ── RIGHT: Info column ── {%- endcomment -%}
+  <div class="c-pdp__info">
+
+    {%- if product.type != blank -%}
+      <p class="c-pdp__category">{{ product.type }}</p>
+    {%- endif -%}
+
+    <h1 class="c-pdp__name">{{ product.title }}</h1>
+    {% for block in section.blocks %}
+  {% render block %}
+{% endfor %}
+
+    <p class="c-pdp__price-line">
+      <span id="c-pdp-price-{{ section.id }}">{{ current_variant.price | money_without_trailing_zeros }}</span>
+      {%- assign size_label = product.metafields.cast.size_label.value -%}
+
+{%- if size_label != blank -%}
+  <span class="c-pdp__size"> | {{ size_label }}</span>
+{%- endif -%}
+    </p>
+
+    {%- comment -%} FAQ from metafields {%- endcomment -%}
+    {%- assign faq_1_q = product.metafields.cast.faq_1_q.value -%}
+    {%- assign faq_1_a = product.metafields.cast.faq_1_a.value -%}
+    {%- assign faq_2_q = product.metafields.cast.faq_2_q.value -%}
+    {%- assign faq_2_a = product.metafields.cast.faq_2_a.value -%}
+
+    {%- if faq_1_q != blank or faq_2_q != blank -%}
+      <div class="c-pdp__faq">
+        {%- if faq_1_q != blank -%}
+          <div class="c-pdp__faq-item">
+            <p class="c-pdp__faq-q">{{ faq_1_q }}</p>
+            {%- if faq_1_a != blank -%}
+              <p class="c-pdp__faq-a">{{ faq_1_a }}</p>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+        {%- if faq_2_q != blank -%}
+          <div class="c-pdp__faq-item">
+            <p class="c-pdp__faq-q">{{ faq_2_q }}</p>
+            {%- if faq_2_a != blank -%}
+              <p class="c-pdp__faq-a">{{ faq_2_a }}</p>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- comment -%} Product form {%- endcomment -%}
+    {%- form 'product', product -%}
+      <input type="hidden" name="id" value="{{ current_variant.id }}" id="c-pdp-variant-id-{{ section.id }}">
+
+      {%- if product.variants.size > 1 -%}
+        <div class="c-pdp__variants">
+          {%- for option in product.options_with_values -%}
+            <div class="c-pdp__option-group">
+              <p class="c-pdp__option-label">{{ option.name }}</p>
+              <div class="c-pdp__option-values">
+                {%- for value in option.values -%}
+                  <button
+                    type="button"
+                    class="c-pdp__option-btn{% if option.selected_value == value %} is-active{% endif %}"
+                    data-option-position="{{ option.position }}"
+                    data-option-value="{{ value | escape }}"
+                  >{{ value }}</button>
+                {%- endfor -%}
+              </div>
+            </div>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+
+    {% if product.handle == 'the-trio' %}
+
+<button
+  type="button"
+  class="c-pdp__atc"
+  id="trio-coming-soon-btn"
+>
+  <span class="c-pdp__atc-text">
+    Coming Soon
+  </span>
+</button>
+
+{% else %}
+
+<button
+  type="{% if current_variant.available %}submit{% else %}button{% endif %}"
+  name="add"
+  class="c-pdp__atc{% unless current_variant.available %} is-notify{% endunless %}"
+  id="c-pdp-atc-{{ section.id }}"
+  data-notify="{% unless current_variant.available %}true{% else %}false{% endunless %}"
+>
+  <span class="c-pdp__atc-text">
+    {% if current_variant.available %}
+      {{ section.settings.atc_text | default: 'Add to Cart' }}
+    {% else %}
+      {{ section.settings.notify_me_text | default: 'Notify Me' }}
+    {% endif %}
+  </span>
+</button>
+
+{% endif %}
+    {%- endform -%}
+    {%- comment -%}
+  ── Back in Stock Modal ──
+{%- endcomment -%}
+
+<div
+  class="c-bis-modal"
+  id="c-bis-modal-{{ section.id }}"
+  aria-hidden="true"
+>
+  <div class="c-bis-modal__backdrop" data-bis-close></div>
+
+  <div
+    class="c-bis-modal__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="c-bis-title-{{ section.id }}"
+  >
+
+    <button
+      type="button"
+      class="c-bis-modal__close"
+      data-bis-close
+      aria-label="Close"
+    >
+      ×
+    </button>
+
+    <p class="c-bis-modal__eyebrow">
+      BACK IN STOCK
+    </p>
+
+    <h2
+      class="c-bis-modal__title"
+      id="c-bis-title-{{ section.id }}"
+    >
+      Get notified when it’s back
+    </h2>
+
+    <p class="c-bis-modal__product">
+      {{ product.title }}
+    </p>
+
+    <p class="c-bis-modal__text">
+      Enter your email below and we'll let you know when this product is back in stock.
+    </p>
+
+    <form
+      class="c-bis-modal__form"
+      id="c-bis-form-{{ section.id }}"
+    >
+      <input
+        type="email"
+        id="c-bis-email-{{ section.id }}"
+        class="c-bis-modal__input"
+        placeholder="Your email address"
+        autocomplete="email"
+        required
+      >
+
+      <button
+        type="submit"
+        class="c-bis-modal__submit"
+        id="c-bis-submit-{{ section.id }}"
+      >
+        Notify Me
+      </button>
+
+      <p
+        class="c-bis-modal__message"
+        id="c-bis-message-{{ section.id }}"
+        role="status"
+      ></p>
+    </form>
+
+  </div>
+</div>
+
+    {%- comment -%} Accordions {%- endcomment -%}
+    <div class="c-pdp__accordion">
+
+      {%- comment -%} 1. What happens in the body {%- endcomment -%}
+      {%- assign body_text = product.metafields.cast.body_text.value -%}
+      {%- if body_text != blank -%}
+        <div class="c-pdp__accordion-item">
+          <button class="c-pdp__accordion-trigger" type="button" aria-expanded="false">
+            {{ section.settings.body_label | default: 'What happens in the body' }}
+            <span class="c-pdp__accordion-icon" aria-hidden="true"></span>
+          </button>
+          <div class="c-pdp__accordion-body" hidden>
+            <p>{{ body_text }}</p>
+          </div>
+        </div>
+      {%- endif -%}
+
+      {%- comment -%} 2. Formulation & ingredients {%- endcomment -%}
+      {%- assign formulation_intro = product.metafields.cast.formulation_intro.value -%}
+      {%- assign ingredients = product.metafields.cast.ingredients.value -%}
+      {%- if formulation_intro != blank or ingredients != blank -%}
+        <div class="c-pdp__accordion-item">
+          <button class="c-pdp__accordion-trigger" type="button" aria-expanded="false">
+            {{ section.settings.formulation_label | default: 'Formulation & ingredients' }}
+            <span class="c-pdp__accordion-icon" aria-hidden="true"></span>
+          </button>
+          <div class="c-pdp__accordion-body" hidden>
+            {%- if formulation_intro != blank -%}
+              <p>{{ formulation_intro }}</p>
+            {%- endif -%}
+            {%- if ingredients != blank -%}
+              <p class="c-pdp__ingredients">{{ ingredients }}</p>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endif -%}
+
+      {%- comment -%} 3. Scent notes {%- endcomment -%}
+      {%- assign scent_top    = product.metafields.cast.scent_top.value -%}
+      {%- assign scent_middle = product.metafields.cast.scent_middle.value -%}
+      {%- assign scent_base   = product.metafields.cast.scent_base.value -%}
+      {%- if scent_top != blank or scent_middle != blank or scent_base != blank -%}
+        <div class="c-pdp__accordion-item">
+          <button class="c-pdp__accordion-trigger" type="button" aria-expanded="false">
+            {{ section.settings.scent_label | default: 'Scent notes' }}
+            <span class="c-pdp__accordion-icon" aria-hidden="true"></span>
+          </button>
+          <div class="c-pdp__accordion-body" hidden>
+            <div class="c-pdp__note-tags">
+              {%- if scent_top != blank -%}
+                <div class="c-pdp__note-row">
+                  <span class="c-pdp__note-label">Top</span>
+                  <span class="c-pdp__note-values">{{ scent_top }}</span>
+                </div>
+              {%- endif -%}
+              {%- if scent_middle != blank -%}
+                <div class="c-pdp__note-row">
+                  <span class="c-pdp__note-label">Middle</span>
+                  <span class="c-pdp__note-values">{{ scent_middle }}</span>
+                </div>
+              {%- endif -%}
+              {%- if scent_base != blank -%}
+                <div class="c-pdp__note-row">
+                  <span class="c-pdp__note-label">Base</span>
+                  <span class="c-pdp__note-values">{{ scent_base }}</span>
+                </div>
+              {%- endif -%}
+            </div>
+          </div>
+        </div>
+      {%- endif -%}
+
+    </div>
+
+  </div>
+</div>
+
+<style>
+  #c-pdp-{{ section.id }} {
+    --pdp-image-bg:      {{ section.settings.image_bg_color }};
+    --pdp-info-bg:       {{ section.settings.info_bg_color }};
+    --pdp-text:          {{ section.settings.text_color }};
+    --pdp-muted:         {{ section.settings.muted_color }};
+    --pdp-atc-bg:        {{ section.settings.atc_bg_color }};
+    --pdp-atc-text:      {{ section.settings.atc_text_color }};
+    --pdp-header-h:      {{ section.settings.nav_height }}px;
+  }
+
+  .c-pdp {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - var(--pdp-header-h));
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+  }
+
+  /* ── Left: Images ── */
+.c-pdp__images {
+    position: sticky;
+    top: var(--pdp-header-h);
+    height: calc(100vh - var(--pdp-header-h));
+    background: var(--pdp-image-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    gap: 20px;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+.c-pdp__main-image {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+.c-pdp__main-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .c-pdp__image-placeholder {
+    width: 60%;
+    opacity: 0.3;
+  }
+
+  .c-pdp__placeholder-svg { width: 100%; height: auto; }
+
+  /* Thumbs */
+  .c-pdp__thumbs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .c-pdp__thumb {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    background: none;
+    border: 1px solid rgba(0,0,0,0.12);
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .c-pdp__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .c-pdp__thumb.is-active { border-color: var(--pdp-text); }
+  .c-pdp__thumb:hover { border-color: rgba(0,0,0,0.4); }
+
+  /* ── Right: Info ── */
+  .c-pdp__info {
+    padding: 0px 64px 100px;
+    background: var(--pdp-info-bg);
+    overflow-y: auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .c-pdp__category {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--pdp-muted);
+    margin-top: 10%;
+    margin-bottom: 0;
+    font-weight: 300;
+    opacity: 0;
+    animation: c-pdp-up 0.6s ease 0.05s forwards;
+  }
+
+  .c-pdp__name {
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 300;
+    color: var(--pdp-text);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 12px 0px 7px 0px;
+    line-height: 1.1;
+    font-family: 'Work Sans', sans-serif;
+    opacity: 0;
+    animation: c-pdp-up 0.6s ease 0.15s forwards;
+  }
+
+  .c-pdp__price-line {
+    font-size: 14px;
+    color: var(--pdp-muted);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    margin-top: 0;
+    padding-bottom: 25px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    opacity: 0;
+    animation: c-pdp-up 0.6s ease 0.22s forwards;
+  }
+
+  /* FAQ */
+  .c-pdp__faq {
+    margin-bottom: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    animation: c-pdp-up 0.6s ease 0.30s forwards;
+  }
+
+  .c-pdp__faq-q {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--pdp-muted);
+    margin-bottom: 4px;
+    font-weight: 300;
+  }
+
+  .c-pdp__faq-a {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--pdp-text);
+    font-weight: 300;
+    margin:0;
+  }
+
+  /* Variants */
+  .c-pdp__variants { margin-bottom: 20px; }
+
+  .c-pdp__option-group { margin-bottom: 16px; }
+
+  .c-pdp__option-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pdp-muted);
+    margin-bottom: 10px;
+    font-weight: 300;
+  }
+
+  .c-pdp__option-values { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .c-pdp__option-btn {
+    padding: 8px 16px;
+    border: 1px solid rgba(0,0,0,0.2);
+    background: none;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    color: var(--pdp-text);
+  }
+
+  .c-pdp__option-btn.is-active {
+    border-color: var(--pdp-text);
+    background: var(--pdp-text);
+    color: var(--pdp-info-bg);
+  }
+
+  /* ATC */
+  .c-pdp__atc {
+    width: 100%;
+    padding: 18px 32px;
+    background: var(--pdp-atc-bg);
+    color: var(--pdp-atc-text);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-bottom: 48px;
+    display: block;
+    opacity: 0;
+    animation: c-pdp-up 0.6s ease 0.40s forwards;
+  }
+
+  .c-pdp__atc:hover:not([disabled]) { opacity: 0.85; }
+  .c-pdp__atc[disabled] { opacity: 0.4; cursor: not-allowed; }
+  
+
+  /* Accordion */
+  .c-pdp__accordion {
+    border-top: 1px solid rgba(0,0,0,0.1);
+    opacity: 0;
+    animation: c-pdp-up 0.6s ease 0.50s forwards;
+  }
+
+  .c-pdp__accordion-item {
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .c-pdp__accordion-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pdp-text);
+    text-align: left;
+    transition: opacity 0.2s;
+  }
+
+  .c-pdp__accordion-trigger:hover { opacity: 0.55; }
+
+  .c-pdp__accordion-icon {
+    width: 14px; height: 14px;
+    position: relative; flex-shrink: 0;
+  }
+
+  .c-pdp__accordion-icon::before,
+  .c-pdp__accordion-icon::after {
+    content: '';
+    position: absolute;
+    background: var(--pdp-text);
+  }
+
+  .c-pdp__accordion-icon::before { width: 14px; height: 1px; top: 50%; transform: translateY(-50%); }
+  .c-pdp__accordion-icon::after  { width: 1px; height: 14px; left: 50%; transform: translateX(-50%); transition: opacity 0.3s, transform 0.3s; }
+
+  .c-pdp__accordion-trigger[aria-expanded="true"] .c-pdp__accordion-icon::after {
+    opacity: 0;
+    transform: translateX(-50%) rotate(90deg);
+  }
+
+  .c-pdp__accordion-body { padding: 0 0 28px; }
+  .c-pdp__accordion-body[hidden] { display: none; }
+
+  .c-pdp__accordion-body p {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.75;
+ color: var(--pdp-text);
+    font-weight: 300;
+    margin-bottom: 14px;
+  }
+
+  .c-pdp__accordion-body p:last-child { margin-bottom: 0; }
+
+  .c-pdp__ingredients {
+    font-size: 13px !important;
+  }
+
+  /* Scent notes */
+  .c-pdp__note-tags { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+
+  .c-pdp__note-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .c-pdp__note-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pdp-muted);
+    font-weight: 300;
+    padding-top: 2px;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-pdp__note-values {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    color: var(--pdp-text);
+    font-weight: 300;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  @keyframes c-pdp-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .c-pdp__category, .c-pdp__name, .c-pdp__price-line,
+    .c-pdp__faq, .c-pdp__atc, .c-pdp__accordion {
+      animation: none;
+      opacity: 1;
+    }
+  }
+
+  /* Tablet */
+  @media screen and (max-width: 900px) {
+    .c-pdp__info { padding: 48px 40px 80px; }
+    .c-pdp__images { padding: 32px; }
+  }
+
+  /* Mobile */
+  @media screen and (max-width: 640px) {
+    .c-pdp { grid-template-columns: 1fr; }
+    .c-pdp__images {
+      position: relative;
+      top: auto;
+      height: auto;
+      min-height: 380px;
+      padding: 32px 24px 20px;
+    }
+    .c-pdp__info { padding: 0px 24px 64px; }
+    .c-pdp__name { font-size: clamp(24px, 7vw, 32px); }
+  }
+  /* ── Back In Stock Modal ── */
+
+.c-bis-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.c-bis-modal.is-visible {
+  display: flex;
+}
+
+.c-bis-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.c-bis-modal__dialog {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 460px);
+  background: var(--pdp-info-bg);
+  padding: 48px 40px 40px;
+  box-sizing: border-box;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+}
+
+.c-bis-modal__close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--pdp-text);
+}
+
+.c-bis-modal__eyebrow {
+  margin: 0 0 10px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pdp-muted);
+}
+
+.c-bis-modal__title {
+  margin: 0 0 10px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pdp-text);
+}
+
+.c-bis-modal__product {
+  margin: 0 0 16px;
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 16px;
+  color: var(--pdp-text);
+}
+
+.c-bis-modal__text {
+  margin: 0 0 24px;
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--pdp-muted);
+}
+
+.c-bis-modal__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 15px 16px;
+  border: 1px solid rgba(0,0,0,0.18);
+  background: transparent;
+  color: var(--pdp-text);
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+  margin-bottom: 12px;
+}
+
+.c-bis-modal__input:focus {
+  border-color: var(--pdp-text);
+}
+
+.c-bis-modal__submit {
+  width: 100%;
+  padding: 16px 24px;
+  border: 0;
+  background: var(--pdp-atc-bg);
+  color: var(--pdp-atc-text);
+  font-family: 'Work Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.c-bis-modal__submit:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.c-bis-modal__message {
+  margin: 14px 0 0;
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.c-bis-modal__message:empty {
+  display: none;
+}
+
+@media screen and (max-width: 640px) {
+  .c-bis-modal {
+    padding: 16px;
+  }
+
+  .c-bis-modal__dialog {
+    padding: 42px 24px 28px;
+  }
+
+  .c-bis-modal__title {
+    font-size: 22px;
+  }
+}
+</style>
+
+<script>
+(function () {
+  var pdp = document.getElementById('c-pdp-{{ section.id }}');
+  if (!pdp) return;
+  function updatePdpTop() {
+  var announcementH = parseFloat(
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--announcement-bar-height')
+  ) || 0;
+  var header = document.getElementById('c-header');
+  var headerH = header ? header.getBoundingClientRect().height : 0;
+  var totalH = announcementH + headerH;
+  pdp.style.setProperty('--pdp-header-h', totalH + 'px');
+}
+// DOM ready hone ke baad run karo
+setTimeout(updatePdpTop, 100);
+window.addEventListener('resize', updatePdpTop);
+/* ── Thumbnail gallery ── */
+var thumbs    = pdp.querySelectorAll('.c-pdp__thumb');
+var mainImg   = document.getElementById('c-pdp-main-img-{{ section.id }}');
+var mainVideo = document.getElementById('c-pdp-main-video-{{ section.id }}');
+
+function showMedia(type, src, alt, videoSrc) {
+  if (type === 'video' && mainVideo) {
+    mainImg.style.opacity = '0';
+    setTimeout(function () {
+      mainImg.style.display = 'none';
+      mainVideo.style.display = 'block';
+      mainVideo.style.opacity = '0';
+      mainVideo.src = videoSrc;
+      mainVideo.load();
+      mainVideo.play();
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          mainVideo.style.transition = 'opacity 0.25s ease';
+          mainVideo.style.opacity = '1';
+        });
+      });
+    }, 250);
+  } else {
+    // Video band karo
+    if (mainVideo && mainVideo.style.display !== 'none') {
+      mainVideo.pause();
+      mainVideo.style.transition = 'none';
+      mainVideo.style.opacity = '0';
+      mainVideo.style.display = 'none';
+      mainVideo.removeAttribute('src');
+    }
+    // Image show karo
+    mainImg.src = src;
+    mainImg.alt = alt || '';
+    mainImg.style.transition = 'none';
+    mainImg.style.opacity = '0';
+    mainImg.style.display = 'block';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        mainImg.style.transition = 'opacity 0.25s ease';
+        mainImg.style.opacity = '1';
+      });
+    });
+  }
+}
+
+thumbs.forEach(function (thumb) {
+  thumb.addEventListener('click', function () {
+    showMedia(
+      thumb.dataset.mediaType,
+      thumb.dataset.imageSrc,
+      thumb.dataset.imageAlt,
+      thumb.dataset.videoUrl
+    );
+    thumbs.forEach(function (t) {
+      t.classList.remove('is-active');
+      t.setAttribute('aria-pressed', 'false');
+    });
+    thumb.classList.add('is-active');
+    thumb.setAttribute('aria-pressed', 'true');
+  });
+});
+  /* ── Accordion ── */
+  var triggers = pdp.querySelectorAll('.c-pdp__accordion-trigger');
+  triggers.forEach(function (trigger) {
+    trigger.addEventListener('click', function () {
+      var body   = trigger.nextElementSibling;
+      var isOpen = trigger.getAttribute('aria-expanded') === 'true';
+      triggers.forEach(function (t) {
+        t.setAttribute('aria-expanded', 'false');
+        if (t.nextElementSibling) t.nextElementSibling.hidden = true;
+      });
+      if (!isOpen) {
+        trigger.setAttribute('aria-expanded', 'true');
+        if (body) body.hidden = false;
+      }
+    });
+  });
+
+  /* ── Variant selector ── */
+  var optionBtns   = pdp.querySelectorAll('.c-pdp__option-btn');
+  var variantInput = document.getElementById('c-pdp-variant-id-{{ section.id }}');
+  var atcBtn       = document.getElementById('c-pdp-atc-{{ section.id }}');
+  var priceEl      = document.getElementById('c-pdp-price-{{ section.id }}');
+  var variants     = {{ product.variants | json }};
+
+  function formatMoney(cents) {
+   var amount = cents / 100;
+return '$' + (amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(2));
+  }
+
+  function getSelected() {
+    var sel = {};
+    optionBtns.forEach(function (b) {
+      if (b.classList.contains('is-active')) sel[b.dataset.optionPosition] = b.dataset.optionValue;
+    });
+    return sel;
+  }
+
+  function findVariant(sel) {
+    return variants.find(function (v) {
+      return v.options.every(function (opt, i) {
+        return sel[String(i + 1)] === opt;
+      });
+    });
+  }
+
+  optionBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      pdp.querySelectorAll('[data-option-position="' + btn.dataset.optionPosition + '"]').forEach(function (b) {
+        b.classList.remove('is-active');
+      });
+      btn.classList.add('is-active');
+
+      var variant = findVariant(getSelected());
+      if (!variant) return;
+
+      if (variantInput) variantInput.value = variant.id;
+      if (priceEl) priceEl.textContent = formatMoney(variant.price);
+
+     if (atcBtn) {
+  var label = atcBtn.querySelector('.c-pdp__atc-text');
+
+  if (variant.available) {
+    atcBtn.disabled = false;
+    atcBtn.type = 'submit';
+    atcBtn.dataset.notify = 'false';
+    atcBtn.classList.remove('is-notify');
+
+    if (label) {
+      label.textContent = '{{ section.settings.atc_text | default: "Add to Cart" }}';
+    }
+
+  } else {
+    atcBtn.disabled = false;
+    atcBtn.type = 'button';
+    atcBtn.dataset.notify = 'true';
+    atcBtn.classList.add('is-notify');
+
+    if (label) {
+      label.textContent = '{{ section.settings.notify_me_text | default: "Notify Me" }}';
+    }
+  }
+}
+
+      if (variant.featured_image && mainImg) {
+        mainImg.style.opacity = '0';
+        setTimeout(function () {
+          mainImg.src = variant.featured_image.src;
+          mainImg.style.opacity = '1';
+        }, 200);
+      }
+    });
+  });
+  /* ── Back In Stock ── */
+
+var bisModal = document.getElementById('c-bis-modal-{{ section.id }}');
+var bisForm = document.getElementById('c-bis-form-{{ section.id }}');
+var bisEmail = document.getElementById('c-bis-email-{{ section.id }}');
+var bisSubmit = document.getElementById('c-bis-submit-{{ section.id }}');
+var bisMessage = document.getElementById('c-bis-message-{{ section.id }}');
+
+var bisVariant = {{ current_variant.id | json }};
+var bisVariantTitle = {{ current_variant.title | json }};
+
+var klaviyoPublicKey = '{{ section.settings.klaviyo_public_api_key | escape }}';
+
+function openBisModal() {
+  if (!bisModal) return;
+
+  bisModal.classList.add('is-visible');
+  bisModal.setAttribute('aria-hidden', 'false');
+
+  setTimeout(function () {
+    if (bisEmail) bisEmail.focus();
+  }, 100);
+}
+
+function closeBisModal() {
+  if (!bisModal) return;
+
+  bisModal.classList.remove('is-visible');
+  bisModal.setAttribute('aria-hidden', 'true');
+
+  if (bisMessage) {
+    bisMessage.textContent = '';
+  }
+}
+
+if (atcBtn) {
+  atcBtn.addEventListener('click', function (event) {
+
+    if (atcBtn.dataset.notify !== 'true') {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    bisVariant = variantInput
+      ? variantInput.value
+      : bisVariant;
+
+    var selectedVariant = variants.find(function (v) {
+      return String(v.id) === String(bisVariant);
+    });
+
+    if (selectedVariant) {
+      bisVariantTitle = selectedVariant.title;
+    }
+
+    openBisModal();
+  });
+}
+
+/* Close modal */
+
+if (bisModal) {
+  bisModal.querySelectorAll('[data-bis-close]').forEach(function (element) {
+    element.addEventListener('click', closeBisModal);
+  });
+}
+
+/* Escape key */
+
+document.addEventListener('keydown', function (event) {
+  if (event.key === 'Escape' && bisModal && bisModal.classList.contains('is-visible')) {
+    closeBisModal();
+  }
+});
+
+/* Submit Back In Stock subscription */
+
+if (bisForm) {
+
+  bisForm.addEventListener('submit', function (event) {
+
+    event.preventDefault();
+
+    var email = bisEmail ? bisEmail.value.trim() : '';
+
+    if (!email || !email.includes('@')) {
+      if (bisMessage) {
+        bisMessage.textContent = 'Please enter a valid email address.';
+      }
+      return;
+    }
+
+    if (!klaviyoPublicKey) {
+      console.error('Klaviyo Public API Key is missing.');
+
+      if (bisMessage) {
+        bisMessage.textContent = 'Something went wrong. Please try again.';
+      }
+
+      return;
+    }
+
+    if (bisSubmit) {
+      bisSubmit.disabled = true;
+      bisSubmit.textContent = 'Submitting...';
+    }
+
+    if (bisMessage) {
+      bisMessage.textContent = '';
+    }
+
+    var catalogVariantId =
+      '$shopify:::$default:::' + String(bisVariant);
+
+    var payload = {
+      data: {
+        type: 'back-in-stock-subscription',
+        attributes: {
+          profile: {
+            data: {
+              type: 'profile',
+              attributes: {
+                email: email
+              }
+            }
+          },
+          channels: ['EMAIL']
+        },
+        relationships: {
+          variant: {
+            data: {
+              type: 'catalog-variant',
+              id: catalogVariantId
+            }
+          }
+        }
+      }
+    };
+
+    fetch(
+      'https://a.klaviyo.com/client/back-in-stock-subscriptions/?company_id=' +
+      encodeURIComponent(klaviyoPublicKey),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'revision': '2024-06-15'
+        },
+        body: JSON.stringify(payload)
+      }
+    )
+    .then(function (response) {
+
+      if (!response.ok) {
+        throw new Error('Klaviyo subscription failed');
+      }
+
+      return response;
+    })
+    .then(function () {
+
+      if (bisMessage) {
+        bisMessage.textContent =
+          'You’re on the list. We’ll email you when it’s back in stock.';
+      }
+
+      if (bisEmail) {
+        bisEmail.value = '';
+      }
+
+      if (bisSubmit) {
+        bisSubmit.textContent = 'You’re on the list';
+      }
+
+      setTimeout(function () {
+        closeBisModal();
+
+        if (bisSubmit) {
+          bisSubmit.disabled = false;
+          bisSubmit.textContent = 'Notify Me';
+        }
+      }, 2500);
+
+    })
+    .catch(function (error) {
+
+      console.error('Back in Stock error:', error);
+
+      if (bisMessage) {
+        bisMessage.textContent =
+          'Something went wrong. Please try again.';
+      }
+
+      if (bisSubmit) {
+        bisSubmit.disabled = false;
+        bisSubmit.textContent = 'Notify Me';
+      }
+    });
+
+  });
+}
+var trioBtn = document.getElementById('trio-coming-soon-btn');
+
+if (trioBtn) {
+
+  trioBtn.addEventListener('click', function () {
+
+    var overlay = document.getElementById('cast-trio-popup-overlay');
+
+    if (overlay) {
+      overlay.classList.add('is-visible');
+    }
+
+  });
+
+}
+})();
+</script>
+{% comment %} ── JSON-LD Product Schema (SEO rich snippets) ── {% endcomment %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": {{ product.title | json }},
+  "description": {{ product.description | strip_html | truncate: 300 | json }},
+  "sku": {{ current_variant.sku | json }},
+  "brand": {
+    "@type": "Brand",
+    "name": "CAST"
+  },
+  {%- if product.featured_image != blank -%}
+  "image": [{{ product.featured_image | image_url: width: 1200 | prepend: "https:" | json }}],
+  {%- endif -%}
+  "offers": {
+    "@type": "Offer",
+    "url": {{ shop.url | append: product.url | json }},
+    "priceCurrency": {{ cart.currency.iso_code | json }},
+    "price": {{ current_variant.price | money_without_currency | strip_html | json }},
+    "availability": "https://schema.org/{% if current_variant.available %}InStock{% else %}OutOfStock{% endif %}",
+    "itemCondition": "https://schema.org/NewCondition"
+  }
+}
+</script>
+{% schema %}
+{
+  "name": "Main Product",
+  "tag": "div",
+  "class": "c-pdp-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Size label"
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Size label",
+      "default": "100mL / 3.4 fl oz",
+      "info": "Shown next to price. Same for all PDPs using this section."
+    },
+    {
+      "type": "header",
+      "content": "Button text"
+    },
+    {
+      "type": "text",
+      "id": "atc_text",
+      "label": "Add to cart text",
+      "default": "Add to Cart"
+    },
+    {
+      "type": "text",
+      "id": "sold_out_text",
+      "label": "Sold out text",
+      "default": "Sold Out"
+    },
+    {
+  "type": "text",
+  "id": "notify_me_text",
+  "label": "Notify me text",
+  "default": "Notify Me"
+},
+{
+  "type": "text",
+  "id": "klaviyo_public_api_key",
+  "label": "Klaviyo Public API Key",
+  "info": "Your Klaviyo Public API Key / Site ID. This is safe to use client-side."
+},
+    {
+      "type": "header",
+      "content": "Accordion labels"
+    },
+    {
+      "type": "text",
+      "id": "body_label",
+      "label": "Body accordion title",
+      "default": "What happens in the body"
+    },
+    {
+      "type": "text",
+      "id": "formulation_label",
+      "label": "Formulation accordion title",
+      "default": "Formulation & ingredients"
+    },
+    {
+      "type": "text",
+      "id": "scent_label",
+      "label": "Scent notes accordion title",
+      "default": "Scent notes"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "nav_height",
+      "label": "Header height offset",
+      "min": 48,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 64,
+      "info": "Match your header height so sticky image sits correctly"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "image_bg_color",
+      "label": "Image column background",
+      "default": "#EEEBE6"
+    },
+    {
+      "type": "color",
+      "id": "info_bg_color",
+      "label": "Info column background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "atc_bg_color",
+      "label": "Add to cart background",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "color",
+      "id": "atc_text_color",
+      "label": "Add to cart text",
+      "default": "#F9F8F6"
+    }
+  ],
+  "blocks": [
+  {
+    "type": "@app"
+  }
+],
+  "presets": [
+    {
+      "name": "Main Product"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,672 @@
+{% comment %}
+  CAST — About Page (Single Section)
+  File: sections/c-about-page.liquid
+
+  Fully customizable via theme editor:
+  - Label, headline
+  - 3 body copy blocks (richtext)
+  - Founder image + 2 inline images
+  - Pull quote
+  - Closing definition block
+  - All colors, padding controllable
+  - Fully responsive
+{% endcomment %}
+
+<div class="c-about-page" id="c-about-page-{{ section.id }}">
+
+  {%- comment -%} ── PAGE HEADER ── {%- endcomment -%}
+  <div class="c-about-page__header-wrap">
+    <div class="c-about-page__header">
+      {%- if section.settings.label != blank -%}
+        <p class="c-about-page__label">{{ section.settings.label }}</p>
+      {%- endif -%}
+      {%- if section.settings.headline != blank -%}
+        <h1 class="c-about-page__headline">{{ section.settings.headline }}</h1>
+      {%- endif -%}
+    </div>
+  </div>
+
+  {%- comment -%} ── FOUNDER IMAGE ── {%- endcomment -%}
+  {%- if section.settings.founder_image != blank -%}
+    <div class="c-about-page__founder-wrap">
+      <div class="c-about-page__col">
+        <div class="c-about-page__founder-img-box">
+          <img
+            src="{{ section.settings.founder_image | image_url: width: 800 }}"
+            alt="{{ section.settings.founder_image.alt | default: section.settings.founder_caption | default: 'Founder' | escape }}"
+            width="{{ section.settings.founder_image.width }}"
+            height="{{ section.settings.founder_image.height }}"
+            loading="eager"
+            fetchpriority="high"
+            class="c-about-page__founder-img"
+          >
+        </div>
+        {%- if section.settings.founder_caption != blank -%}
+          <p class="c-about-page__caption">{{ section.settings.founder_caption }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- comment -%} ── BODY 1 ── {%- endcomment -%}
+  {%- if section.settings.body_1 != blank -%}
+    <div class="c-about-page__body-wrap">
+      <div class="c-about-page__col">
+        <div class="c-about-page__body">{{ section.settings.body_1 }}</div>
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- comment -%} ── INLINE IMAGE 1 ── {%- endcomment -%}
+  {%- if section.settings.inline_image_1 != blank -%}
+    <div class="c-about-page__image-wrap">
+      <div class="c-about-page__col">
+        <div class="c-about-page__img-box c-about-page__img-box--landscape">
+          <img
+            src="{{ section.settings.inline_image_1 | image_url: width: 1000 }}"
+            alt="{{ section.settings.inline_image_1.alt | default: '' | escape }}"
+            loading="lazy"
+            class="c-about-page__img"
+          >
+        </div>
+        {%- if section.settings.inline_image_1_caption != blank -%}
+          <p class="c-about-page__caption">{{ section.settings.inline_image_1_caption }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- comment -%} ── BODY 2 ── {%- endcomment -%}
+  {%- if section.settings.body_2 != blank -%}
+    <div class="c-about-page__body-wrap">
+      <div class="c-about-page__col">
+        <div class="c-about-page__body">{{ section.settings.body_2 }}</div>
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- comment -%} ── PULL QUOTE ── {%- endcomment -%}
+  {%- if section.settings.pull_quote != blank -%}
+    <div class="c-about-page__quote-wrap">
+      <div class="c-about-page__col">
+        <div class="c-about-page__quote">
+          <p>{{ section.settings.pull_quote }}</p>
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- comment -%} ── BODY 3 ── {%- endcomment -%}
+  {%- if section.settings.body_3 != blank -%}
+    <div class="c-about-page__body-wrap">
+      <div class="c-about-page__col">
+        <div class="c-about-page__body">{{ section.settings.body_3 }}</div>
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- comment -%} ── INLINE IMAGE 2 ── {%- endcomment -%}
+  {%- if section.settings.inline_image_2 != blank -%}
+    <div class="c-about-page__image-wrap c-about-page__image-wrap--last">
+      <div class="c-about-page__col">
+        <div class="c-about-page__img-box c-about-page__img-box--landscape">
+          <img
+            src="{{ section.settings.inline_image_2 | image_url: width: 1000 }}"
+            alt="{{ section.settings.inline_image_2.alt | default: '' | escape }}"
+            loading="lazy"
+            class="c-about-page__img"
+          >
+        </div>
+        {%- if section.settings.inline_image_2_caption != blank -%}
+          <p class="c-about-page__caption">{{ section.settings.inline_image_2_caption }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- comment -%} ── CLOSING DEFINITION ── {%- endcomment -%}
+  {%- if section.settings.closing_label != blank or section.settings.closing_text_1 != blank -%}
+    <div class="c-about-page__closing-wrap">
+      <div class="c-about-page__closing">
+        {%- if section.settings.closing_label != blank -%}
+          <p class="c-about-page__closing-label">{{ section.settings.closing_label }}</p>
+        {%- endif -%}
+        {%- if section.settings.closing_text_1 != blank -%}
+          <p class="c-about-page__closing-text">{{ section.settings.closing_text_1 }}</p>
+        {%- endif -%}
+        {%- if section.settings.closing_text_2 != blank -%}
+          <p class="c-about-page__closing-text">{{ section.settings.closing_text_2 }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+</div>
+
+<style>
+  #c-about-page-{{ section.id }} {
+    --ap-bg:           {{ section.settings.bg_color }};
+    --ap-text:         {{ section.settings.text_color }};
+    --ap-muted:        {{ section.settings.muted_color }};
+    --ap-closing-bg:   {{ section.settings.closing_bg_color }};
+    --ap-closing-text: {{ section.settings.closing_text_color }};
+  }
+
+  /* ── Base ── */
+  .c-about-page {
+    background: var(--ap-bg);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+  }
+
+  .c-about-page__col {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* ── Header ── */
+  .c-about-page__header-wrap {
+    background: var(--ap-bg);
+  }
+
+  .c-about-page__header {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: {{ section.settings.header_padding_top }}px 40px {{ section.settings.header_padding_bottom }}px;
+  }
+
+  .c-about-page__label {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ap-muted);
+    font-weight: 300;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    opacity: 0;
+    animation: c-about-up 0.7s ease 0.05s forwards;
+  }
+
+  .c-about-page__label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--ap-muted);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  .c-about-page__headline {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 300;
+    line-height: 1.08;
+    color: var(--ap-text);
+    letter-spacing: -0.02em;
+    padding-bottom: 48px;
+    border-bottom: 1.5px solid rgba(0,0,0,0.14);
+    font-family: 'Work Sans', sans-serif;
+    opacity: 0;
+    animation: c-about-up 0.7s ease 0.2s forwards;
+  }
+
+  /* ── Founder image ── */
+  .c-about-page__founder-wrap {
+    background: var(--ap-bg);
+  }
+
+  .c-about-page__founder-img-box {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background: #EEEBE6;
+    margin-top: 72px;
+  }
+
+  .c-about-page__founder-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: {{ section.settings.founder_focal }};
+    display: block;
+  }
+
+  /* ── Inline images ── */
+  .c-about-page__image-wrap {
+    background: var(--ap-bg);
+  }
+
+  .c-about-page__image-wrap--last .c-about-page__col {
+    padding-bottom: {{ section.settings.last_image_padding_bottom }}px;
+  }
+
+  .c-about-page__img-box--landscape {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #EEEBE6;
+    margin-top: {{ section.settings.image_margin_top }}px;
+  }
+
+  .c-about-page__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  .c-about-page__caption {
+    font-size: 11px;
+    color: var(--ap-muted);
+    letter-spacing: 0.06em;
+    font-weight: 300;
+    margin-top: 12px;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Body copy ── */
+  .c-about-page__body-wrap {
+    background: var(--ap-bg);
+  }
+
+  .c-about-page__body {
+    padding: {{ section.settings.body_padding_top }}px 0 {{ section.settings.body_padding_bottom }}px;
+  }
+
+  .c-about-page__body p {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--ap-text);
+    font-weight: 300;
+    margin-bottom: 28px;
+  }
+
+  .c-about-page__body p:last-child { margin-bottom: 0; }
+
+  .c-about-page__body h2 {
+    font-size: clamp(20px, 2.5vw, 26px);
+    font-weight: 300;
+    color: var(--ap-text);
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin: 48px 0 20px;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-about-page__body a {
+    color: var(--ap-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: opacity 0.2s;
+  }
+
+  .c-about-page__body a:hover { opacity: 0.6; }
+
+  /* ── Pull quote ── */
+  .c-about-page__quote-wrap {
+    background: var(--ap-bg);
+  }
+
+  .c-about-page__quote {
+    padding: {{ section.settings.quote_padding }}px 0;
+    border-top: 1.5px solid rgba(0,0,0,0.14);
+    border-bottom: 1.5px solid rgba(0,0,0,0.14);
+  }
+
+  .c-about-page__quote p {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: clamp(22px, 3vw, 34px);
+    font-weight: 300;
+    line-height: 1.4;
+    color: var(--ap-text);
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Closing definition ── */
+  .c-about-page__closing-wrap {
+    background: var(--ap-closing-bg);
+    border-top: 1.5px solid rgba(0,0,0,0.14);
+  }
+
+  .c-about-page__closing {
+    padding: {{ section.settings.closing_padding }}px 40px;
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .c-about-page__closing-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ap-muted);
+    font-weight: 300;
+    margin-bottom: 28px;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-about-page__closing-text {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: clamp(18px, 2.5vw, 26px);
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--ap-closing-text);
+    max-width: 600px;
+    margin: 0 auto 20px;
+    letter-spacing: -0.01em;
+  }
+
+  .c-about-page__closing-text:last-child { margin-bottom: 0; }
+
+  /* ── Animation ── */
+  @keyframes c-about-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .c-about-page__label,
+    .c-about-page__headline { animation: none; opacity: 1; }
+  }
+
+  /* ── Tablet ── */
+  @media screen and (max-width: 900px) {
+    .c-about-page__col { padding: 0 32px; }
+    .c-about-page__header { padding-left: 32px; padding-right: 32px; }
+    .c-about-page__closing { padding-left: 32px; padding-right: 32px; }
+  }
+
+  /* ── Mobile ── */
+  @media screen and (max-width: 640px) {
+    .c-about-page__col { padding: 0 24px; }
+
+    .c-about-page__header {
+      padding: 56px 24px 48px;
+    }
+
+    .c-about-page__closing {
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+
+    .c-about-page__body p { font-size: 16px; }
+
+    .c-about-page__founder-img-box { margin-top: 48px; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "About Page",
+  "tag": "div",
+  "class": "c-about-page-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Page Header"
+    },
+    {
+      "type": "text",
+      "id": "label",
+      "label": "Label",
+      "default": "About"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Headline",
+      "default": "How Cast started"
+    },
+    {
+      "type": "range",
+      "id": "header_padding_top",
+      "label": "Header padding top",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "header_padding_bottom",
+      "label": "Header padding bottom",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "header",
+      "content": "Founder Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "founder_image",
+      "label": "Founder image",
+      "info": "Portrait 3:4 ratio recommended"
+    },
+    {
+      "type": "select",
+      "id": "founder_focal",
+      "label": "Focal point",
+      "options": [
+        { "value": "top center",    "label": "Top" },
+        { "value": "center",        "label": "Center" },
+        { "value": "bottom center", "label": "Bottom" }
+      ],
+      "default": "top center"
+    },
+    {
+      "type": "text",
+      "id": "founder_caption",
+      "label": "Caption",
+      "default": "Nicole Carrington, founder"
+    },
+    {
+      "type": "header",
+      "content": "Body Copy 1"
+    },
+    {
+      "type": "richtext",
+      "id": "body_1",
+      "label": "Body 1",
+      "default": "<p>I grew up making things from scratch. My mom introduced me to health food stores, herbal remedies, and the power of botanicals. She believed that what we put on and around our bodies shapes how we feel inside.</p><p>Years later, after a period of transition, I returned to those roots. I was exhausted in ways that mindset or meditation alone could not fix. I started developing blends to help steady my nervous system. When my mom passed away, Cast came into being.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Inline Image 1"
+    },
+    {
+      "type": "image_picker",
+      "id": "inline_image_1",
+      "label": "Inline image 1",
+      "info": "Landscape 4:3 recommended"
+    },
+    {
+      "type": "text",
+      "id": "inline_image_1_caption",
+      "label": "Caption",
+      "info": "Optional"
+    },
+    {
+      "type": "header",
+      "content": "Body Copy 2"
+    },
+    {
+      "type": "richtext",
+      "id": "body_2",
+      "label": "Body 2",
+      "default": "<p>Most of what existed in wellness was built around fragrance, mood, or ritual. None of it was built around how the nervous system actually works. That gap is what Cast is designed to fill.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Pull Quote"
+    },
+    {
+      "type": "textarea",
+      "id": "pull_quote",
+      "label": "Pull quote",
+      "default": "Cast was created to support the body. To offer tools that restore physiological steadiness, support the body under stress, and create room for clarity."
+    },
+    {
+      "type": "range",
+      "id": "quote_padding",
+      "label": "Quote padding top & bottom",
+      "min": 24,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "header",
+      "content": "Body Copy 3"
+    },
+    {
+      "type": "richtext",
+      "id": "body_3",
+      "label": "Body 3",
+      "default": "<p>Every Cast formula begins with a 16-hour herbal infusion before volatile plant molecules are layered in to activate olfactory pathways connected to nervous system regulation. Ingredient selection is driven by how the nervous system responds, not by how something smells.</p><p>Cast is 100% women-founded, built in Canada, and produced in small batches.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Inline Image 2"
+    },
+    {
+      "type": "image_picker",
+      "id": "inline_image_2",
+      "label": "Inline image 2",
+      "info": "Landscape 4:3 recommended"
+    },
+    {
+      "type": "text",
+      "id": "inline_image_2_caption",
+      "label": "Caption",
+      "info": "Optional"
+    },
+    {
+      "type": "range",
+      "id": "last_image_padding_bottom",
+      "label": "Padding below last image",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Closing Definition"
+    },
+    {
+      "type": "text",
+      "id": "closing_label",
+      "label": "Closing label",
+      "default": "Cast"
+    },
+    {
+      "type": "textarea",
+      "id": "closing_text_1",
+      "label": "Closing text line 1",
+      "default": "Physiological wellness is the practice of helping your nervous system regulate itself throughout the day."
+    },
+    {
+      "type": "textarea",
+      "id": "closing_text_2",
+      "label": "Closing text line 2",
+      "default": "Cast's home and body care supports this process through olfactory, herbal, and structural inputs formulated for everyday use."
+    },
+    {
+      "type": "range",
+      "id": "closing_padding",
+      "label": "Closing section padding top & bottom",
+      "min": 40,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "body_padding_top",
+      "label": "Body copy padding top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "body_padding_bottom",
+      "label": "Body copy padding bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "image_margin_top",
+      "label": "Image top spacing",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Page background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted / label color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "closing_bg_color",
+      "label": "Closing section background",
+      "default": "#EEEBE6"
+    },
+    {
+      "type": "color",
+      "id": "closing_text_color",
+      "label": "Closing section text",
+      "default": "#000000"
+    }
+  ],
+  "presets": [
+    {
+      "name": "About Page"
+    }
+  ]
+}
+{% endschema %}

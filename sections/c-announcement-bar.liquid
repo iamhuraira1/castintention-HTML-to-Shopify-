@@ -1,0 +1,378 @@
+{% comment %}
+  CAST — Announcement Bar
+  File: sections/c-announcement-bar.liquid
+
+  Features:
+  - Single announcement: static display
+  - Multiple announcements: auto-rotating slider (vanilla JS)
+  - Fully customizable via Shopify theme editor
+  - Text, link, colors, speed all controllable
+  - Performance: no libraries, inline CSS, deferred JS
+  - Responsive: mobile, tablet, desktop
+  - Accessible: aria-live region for screen readers
+{% endcomment %}
+
+{% assign announcements = section.blocks | where: "type", "announcement" %}
+{% assign count = announcements | size %}
+
+{% if section.settings.show_bar and count > 0 %}
+
+<div
+  class="c-announcement-bar"
+  style="
+    background-color: {{ section.settings.bg_color }};
+    padding-top: {{ section.settings.padding_vertical }}px;
+    padding-bottom: {{ section.settings.padding_vertical }}px;
+  "
+  role="region"
+  aria-label="Announcements"
+>
+
+  {% if count == 1 %}
+    {% comment %} ── SINGLE: static, no JS needed ── {% endcomment %}
+    {% assign ann = announcements.first %}
+    <p
+      class="c-announcement-bar__text"
+      style="color: {{ section.settings.text_color }};"
+    >
+      {{ ann.settings.text }}
+      {% if ann.settings.link != blank and ann.settings.link_text != blank %}
+        <a
+          href="{{ ann.settings.link }}"
+          class="c-announcement-bar__link"
+          style="color: {{ section.settings.text_color }};"
+        >
+          {{ ann.settings.link_text }}
+        </a>
+      {% endif %}
+    </p>
+
+  {% else %}
+    {% comment %} ── MULTIPLE: slider ── {% endcomment %}
+    <div
+      class="c-announcement-bar__slider"
+      data-speed="{{ section.settings.rotation_speed }}"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {% for block in announcements %}
+        <p
+          class="c-announcement-bar__slide{% if forloop.first %} is-active{% endif %}"
+          style="color: {{ section.settings.text_color }};"
+          aria-hidden="{% unless forloop.first %}true{% else %}false{% endunless %}"
+          {{ block.shopify_attributes }}
+        >
+          {{ block.settings.text }}
+          {% if block.settings.link != blank and block.settings.link_text != blank %}
+            <a
+              href="{{ block.settings.link }}"
+              class="c-announcement-bar__link"
+              style="color: {{ section.settings.text_color }};"
+            >
+              {{ block.settings.link_text }}
+            </a>
+          {% endif %}
+        </p>
+      {% endfor %}
+    </div>
+
+    {% comment %} ── Dots (only if more than 1) ── {% endcomment %}
+    {% if section.settings.show_dots %}
+      <div class="c-announcement-bar__dots" aria-hidden="true">
+        {% for block in announcements %}
+          <button
+            class="c-announcement-bar__dot{% if forloop.first %} is-active{% endif %}"
+            style="background-color: {{ section.settings.text_color }};"
+            aria-label="Announcement {{ forloop.index }}"
+          ></button>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  {% endif %}
+
+</div>
+
+{% endif %}
+
+{% comment %} ── STYLES ── {% endcomment %}
+<style>
+  .c-announcement-bar {
+    width: 100%;
+    text-align: center;
+    position: relative;
+    z-index: 200;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    overflow: hidden;
+  }
+
+  /* ── Single ── */
+  .c-announcement-bar__text {
+    margin: 0;
+    padding: 0 20px;
+  }
+
+  /* ── Slider wrapper ── */
+  .c-announcement-bar__slider {
+    position: relative;
+    width: 100%;
+    min-height: 1.4em;
+  }
+
+  /* ── Slides ── */
+  .c-announcement-bar__slide {
+    margin: 0;
+    padding: 0 20px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    pointer-events: none;
+  }
+
+  .c-announcement-bar__slide.is-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    position: relative;
+  }
+
+  /* ── Link ── */
+  .c-announcement-bar__link {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    transition: opacity 0.2s ease;
+  }
+
+  .c-announcement-bar__link:hover {
+    opacity: 0.7;
+  }
+
+  /* ── Dots ── */
+  .c-announcement-bar__dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .c-announcement-bar__dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0.35;
+    transition: opacity 0.3s ease;
+  }
+
+  .c-announcement-bar__dot.is-active {
+    opacity: 1;
+  }
+
+  /* ── Tablet ── */
+  @media screen and (max-width: 768px) {
+    .c-announcement-bar {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+    }
+  }
+
+  /* ── Mobile ── */
+  @media screen and (max-width: 480px) {
+    .c-announcement-bar {
+      font-size: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .c-announcement-bar__text,
+    .c-announcement-bar__slide {
+      padding: 0 12px;
+    }
+  }
+</style>
+{% if count > 1 %}
+<script>
+  (function () {
+    var bar     = document.querySelector('.c-announcement-bar__slider');
+    if (!bar) return;
+
+    var slides  = bar.querySelectorAll('.c-announcement-bar__slide');
+    var dots    = document.querySelectorAll('.c-announcement-bar__dot');
+    var speed   = parseInt(bar.dataset.speed, 10) || 4000;
+    var current = 0;
+    var timer   = null;
+
+    function goTo(index) {
+      slides[current].classList.remove('is-active');
+      slides[current].setAttribute('aria-hidden', 'true');
+      if (dots[current]) dots[current].classList.remove('is-active');
+      current = (index + slides.length) % slides.length;
+      slides[current].classList.add('is-active');
+      slides[current].setAttribute('aria-hidden', 'false');
+      if (dots[current]) dots[current].classList.add('is-active');
+    }
+
+    function next() { goTo(current + 1); }
+    function startTimer() { timer = setInterval(next, speed); }
+    function stopTimer() { clearInterval(timer); }
+
+    dots.forEach(function (dot, i) {
+      dot.addEventListener('click', function () {
+        stopTimer(); goTo(i); startTimer();
+      });
+    });
+
+    bar.addEventListener('mouseenter', stopTimer);
+    bar.addEventListener('mouseleave', startTimer);
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) { stopTimer(); } else { startTimer(); }
+    });
+
+    var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReduced) { startTimer(); }
+  })();
+</script>
+{% endif %}
+
+{%- comment -%} ── Bar height — HAMESHA chalti hai, single ya multiple dono ke liye ── {%- endcomment -%}
+<script>
+(function() {
+  function setBarHeight() {
+    var bar = document.querySelector('.c-announcement-bar-wrapper');
+    if (bar) {
+      var h = bar.getBoundingClientRect().height;
+      document.documentElement.style.setProperty('--announcement-bar-height', h + 'px');
+      document.body.classList.add('has-announcement-bar');
+    } else {
+      document.documentElement.style.setProperty('--announcement-bar-height', '0px');
+      document.body.classList.remove('has-announcement-bar');
+    }
+  }
+  setBarHeight();
+  window.addEventListener('resize', setBarHeight);
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Announcement Bar",
+  "tag": "div",
+  "class": "c-announcement-bar-wrapper",
+  "limit": 1,
+  "blocks": [
+    {
+      "type": "announcement",
+      "name": "Announcement",
+      "limit": 5,
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Announcement text",
+          "default": "Free shipping over $100. Shop now."
+        },
+        {
+          "type": "header",
+          "content": "Optional link"
+        },
+        {
+          "type": "text",
+          "id": "link_text",
+          "label": "Link text",
+          "info": "Leave blank to hide"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link URL"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_bar",
+      "label": "Show announcement bar",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Slider settings"
+    },
+    {
+      "type": "range",
+      "id": "rotation_speed",
+      "label": "Rotation speed",
+      "min": 2000,
+      "max": 8000,
+      "step": 500,
+      "unit": "ms",
+      "default": 4000,
+      "info": "How long each announcement shows (milliseconds). Only applies when multiple announcements are added."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_dots",
+      "label": "Show navigation dots",
+      "default": true,
+      "info": "Only visible when multiple announcements are added"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background color",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text & dots color",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_vertical",
+      "label": "Top & bottom padding",
+      "min": 6,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 10
+    }
+  ],
+  "presets": [
+    {
+      "name": "Announcement Bar",
+      "blocks": [
+        {
+          "type": "announcement",
+          "settings": {
+            "text": "Free shipping over $100. Shop now."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

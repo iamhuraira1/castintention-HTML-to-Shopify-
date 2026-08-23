@@ -1,0 +1,211 @@
+{% comment %}
+  CAST — PDP Definition Block
+  File: sections/c-pdp-definition.liquid
+
+  Features:
+  - 2 column: left = headline, right = body text
+  - All text editable in theme editor
+  - Same section reused on About page — consistent design
+  - Colors, padding desktop/tablet/mobile customizable
+  - Mobile: stacks to single column
+  - No JS needed
+{% endcomment %}
+
+<section
+  class="c-pdp-definition"
+  id="c-pdp-definition-{{ section.id }}"
+>
+
+  <div class="c-pdp-definition__left">
+    {% if section.settings.headline != blank %}
+      <h2 class="c-pdp-definition__headline">{{ section.settings.headline }}</h2>
+    {% endif %}
+  </div>
+
+  <div class="c-pdp-definition__right">
+    {% if section.settings.body_text != blank %}
+      <p class="c-pdp-definition__body">{{ section.settings.body_text }}</p>
+    {% endif %}
+  </div>
+
+</section>
+
+<style>
+  #c-pdp-definition-{{ section.id }} {
+    --def-bg:              {{ section.settings.bg_color }};
+    --def-headline-color:  {{ section.settings.headline_color }};
+    --def-body-color:      {{ section.settings.body_color }};
+    --def-gap:             {{ section.settings.col_gap }}px;
+    --def-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --def-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --def-padding-mobile:  {{ section.settings.padding_mobile }}px;
+  }
+
+  .c-pdp-definition {
+    padding: var(--def-padding-desktop) 80px;
+    background: var(--def-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1.5px solid rgba(0,0,0,0.14);
+    {% endif %}
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--def-gap);
+    align-items: center;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-pdp-definition__headline {
+    font-size: clamp(16px, 2vw, 22px);
+    font-weight: 300;
+    line-height: 1.45;
+    color: var(--def-headline-color);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-pdp-definition__body {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--def-body-color);
+    font-weight: 300;
+  }
+
+  /* Tablet */
+  @media screen and (max-width: 900px) {
+    .c-pdp-definition {
+      padding: var(--def-padding-tablet) 48px;
+      gap: 48px;
+    }
+  }
+
+  /* Mobile */
+  @media screen and (max-width: 640px) {
+    .c-pdp-definition {
+      padding: var(--def-padding-mobile) 24px;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "PDP — Definition Block",
+  "tag": "section",
+  "class": "c-pdp-definition-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Headline",
+      "default": "What is physiological wellness"
+    },
+    {
+      "type": "textarea",
+      "id": "body_text",
+      "label": "Body text",
+      "default": "Physiological wellness is the practice of helping your nervous system regulate itself throughout the day. Cast home and body care is designed to support this through olfactory, herbal, and structural inputs formulated for everyday use."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#EEEBE6"
+    },
+    {
+      "type": "color",
+      "id": "headline_color",
+      "label": "Headline color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "body_color",
+      "label": "Body text color",
+      "default": "#666666"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 200,
+      "step": 8,
+      "unit": "px",
+      "default": 136
+    },
+    {
+      "type": "range",
+      "id": "col_gap",
+      "label": "Column gap — Desktop",
+      "min": 24,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    }
+  ],
+  "presets": [
+    {
+      "name": "PDP — Definition Block",
+      "settings": {
+        "headline": "What is physiological wellness",
+        "body_text": "Physiological wellness is the practice of helping your nervous system regulate itself throughout the day. Cast home and body care is designed to support this through olfactory, herbal, and structural inputs formulated for everyday use.",
+        "show_border_top": true
+      }
+    }
+  ]
+}
+{% endschema %}

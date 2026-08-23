@@ -1,0 +1,623 @@
+{% comment %}
+  CAST — Category Intro / Definition Block
+  File: sections/c-category-intro.liquid
+
+  Features:
+  - 2 column layout: left text, right audio widget + CTA
+  - Audio widget: real HTML5 audio player with custom UI
+  - Play/pause toggle, progress bar, duration display
+  - All text, audio file, CTA fully editable in theme editor
+  - Hook text (italic) optional
+  - Separate padding controls for desktop/tablet/mobile
+  - Fully responsive: stacks on mobile
+  - Performance: vanilla JS, no libraries
+  - Accessible: aria labels, keyboard support
+{% endcomment %}
+
+<section
+  class="c-category-intro"
+  id="c-category-intro-{{ section.id }}"
+  style="background-color: {{ section.settings.bg_color }};"
+>
+
+  {%- comment -%} ── LEFT COLUMN ── {%- endcomment -%}
+  <div class="c-category-intro__left">
+
+    {% if section.settings.hook_text != blank %}
+      <p class="c-category-intro__hook">{{ section.settings.hook_text }}</p>
+    {% endif %}
+
+    {% if section.settings.headline != blank %}
+      <h2 class="c-category-intro__headline">{{ section.settings.headline }}</h2>
+    {% endif %}
+
+  </div>
+
+  {%- comment -%} ── RIGHT COLUMN ── {%- endcomment -%}
+  <div class="c-category-intro__right">
+
+    {%- comment -%} Audio Widget {%- endcomment -%}
+    {% if section.settings.audio_file != blank or section.settings.audio_url != blank %}
+      {% assign audio_src = section.settings.audio_url %}
+      {% if section.settings.audio_file != blank %}
+        {% assign audio_src = section.settings.audio_file %}
+      {% endif %}
+
+      <div
+        class="c-audio-widget"
+        id="c-audio-{{ section.id }}"
+        role="region"
+        aria-label="Audio player"
+      >
+        <audio
+          class="c-audio-widget__audio"
+          preload="metadata"
+          aria-label="{{ section.settings.audio_sublabel }}"
+        >
+          <source src="{{ audio_src }}" type="audio/mpeg">
+        </audio>
+
+        {%- comment -%} Play button {%- endcomment -%}
+        <button
+          class="c-audio-widget__play-btn"
+          aria-label="Play audio"
+          data-action="play"
+        >
+          <svg class="c-audio-widget__play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <polygon points="5,3 19,12 5,21"/>
+          </svg>
+          <svg class="c-audio-widget__pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none;">
+            <rect x="6" y="4" width="4" height="16"/>
+            <rect x="14" y="4" width="4" height="16"/>
+          </svg>
+        </button>
+
+        {%- comment -%} Text + progress {%- endcomment -%}
+        <div class="c-audio-widget__body">
+          {% if section.settings.audio_label != blank %}
+            <span class="c-audio-widget__label">{{ section.settings.audio_label }}</span>
+          {% endif %}
+          {% if section.settings.audio_sublabel != blank %}
+            <span class="c-audio-widget__sublabel">{{ section.settings.audio_sublabel }}</span>
+          {% endif %}
+          {% comment %} <div class="c-audio-widget__progress-wrap" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div class="c-audio-widget__progress-bar"></div>
+          </div> {% endcomment %}
+        </div>
+
+        {%- comment -%} Duration {%- endcomment -%}
+        <div class="c-audio-widget__duration" aria-live="polite">
+          <span class="c-audio-widget__time-current">0:00</span>
+          {% if section.settings.show_duration %}
+            <span class="c-audio-widget__time-sep"> / </span>
+           <span class="c-audio-widget__time-total">0:39</span>
+          {% endif %}
+        </div>
+
+      </div>
+    {% endif %}
+
+    {%- comment -%} CTA Button {%- endcomment -%}
+    {% if section.settings.cta_text != blank and section.settings.cta_link != blank %}
+      <a
+        href="{{ section.settings.cta_link }}"
+        class="c-category-intro__cta"
+      >
+        {{ section.settings.cta_text }}
+      </a>
+    {% endif %}
+
+  </div>
+
+</section>
+
+<style>
+  #c-category-intro-{{ section.id }} {
+    --cat-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --cat-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --cat-padding-mobile:  {{ section.settings.padding_mobile }}px;
+    --cat-gap-desktop:     {{ section.settings.gap_desktop }}px;
+    --cat-gap-mobile:      {{ section.settings.gap_mobile }}px;
+    --cat-border-top:      {{ section.settings.show_border_top | json }};
+  }
+
+  /* ── Section wrapper ── */
+  .c-category-intro {
+    padding: var(--cat-padding-desktop) 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--cat-gap-desktop);
+    align-items: center;
+    {% if section.settings.show_border_top %}
+    border-top: 1px solid rgba(0,0,0,0.08);
+    {% endif %}
+    font-family: 'Work Sans', sans-serif;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ── Left: Hook + Headline ── */
+  .c-category-intro__hook {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: clamp(18px, 2.2vw, 26px);
+    font-weight: 300;
+    color: {{ section.settings.text_color }};
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    margin-bottom: 28px;
+    font-style: italic;
+  }
+
+  .c-category-intro__headline {
+    font-size: clamp(22px, 2.8vw, 34px);
+    font-weight: 300;
+    line-height: 1.3;
+    color: {{ section.settings.text_color }};
+    letter-spacing: -0.01em;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* ── Right column ── */
+  .c-category-intro__right {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* ── Audio Widget ── */
+  .c-audio-widget {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    border: 1.5px solid rgba(0,0,0,0.14);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    margin-bottom: 32px;
+    background: {{ section.settings.bg_color }};
+  }
+
+  .c-audio-widget:hover {
+    border-color: #0B1F4C;
+    background: rgba(11,31,76,0.03);
+  }
+
+  /* Play/pause button */
+  .c-audio-widget__play-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background: {{ section.settings.audio_btn_color }};
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: {{ section.settings.bg_color }};
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .c-audio-widget__play-btn:hover { opacity: 0.8; }
+
+  /* Text area */
+  .c-audio-widget__body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .c-audio-widget__label {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: {{ section.settings.text_color }};
+    font-weight: 300;
+  }
+
+  .c-audio-widget__sublabel {
+    font-size: 12px;
+    color: #666666;
+    font-weight: 300;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Progress bar */
+  .c-audio-widget__progress-wrap {
+    width: 100%;
+    height: 2px;
+    background: rgba(0,0,0,0.1);
+    margin-top: 6px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .c-audio-widget__progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #0B1F4C;
+    transition: width 0.1s linear;
+    pointer-events: none;
+  }
+
+  /* Duration */
+  .c-audio-widget__duration {
+    font-size: 11px;
+    color: #666666;
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── CTA Button ── */
+  .c-category-intro__cta {
+    display: inline-block;
+    padding: 14px 36px;
+    background: transparent;
+    color: {{ section.settings.text_color }};
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid rgba(0,0,0,0.25);
+    transition: border-color 0.2s ease, background 0.2s ease;
+    width: fit-content;
+  }
+
+  .c-category-intro__cta:hover {
+    border-color: {{ section.settings.text_color }};
+    background: rgba(0,0,0,0.03);
+  }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 900px) {
+    .c-category-intro {
+      padding: var(--cat-padding-tablet) 48px;
+      gap: var(--cat-gap-mobile);
+    }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 640px) {
+    .c-category-intro {
+      padding: var(--cat-padding-mobile) 24px;
+      grid-template-columns: 1fr;
+      gap: var(--cat-gap-mobile);
+    }
+
+    .c-category-intro__left,
+    .c-category-intro__right {
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .c-audio-widget {
+      padding: 14px 16px;
+      gap: 12px;
+      width: 100%;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+
+    .c-audio-widget__body {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .c-audio-widget__sublabel {
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .c-audio-widget__duration {
+      flex-shrink: 0;
+      font-size: 10px;
+    }
+
+    .c-category-intro__cta {
+      width: 100%;
+      text-align: center;
+      box-sizing: border-box;
+    }
+  }
+</style>
+
+{%- comment -%} ── JAVASCRIPT: Audio player ── {%- endcomment -%}
+{% if section.settings.audio_file != blank or section.settings.audio_url != blank %}
+<script>
+(function () {
+  var widget    = document.getElementById('c-audio-{{ section.id }}');
+  if (!widget) return;
+
+  var audio     = widget.querySelector('.c-audio-widget__audio');
+  var playBtn   = widget.querySelector('.c-audio-widget__play-btn');
+  var playIcon  = widget.querySelector('.c-audio-widget__play-icon');
+  var pauseIcon = widget.querySelector('.c-audio-widget__pause-icon');
+  var progress  = widget.querySelector('.c-audio-widget__progress-wrap');
+  var bar       = widget.querySelector('.c-audio-widget__progress-bar');
+  var timeCur   = widget.querySelector('.c-audio-widget__time-current');
+  var timeTotal = widget.querySelector('.c-audio-widget__time-total');
+
+  function pad(n) { return n < 10 ? '0' + n : n; }
+
+  function formatTime(s) {
+    var m = Math.floor(s / 60);
+    var sec = Math.floor(s % 60);
+    return m + ':' + pad(sec);
+  }
+
+  // Set duration when metadata loads
+  audio.addEventListener('loadedmetadata', function () {
+    if (timeTotal) timeTotal.textContent = formatTime(audio.duration);
+  });
+
+  // Update progress + current time
+audio.addEventListener('timeupdate', function () {
+  if (!audio.duration) return;
+
+  var pct = (audio.currentTime / audio.duration) * 100;
+
+  if (bar) {
+    bar.style.width = pct + '%';
+  }
+
+  if (timeCur) {
+    timeCur.textContent = formatTime(audio.currentTime);
+  }
+
+  if (progress) {
+    progress.setAttribute('aria-valuenow', Math.round(pct));
+  }
+});
+
+  // Reset on end
+  audio.addEventListener('ended', function () {
+    playIcon.style.display  = '';
+    pauseIcon.style.display = 'none';
+    playBtn.setAttribute('aria-label', 'Play audio');
+   if (bar) {
+  bar.style.width = '0%';
+}
+    if (timeCur) timeCur.textContent = '0:00';
+    audio.currentTime = 0;
+  });
+
+  // Play / Pause toggle
+  function togglePlay() {
+    if (audio.paused) {
+      audio.play().then(function () {
+        playIcon.style.display  = 'none';
+        pauseIcon.style.display = '';
+        playBtn.setAttribute('aria-label', 'Pause audio');
+      }).catch(function (e) {
+        console.warn('Audio play error:', e);
+      });
+    } else {
+      audio.pause();
+      playIcon.style.display  = '';
+      pauseIcon.style.display = 'none';
+      playBtn.setAttribute('aria-label', 'Play audio');
+    }
+  }
+
+  playBtn.addEventListener('click', togglePlay);
+
+  // Click on progress bar to seek
+  if (progress) {
+    progress.addEventListener('click', function (e) {
+      if (!audio.duration) return;
+      var rect = progress.getBoundingClientRect();
+      var pct  = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = pct * audio.duration;
+    });
+  }
+
+  // Pause when tab hidden
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && !audio.paused) audio.pause();
+  });
+
+})();
+</script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Category Intro",
+  "tag": "section",
+  "class": "c-category-intro-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Left column — Text"
+    },
+    {
+      "type": "textarea",
+      "id": "hook_text",
+      "label": "Hook text (italic)",
+      "default": "You're ready for bed, but you're too wired to sleep.",
+      "info": "Italic intro line. Leave blank to hide."
+    },
+    {
+      "type": "textarea",
+      "id": "headline",
+      "label": "Headline",
+      "default": "Physiological wellness is the practice of helping your nervous system regulate itself throughout the day."
+    },
+    {
+      "type": "header",
+      "content": "Right column — Audio widget"
+    },
+    {
+      "type": "text",
+      "id": "audio_label",
+      "label": "Audio label",
+      "default": "Listen",
+      "info": "Small uppercase label e.g. 'Listen'"
+    },
+    {
+      "type": "text",
+      "id": "audio_sublabel",
+      "label": "Audio sublabel",
+      "default": "The science behind why you can't switch off"
+    },
+    {
+      "type": "text",
+      "id": "audio_file",
+      "label": "Audio file URL",
+      "info": "Upload MP3 to Shopify Files (Content > Files), paste the URL here."
+    },
+    {
+      "type": "text",
+      "id": "audio_url",
+      "label": "External audio URL",
+      "info": "Fallback: paste a direct MP3 URL (e.g. from Buzzsprout, Libsyn, etc.)"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_duration",
+      "label": "Show total duration",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Right column — CTA button"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "default": "About Cast"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background color",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "audio_btn_color",
+      "label": "Audio play button color",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 120
+    },
+    {
+      "type": "range",
+      "id": "gap_desktop",
+      "label": "Column gap — Desktop",
+      "min": 24,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "gap_mobile",
+      "label": "Column gap — Mobile",
+      "min": 24,
+      "max": 64,
+      "step": 8,
+      "unit": "px",
+      "default": 40
+    }
+  ],
+  "presets": [
+    {
+      "name": "Category Intro",
+      "settings": {
+        "hook_text": "You're ready for bed, but you're too wired to sleep.",
+        "headline": "Physiological wellness is the practice of helping your nervous system regulate itself throughout the day.",
+        "audio_label": "Listen",
+        "audio_sublabel": "The science behind why you can't switch off",
+        "cta_text": "About Cast",
+        "show_duration": true,
+        "show_border_top": true
+      }
+    }
+  ]
+}
+{% endschema %}

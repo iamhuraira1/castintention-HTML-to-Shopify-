@@ -1,0 +1,899 @@
+{% comment %}
+  CAST — Hero Video Section
+  File: sections/c-hero-video.liquid
+
+  Features:
+  - Background: Shopify-hosted video OR YouTube/Vimeo OR image
+  - Separate layout controls for desktop / tablet / mobile
+  - Overlay gradient opacity controllable
+  - Eyebrow, headline, subtext, CTA — all editable
+  - Fade-up animation on load
+  - Video: autoplay, muted, loop, playsinline (mobile safe)
+  - Performance: eager image, video pause on hidden tab
+  - Accessible: reduced motion respected
+
+  FIX (2026-08 #11): Nicole reported the headline text landing over the
+  model's face in the hero video. Root cause: the "Image focal point"
+  controls (Desktop/Tablet/Mobile) only ever applied to `.c-hero__video`
+  is fixed at `object-position: center` regardless of that setting — so
+  there was no way to nudge the video's framing to move the subject away
+  from the text without editing code. Fixed by applying the same focal-
+  point CSS variables to the video element (base + tablet + mobile
+  breakpoints), and renamed the setting from "Image focal point" to
+  "Background focal point" since it now affects video too. Nicole can
+  now fix this herself from the theme editor: Section settings > Desktop
+  settings > Background focal point > try "Top" or "Right" etc. until
+  the face and headline no longer overlap.
+{% endcomment %}
+
+<section
+  class="c-hero{% if section.settings.shopify_video == blank and section.settings.external_video == blank and section.settings.bg_image == blank %} c-hero--gradient-only{% endif %}"
+  id="c-hero-{{ section.id }}"
+  data-text-align="{{ section.settings.text_align }}"
+>
+  {%- comment -%} ── BACKGROUND ── {%- endcomment -%}
+  <div class="c-hero__bg">
+
+    {%- comment -%}
+      DESKTOP background (hidden on mobile)
+      Priority: Shopify video > External video > Image > Gradient
+    {%- endcomment -%}
+   <div class="c-hero__bg-desktop" data-hero-bg="desktop">
+    <template data-hero-media="desktop">
+      {% if section.settings.shopify_video != blank %}
+        {{
+          section.settings.shopify_video
+          | video_tag:
+            image_size: '1800x',
+            autoplay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            preload: 'metadata',
+            class: 'c-hero__video',
+            aria-hidden: 'true'
+        }}
+      {% elsif section.settings.external_video != blank %}
+        <div class="c-hero__video c-hero__video--external">
+          {{
+            section.settings.external_video
+            | external_video_tag:
+              class: 'c-hero__video-iframe',
+              autoplay: true,
+              loop: true,
+              muted: true,
+              playsinline: true
+          }}
+        </div>
+      {% elsif section.settings.bg_image != blank %}
+        {{
+          section.settings.bg_image
+          | image_url: width: 1800
+          | image_tag:
+            class: 'c-hero__image',
+            alt: section.settings.headline,
+            loading: 'eager',
+            fetchpriority: 'high'
+        }}
+      {% else %}
+        <div class="c-hero__gradient-fallback"></div>
+      {% endif %}
+        </template>
+    </div>
+
+    {%- comment -%}
+      MOBILE background (hidden on desktop)
+      Falls back to desktop media if no mobile-specific media set
+    {%- endcomment -%}
+   <div class="c-hero__bg-mobile" data-hero-bg="mobile">
+    <template data-hero-media="mobile">
+      {% if section.settings.shopify_video_mobile != blank %}
+        {{
+          section.settings.shopify_video_mobile
+          | video_tag:
+            image_size: '800x',
+            autoplay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            class: 'c-hero__video',
+            aria-hidden: 'true'
+        }}
+      {% elsif section.settings.bg_image_mobile != blank %}
+        {{
+          section.settings.bg_image_mobile
+          | image_url: width: 800
+          | image_tag:
+            class: 'c-hero__image',
+            alt: section.settings.headline,
+            loading: 'eager',
+            fetchpriority: 'high'
+        }}
+      {% elsif section.settings.shopify_video != blank %}
+        {%- comment -%} Fallback to desktop video if no mobile video {%- endcomment -%}
+        {{
+          section.settings.shopify_video
+          | video_tag:
+            image_size: '800x',
+            autoplay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            class: 'c-hero__video',
+            preload: 'metadata',
+            aria-hidden: 'true'
+        }}
+      {% elsif section.settings.external_video != blank %}
+        <div class="c-hero__video c-hero__video--external">
+          {{
+            section.settings.external_video
+            | external_video_tag:
+              class: 'c-hero__video-iframe',
+              autoplay: true,
+              loop: true,
+              muted: true,
+              playsinline: true
+          }}
+        </div>
+      {% elsif section.settings.bg_image != blank %}
+        {{
+          section.settings.bg_image
+          | image_url: width: 800
+          | image_tag:
+            class: 'c-hero__image',
+            alt: section.settings.headline,
+            loading: 'eager',
+            fetchpriority: 'high'
+        }}
+      {% else %}
+        <div class="c-hero__gradient-fallback"></div>
+      {% endif %}
+      </template>
+    </div>
+
+  </div>
+
+  {%- comment -%} ── OVERLAY ── {%- endcomment -%}
+  <div class="c-hero__overlay"></div>
+
+  {%- comment -%}
+    FIX (2026-08 #11 follow-up): the video's subject moves during
+    playback (reading, then reaching for the lamp, etc.), so no single
+    focal-point crop keeps her clear of the text for the whole loop.
+    This scrim is a dedicated dark patch anchored behind the text block
+    specifically — it stays put regardless of what's happening in the
+    video underneath, so the headline stays readable at every frame.
+  {%- endcomment -%}
+  <div class="c-hero__text-scrim"></div>
+
+  {%- comment -%} ── CONTENT ── {%- endcomment -%}
+  <div class="c-hero__content">
+
+    {% if section.settings.eyebrow != blank %}
+      <p class="c-hero__eyebrow">{{ section.settings.eyebrow }}</p>
+    {% endif %}
+
+    {% if section.settings.headline != blank %}
+      <h1 class="c-hero__headline">{{ section.settings.headline }}</h1>
+    {% endif %}
+
+    {% if section.settings.subtext != blank %}
+      <p class="c-hero__subtext">{{ section.settings.subtext }}</p>
+    {% endif %}
+
+    {% if section.settings.cta_text != blank and section.settings.cta_link != blank %}
+      <a href="{{ section.settings.cta_link }}" class="c-hero__cta">
+        {{ section.settings.cta_text }}
+      </a>
+    {% endif %}
+
+  </div>
+</section>
+
+<style>
+  #c-hero-{{ section.id }} {
+    --hero-overlay-opacity-desktop: {{ section.settings.overlay_opacity_desktop | divided_by: 100.0 }};
+    --hero-overlay-opacity-tablet:  {{ section.settings.overlay_opacity_tablet  | divided_by: 100.0 }};
+    --hero-overlay-opacity-mobile:  {{ section.settings.overlay_opacity_mobile  | divided_by: 100.0 }};
+    --hero-min-height-desktop: {{ section.settings.min_height_desktop }}px;
+    --hero-min-height-tablet:  {{ section.settings.min_height_tablet }}px;
+    --hero-min-height-mobile:  {{ section.settings.min_height_mobile }}px;
+    --hero-content-align: {{ section.settings.content_align }};
+    --hero-text-align: {{ section.settings.text_align }};
+    --hero-image-position-desktop: {{ section.settings.image_position_desktop }};
+    --hero-image-position-tablet:  {{ section.settings.image_position_tablet }};
+    --hero-image-position-mobile:  {{ section.settings.image_position_mobile }};
+    --hero-scrim-opacity: {{ section.settings.text_scrim_opacity | divided_by: 100.0 }};
+    --hero-zoom-desktop: {{ section.settings.zoom_desktop | divided_by: 100.0 }};
+    --hero-zoom-tablet:  {{ section.settings.zoom_tablet  | divided_by: 100.0 }};
+    --hero-zoom-mobile:  {{ section.settings.zoom_mobile  | divided_by: 100.0 }};
+  }
+
+  /* ── Base ── */
+  .c-hero {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    min-height: var(--hero-min-height-desktop);
+    overflow: hidden;
+    display: flex;
+    align-items: var(--hero-content-align);
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-hero__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── Desktop bg shown, mobile bg hidden by default ── */
+  .c-hero__bg-desktop {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .c-hero__bg-mobile {
+    position: absolute;
+    inset: 0;
+    display: none;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── On mobile: swap ── */
+  @media screen and (max-width: 640px) {
+    .c-hero__bg-desktop { display: none; }
+    .c-hero__bg-mobile  { display: block; }
+  }
+
+  /* ── Video (Shopify hosted) ──
+     FIX #11: object-position now follows the same focal-point variable
+     as the image, instead of being hardcoded to "center".
+     FIX #11 follow-up #2: plain object-position had almost no visible
+     range to work with (the source barely overflows the container at
+     100% scale), so panning alone couldn't move the subject clear of
+     the text. Added a "Zoom" control (transform: scale) so there's
+     actual room to push the subject out of the text's footprint — pan
+     (focal point) and zoom now work together like a crop tool. */
+  .c-hero__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: var(--hero-image-position-desktop);
+    transform: scale(var(--hero-zoom-desktop));
+    transform-origin: var(--hero-image-position-desktop);
+    display: block;
+  }
+
+  /* ── External video (YouTube/Vimeo) ── */
+  .c-hero__video--external {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .c-hero__video-iframe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 177.78vh; /* 16:9 */
+    height: 100vh;
+    min-width: 100%;
+    min-height: 56.25vw;
+    transform: translate(-50%, -50%);
+    border: none;
+    pointer-events: none;
+  }
+
+  /* ── Image ── */
+  .c-hero__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: var(--hero-image-position-desktop);
+    transform: scale(var(--hero-zoom-desktop));
+    transform-origin: var(--hero-image-position-desktop);
+    display: block;
+  }
+
+  /* ── Gradient fallback ── */
+  .c-hero__gradient-fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1208 0%, #2a1a08 35%, #0d1a2e 70%, #05102a 100%);
+  }
+
+  .c-hero__gradient-fallback::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 65% 38%, rgba(139,82,19,0.38) 0%, transparent 58%),
+      radial-gradient(ellipse at 25% 72%, rgba(11,31,76,0.55) 0%, transparent 52%);
+    animation: c-hero-bgshift 9s ease-in-out infinite alternate;
+  }
+
+  @keyframes c-hero-bgshift {
+    from { opacity: 0.75; transform: scale(1); }
+    to   { opacity: 1;    transform: scale(1.05); }
+  }
+
+  /* ── Overlay ── */
+  .c-hero__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      to top,
+      rgba(0,0,0,0.68) 0%,
+      rgba(0,0,0,0.18) 55%,
+      rgba(0,0,0,0.04) 100%
+    );
+    opacity: var(--hero-overlay-opacity-desktop);
+  }
+
+  /* No overlay when only gradient showing — let radial glows breathe */
+  .c-hero--gradient-only .c-hero__overlay {
+    opacity: 0 !important;
+  }
+
+  /* ── Text scrim ──
+     FIX #11 follow-up: dedicated darkening anchored where the text
+     sits (bottom-left by default), independent of the global overlay
+     above. Keeps the headline legible even as the video's subject
+     moves through that area during playback. Sized generously so it
+     still covers the text block if content_align/text_align change. */
+  .c-hero__text-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: var(--hero-scrim-opacity);
+    background: radial-gradient(
+      ellipse 760px 620px at 22% 82%,
+      rgba(0,0,0,0.62) 0%,
+      rgba(0,0,0,0.32) 45%,
+      rgba(0,0,0,0) 78%
+    );
+    pointer-events: none;
+    transition: background 0.2s ease;
+  }
+
+  .c-hero--gradient-only .c-hero__text-scrim {
+    opacity: 0 !important;
+  }
+
+  /* Text alignment: center → scrim follows to center */
+  #c-hero-{{ section.id }}[data-text-align="center"] .c-hero__text-scrim {
+    background: radial-gradient(
+      ellipse 780px 620px at 50% 82%,
+      rgba(0,0,0,0.62) 0%,
+      rgba(0,0,0,0.32) 45%,
+      rgba(0,0,0,0) 78%
+    );
+  }
+
+  /* ── Content ── */
+  .c-hero__content {
+    position: relative;
+    z-index: 2;
+    padding: 0 80px 88px;
+    max-width: 750px;
+    width: 100%;
+    text-align: var(--hero-text-align);
+  }
+
+  /* ── Eyebrow ── */
+  .c-hero__eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(249,248,246,0.55);
+    margin-bottom: 24px;
+    font-weight: 300;
+    opacity: 0;
+    animation: c-hero-fadeUp 0.85s ease 0.2s forwards;
+  }
+
+  /* ── Headline ── */
+  .c-hero__headline {
+    font-size: clamp(38px, 5.5vw, 68px);
+    font-weight: 300;
+    line-height: 1.08;
+    color: rgba(249,248,246,0.88);
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+    font-family: 'Work Sans', sans-serif;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+    opacity: 0;
+    animation: c-hero-fadeUp 0.85s ease 0.42s forwards;
+  }
+
+  /* ── Subtext ── */
+  .c-hero__subtext {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: rgba(249,248,246,0.55);
+    margin-bottom: 44px;
+    max-width: 420px;
+    font-weight: 300;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.4);
+    opacity: 0;
+    animation: c-hero-fadeUp 0.85s ease 0.62s forwards;
+  }
+
+  /* ── CTA ── */
+  .c-hero__cta {
+    display: inline-block;
+    padding: 16px 40px;
+    background: #F9F8F6;
+    color: #000000;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    opacity: 0;
+    animation: c-hero-fadeUp 0.85s ease 0.82s forwards;
+  }
+
+  .c-hero__cta:hover { opacity: 0.82; }
+
+  /* ── Fade up ── */
+  @keyframes c-hero-fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .c-hero__eyebrow,
+    .c-hero__headline,
+    .c-hero__subtext,
+    .c-hero__cta {
+      animation: none;
+      opacity: 1;
+    }
+    .c-hero__gradient-fallback::before { animation: none; }
+  }
+
+  /* ── TABLET (max 900px) ── */
+  @media screen and (max-width: 900px) {
+    .c-hero {
+      min-height: var(--hero-min-height-tablet);
+    }
+
+    .c-hero__overlay {
+      opacity: var(--hero-overlay-opacity-tablet);
+    }
+
+    .c-hero__image,
+    .c-hero__video {
+      object-position: var(--hero-image-position-tablet);
+      transform: scale(var(--hero-zoom-tablet));
+      transform-origin: var(--hero-image-position-tablet);
+    }
+
+    .c-hero__content {
+      padding: 0 48px 64px;
+      max-width: 560px;
+    }
+
+    .c-hero__headline {
+      font-size: clamp(32px, 5vw, 52px);
+    }
+  }
+
+  /* ── MOBILE (max 640px) ── */
+  @media screen and (max-width: 640px) {
+    .c-hero {
+      height: 100svh;
+      min-height: var(--hero-min-height-mobile);
+    }
+
+    .c-hero__overlay {
+      opacity: var(--hero-overlay-opacity-mobile);
+    }
+
+    .c-hero__image,
+    .c-hero__video {
+      object-position: var(--hero-image-position-mobile);
+      transform: scale(var(--hero-zoom-mobile));
+      transform-origin: var(--hero-image-position-mobile);
+    }
+
+    .c-hero__content {
+      padding: 0 24px 56px;
+      max-width: 100%;
+    }
+
+    .c-hero__headline {
+      font-size: clamp(30px, 8vw, 44px);
+      margin-bottom: 16px;
+    }
+
+    .c-hero__subtext {
+      font-size: 15px;
+      margin-bottom: 32px;
+      max-width: 100%;
+    }
+
+    .c-hero__cta {
+      padding: 14px 32px;
+      font-size: 10px;
+    }
+  }
+  #MainContent {
+  padding-top: 0px !important;
+}
+</style>
+<script>
+(function () {
+  var isMobile = window.matchMedia('(max-width: 640px)').matches;
+  var activeDevice = isMobile ? 'mobile' : 'desktop';
+  var inactiveDevice = isMobile ? 'desktop' : 'mobile';
+
+  // Pehle inactive wala template hata do (agar kabhi accidentally render ho jaye)
+  var inactiveTemplate = document.querySelector(
+    '#c-hero-{{ section.id }} template[data-hero-media="' + inactiveDevice + '"]'
+  );
+  if (inactiveTemplate) inactiveTemplate.remove();
+
+  var activeTemplate = document.querySelector(
+    '#c-hero-{{ section.id }} template[data-hero-media="' + activeDevice + '"]'
+  );
+  if (!activeTemplate) return;
+
+  var container = activeTemplate.parentElement;
+  container.appendChild(activeTemplate.content.cloneNode(true));
+  activeTemplate.remove();
+})();
+</script>
+{% if section.settings.shopify_video != blank or section.settings.shopify_video_mobile != blank %}
+<script>
+ (function () {
+    var videos = document.querySelectorAll('#c-hero-{{ section.id }} .c-hero__video');
+    if (!videos.length) return;
+
+    videos.forEach(function(video) {
+      // Reduced motion: pause karo
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        video.pause();
+        return;
+      }
+
+      // Buffering fix: jab readyState kam ho to reload karo
+      video.addEventListener('stalled', function () {
+        video.load();
+        video.play().catch(function(){});
+      });
+
+      video.addEventListener('waiting', function () {
+        // 2 second wait ke baad reload
+        var t = setTimeout(function () {
+          if (video.readyState < 3) {
+            video.load();
+            video.play().catch(function(){});
+          }
+        }, 2000);
+        video.addEventListener('playing', function () { clearTimeout(t); }, { once: true });
+      });
+
+      // Tab hidden pe sirf pause, wapis aane pe smooth play
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+          video.pause();
+        } else {
+          // Delay de ke browser settle karne do
+          setTimeout(function () {
+            video.play().catch(function(){});
+          }, 300);
+        }
+      });
+    });
+  })();
+</script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Hero Video",
+  "tag": "section",
+  "class": "c-hero-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Background — Video"
+    },
+    {
+      "type": "video",
+      "id": "shopify_video",
+      "label": "Shopify-hosted video",
+      "info": "Upload MP4 via Content > Files, then select here. Takes priority over external video."
+    },
+    {
+      "type": "video_url",
+      "id": "external_video",
+      "label": "YouTube or Vimeo URL",
+      "accept": ["youtube", "vimeo"],
+      "info": "Used if no Shopify video is selected above."
+    },
+    {
+      "type": "header",
+      "content": "Background — Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "bg_image",
+      "label": "Background image",
+      "info": "Used when no video is selected. Min 1800px wide recommended."
+    },
+    {
+      "type": "header",
+      "content": "Background — Mobile specific"
+    },
+    {
+      "type": "paragraph",
+      "content": "Upload portrait-format media for mobile (9:16 ratio recommended). If left empty, desktop media is used as fallback."
+    },
+    {
+      "type": "video",
+      "id": "shopify_video_mobile",
+      "label": "Mobile video (portrait)",
+      "info": "Upload portrait MP4 via Content > Files. Shown only on mobile."
+    },
+    {
+      "type": "image_picker",
+      "id": "bg_image_mobile",
+      "label": "Mobile background image (portrait)",
+      "info": "Shown only on mobile. 9:16 ratio recommended (e.g. 800x1422px)."
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow text",
+      "info": "Small label above headline. Leave blank to hide."
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Headline",
+      "default": "Balance when your body needs it."
+    },
+    {
+      "type": "textarea",
+      "id": "subtext",
+      "label": "Subtext",
+      "default": "Plant chemistry designed to support your nervous system throughout the day."
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "default": "Shop Sleep Spray"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link"
+    },
+    {
+      "type": "select",
+      "id": "content_align",
+      "label": "Content vertical position",
+      "options": [
+        { "value": "flex-end",  "label": "Bottom" },
+        { "value": "center",    "label": "Center" },
+        { "value": "flex-start","label": "Top" }
+      ],
+      "default": "flex-end"
+    },
+    {
+      "type": "select",
+      "id": "text_align",
+      "label": "Text alignment",
+      "options": [
+        { "value": "left",   "label": "Left" },
+        { "value": "center", "label": "Center" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "range",
+      "id": "text_scrim_opacity",
+      "label": "Darken behind text",
+      "info": "Extra darkening anchored behind the headline/subtext only — keeps text readable even as the video's subject moves through that area. Increase if text is ever hard to read against a busy frame.",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 70
+    },
+    {
+      "type": "header",
+      "content": "Desktop settings"
+    },
+    {
+      "type": "range",
+      "id": "min_height_desktop",
+      "label": "Min height — Desktop",
+      "min": 400,
+      "max": 900,
+      "step": 20,
+      "unit": "px",
+      "default": 620
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity_desktop",
+      "label": "Overlay darkness — Desktop",
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "select",
+      "id": "image_position_desktop",
+      "label": "Background focal point — Desktop",
+      "info": "Applies to both video and image backgrounds. Also acts as the zoom anchor below.",
+      "options": [
+        { "value": "top center",    "label": "Top" },
+        { "value": "center",        "label": "Center" },
+        { "value": "bottom center", "label": "Bottom" },
+        { "value": "center left",   "label": "Left" },
+        { "value": "center right",  "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "zoom_desktop",
+      "label": "Zoom — Desktop",
+      "info": "Zooms the background in, anchored to the focal point above. Use this together with the focal point to crop the subject clear of the headline text — panning alone often isn't enough room.",
+      "min": 100,
+      "max": 200,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "Tablet settings"
+    },
+    {
+      "type": "range",
+      "id": "min_height_tablet",
+      "label": "Min height — Tablet",
+      "min": 400,
+      "max": 900,
+      "step": 20,
+      "unit": "px",
+      "default": 600
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity_tablet",
+      "label": "Overlay darkness — Tablet",
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "unit": "%",
+      "default": 55
+    },
+    {
+      "type": "select",
+      "id": "image_position_tablet",
+      "label": "Background focal point — Tablet",
+      "info": "Applies to both video and image backgrounds. Also acts as the zoom anchor below.",
+      "options": [
+        { "value": "top center",    "label": "Top" },
+        { "value": "center",        "label": "Center" },
+        { "value": "bottom center", "label": "Bottom" },
+        { "value": "center left",   "label": "Left" },
+        { "value": "center right",  "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "zoom_tablet",
+      "label": "Zoom — Tablet",
+      "info": "Zooms the background in, anchored to the focal point above.",
+      "min": 100,
+      "max": 200,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "Mobile settings"
+    },
+    {
+      "type": "range",
+      "id": "min_height_mobile",
+      "label": "Min height — Mobile",
+      "min": 300,
+      "max": 800,
+      "step": 20,
+      "unit": "px",
+      "default": 560
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity_mobile",
+      "label": "Overlay darkness — Mobile",
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "unit": "%",
+      "default": 60
+    },
+    {
+      "type": "select",
+      "id": "image_position_mobile",
+      "label": "Background focal point — Mobile",
+      "info": "Applies to both video and image backgrounds. Also acts as the zoom anchor below.",
+      "options": [
+        { "value": "top center",    "label": "Top" },
+        { "value": "center",        "label": "Center" },
+        { "value": "bottom center", "label": "Bottom" },
+        { "value": "center left",   "label": "Left" },
+        { "value": "center right",  "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "zoom_mobile",
+      "label": "Zoom — Mobile",
+      "info": "Zooms the background in, anchored to the focal point above.",
+      "min": 100,
+      "max": 200,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero Video",
+      "settings": {
+        "headline": "Balance when your body needs it.",
+        "subtext": "Plant chemistry designed to support your nervous system throughout the day.",
+        "cta_text": "Shop Sleep Spray",
+        "overlay_opacity_desktop": 50,
+        "overlay_opacity_tablet": 55,
+        "overlay_opacity_mobile": 60,
+        "min_height_desktop": 620,
+        "min_height_tablet": 600,
+        "min_height_mobile": 560
+      }
+    }
+  ]
+}
+{% endschema %}

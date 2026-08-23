@@ -1,0 +1,846 @@
+{% comment %}
+  CAST — PDP Related Collection
+  File: sections/c-pdp-related-collection.liquid
+
+  Logic:
+  1. Agar manual blocks hain → woh dikhao (override)
+  2. Agar blocks nahi → Shopify recommendations API use karo
+  3. Agar recommendations bhi nahi → same collection ke products dikhao (current product exclude)
+
+  Quick Add: shopping bag icon on image, adds to cart via AJAX, shows confirmation toast,
+  updates the header cart badge in real time. Skipped for "the-trio" (Coming Soon, not purchasable).
+{% endcomment %}
+
+{% assign has_manual = false %}
+{% if section.blocks.size > 0 %}
+  {% for block in section.blocks %}
+    {% if block.type == 'product_card' and block.settings.product != blank %}
+      {% assign has_manual = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+<section
+  class="c-pdp-related"
+  id="c-pdp-related-{{ section.id }}"
+  data-product-id="{{ product.id }}"
+  data-section-id="{{ section.id }}"
+  data-has-manual="{{ has_manual }}"
+>
+
+  <div class="c-pdp-related__header">
+    {% if section.settings.section_label != blank %}
+      <p class="c-pdp-related__label">{{ section.settings.section_label }}</p>
+    {% endif %}
+    {% if section.settings.section_title != blank %}
+      <h2 class="c-pdp-related__title">{{ section.settings.section_title }}</h2>
+    {% endif %}
+  </div>
+
+  <div class="c-pdp-related__grid" id="c-pdp-related-grid-{{ section.id }}">
+
+    {% if has_manual %}
+      {%- comment -%} MANUAL BLOCKS — editor mein set kiye hue products {%- endcomment -%}
+      {% for block in section.blocks %}
+        {% if block.type == 'product_card' %}
+          {% assign related_product = block.settings.product %}
+          {% if related_product != blank %}
+            {% assign quick_add_variant = related_product.selected_or_first_available_variant %}
+            <div class="c-pdp-related__card" {{ block.shopify_attributes }}>
+            <div class="c-pdp-related__image-wrap">
+            {% if related_product.handle == 'the-trio' %}
+  <a href="{{ related_product.url }}" class="c-pdp-related__image-link" aria-label="{{ related_product.title }}" tabindex="-1">
+    <div class="c-pdp-related__image-area">
+      {% if related_product.featured_image != blank %}
+        <img
+          src="{{ related_product.featured_image | image_url: width: 800 }}"
+          alt="{{ related_product.featured_image.alt | default: related_product.title | escape }}"
+          width="{{ related_product.featured_image.width }}"
+          height="{{ related_product.featured_image.height }}"
+          loading="lazy"
+          class="c-pdp-related__image"
+        >
+      {% else %}
+        <div class="c-pdp-related__image-placeholder">
+          {{ 'product-1' | placeholder_svg_tag: 'c-pdp-related__placeholder-svg' }}
+        </div>
+      {% endif %}
+    </div>
+</a>
+{% else %}
+  <a href="{{ related_product.url }}" class="c-pdp-related__image-link" aria-label="{{ related_product.title }}" tabindex="-1">
+    <div class="c-pdp-related__image-area">
+      {% if related_product.featured_image != blank %}
+        <img
+          src="{{ related_product.featured_image | image_url: width: 800 }}"
+          alt="{{ related_product.featured_image.alt | default: related_product.title | escape }}"
+          width="{{ related_product.featured_image.width }}"
+          height="{{ related_product.featured_image.height }}"
+          loading="lazy"
+          class="c-pdp-related__image"
+        >
+      {% else %}
+        <div class="c-pdp-related__image-placeholder">
+          {{ 'product-1' | placeholder_svg_tag: 'c-pdp-related__placeholder-svg' }}
+        </div>
+      {% endif %}
+    </div>
+  </a>
+{% endif %}
+
+              {%- comment -%} Quick add to cart icon {%- endcomment -%}
+              {% if section.settings.enable_quick_add and quick_add_variant != blank and related_product.handle != 'the-trio' %}
+                <button
+                  type="button"
+                  class="c-pdp-related__quick-add"
+                  data-quick-add-button
+                  data-variant-id="{{ quick_add_variant.id }}"
+                  data-product-title="{{ related_product.title | escape }}"
+                  aria-label="Add {{ related_product.title | escape }} to cart"
+                >
+                  {% if section.settings.quick_add_icon != blank %}
+                    {{
+                      section.settings.quick_add_icon
+                      | image_url: width: 64
+                      | image_tag:
+                        class: 'c-pdp-related__quick-add-icon c-pdp-related__quick-add-icon--custom',
+                        alt: '',
+                        loading: 'lazy',
+                        widths: '32,48,64'
+                    }}
+                  {% else %}
+                    <svg class="c-pdp-related__quick-add-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M6 8H18L17.2 19.5C17.14 20.33 16.44 21 15.6 21H8.4C7.56 21 6.86 20.33 6.8 19.5L6 8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                      <path d="M9 8V6C9 4.34315 10.3431 3 12 3C13.6569 3 15 4.34315 15 6V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  {% endif %}
+                  <svg class="c-pdp-related__quick-add-spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="40" stroke-dashoffset="10"/>
+                  </svg>
+                </button>
+              {% endif %}
+            </div>
+
+              <div class="c-pdp-related__info">
+                {% assign use_state = block.settings.use_state %}
+                {% if use_state == blank %}{% assign use_state = related_product.type %}{% endif %}
+                {% if use_state != blank %}<span class="c-pdp-related__use">{{ use_state }}</span>{% endif %}
+               <h3 class="c-pdp-related__name">
+ {% if related_product.handle == 'the-trio' %}
+  <a href="{{ related_product.url }}" class="c-pdp-related__name-link">
+    {{ related_product.title }}
+  </a>
+  {% else %}
+    <a href="{{ related_product.url }}" class="c-pdp-related__name-link">
+      {{ related_product.title }}
+    </a>
+  {% endif %}
+</h3>
+                <p class="c-pdp-related__price">
+  {{ related_product.price | money_without_trailing_zeros }}
+  {% if block.settings.size_label != blank %}
+    <span class="c-pdp-related__size"> | {{ block.settings.size_label }}</span>
+  {% endif %}
+</p>
+                {% assign cta = block.settings.cta_text %}
+                {% if cta == blank %}{% assign cta = 'Shop ' | append: related_product.title %}{% endif %}
+                {% if related_product.handle == 'the-trio' %}
+  <a href="{{ related_product.url }}" class="c-pdp-related__cta">
+    Coming Soon
+  </a>
+{% else %}
+  <a href="{{ related_product.url }}" class="c-pdp-related__cta">
+    {{ cta }}
+  </a>
+{% endif %}
+              </div>
+            </div>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+
+   {% else %}
+
+  {% assign related_products = product.metafields.shopify--discovery--product_recommendation.related_products.value %}
+
+  {% if related_products != blank %}
+
+    {% for col_product in related_products %}
+
+      {% assign quick_add_variant = col_product.selected_or_first_available_variant %}
+
+      <div class="c-pdp-related__card">
+
+      <div class="c-pdp-related__image-wrap">
+{% if col_product.handle == 'the-trio' %}
+<a href="{{ col_product.url }}" class="c-pdp-related__image-link" aria-label="{{ col_product.title }}" tabindex="-1">
+  <div class="c-pdp-related__image-area">
+    {% if col_product.featured_image != blank %}
+      <img
+        src="{{ col_product.featured_image | image_url: width: 800 }}"
+        alt="{{ col_product.featured_image.alt | default: col_product.title | escape }}"
+        width="{{ col_product.featured_image.width }}"
+        height="{{ col_product.featured_image.height }}"
+        loading="lazy"
+        class="c-pdp-related__image"
+      >
+    {% endif %}
+  </div>
+</a>
+{% else %}
+<a href="{{ col_product.url }}" class="c-pdp-related__image-link" aria-label="{{ col_product.title }}" tabindex="-1">
+  <div class="c-pdp-related__image-area">
+    {% if col_product.featured_image != blank %}
+      <img
+        src="{{ col_product.featured_image | image_url: width: 800 }}"
+        alt="{{ col_product.featured_image.alt | default: col_product.title | escape }}"
+        width="{{ col_product.featured_image.width }}"
+        height="{{ col_product.featured_image.height }}"
+        loading="lazy"
+        class="c-pdp-related__image"
+      >
+    {% endif %}
+  </div>
+</a>
+{% endif %}
+
+        {%- comment -%} Quick add to cart icon {%- endcomment -%}
+        {% if section.settings.enable_quick_add and quick_add_variant != blank and col_product.handle != 'the-trio' %}
+          <button
+            type="button"
+            class="c-pdp-related__quick-add"
+            data-quick-add-button
+            data-variant-id="{{ quick_add_variant.id }}"
+            data-product-title="{{ col_product.title | escape }}"
+            {% if quick_add_variant.available == false %}disabled aria-disabled="true"{% endif %}
+            aria-label="Add {{ col_product.title | escape }} to cart"
+          >
+            {% if section.settings.quick_add_icon != blank %}
+              {{
+                section.settings.quick_add_icon
+                | image_url: width: 64
+                | image_tag:
+                  class: 'c-pdp-related__quick-add-icon c-pdp-related__quick-add-icon--custom',
+                  alt: '',
+                  loading: 'lazy',
+                  widths: '32,48,64'
+              }}
+            {% else %}
+              <svg class="c-pdp-related__quick-add-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M6 8H18L17.2 19.5C17.14 20.33 16.44 21 15.6 21H8.4C7.56 21 6.86 20.33 6.8 19.5L6 8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M9 8V6C9 4.34315 10.3431 3 12 3C13.6569 3 15 4.34315 15 6V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            {% endif %}
+            <svg class="c-pdp-related__quick-add-spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="40" stroke-dashoffset="10"/>
+            </svg>
+          </button>
+        {% endif %}
+      </div>
+
+        <div class="c-pdp-related__info">
+
+          {% if col_product.type != blank %}
+            <span class="c-pdp-related__use">{{ col_product.type }}</span>
+          {% endif %}
+
+       <h3 class="c-pdp-related__name">
+  {% if col_product.handle == 'the-trio' %}
+    <a href="{{ col_product.url }}" class="c-pdp-related__name-link">
+      {{ col_product.title }}
+   </a>
+  {% else %}
+    <a href="{{ col_product.url }}" class="c-pdp-related__name-link">
+      {{ col_product.title }}
+    </a>
+  {% endif %}
+</h3>
+
+      {% assign size_label = col_product.metafields.cast.size_label.value %}
+
+<p class="c-pdp-related__price">
+  {{ col_product.price | money_without_trailing_zeros }}
+  {% if size_label != blank %}
+    <span class="c-pdp-related__size"> | {{ size_label }}</span>
+  {% endif %}
+</p>
+
+         {% if col_product.handle == 'the-trio' %}
+<a href="{{ col_product.url }}" class="c-pdp-related__cta">
+  Coming Soon
+</a>
+{% else %}
+  <a href="{{ col_product.url }}" class="c-pdp-related__cta">
+    Shop {{ col_product.title }}
+  </a>
+{% endif %}
+
+        </div>
+
+      </div>
+
+    {% endfor %}
+
+  {% endif %}
+
+{% endif %}
+
+  </div>
+
+  {%- comment -%} ── Quick add confirmation toast ── {%- endcomment -%}
+  <div class="c-quick-add-toast" data-quick-add-toast role="status" aria-live="polite">
+    <span data-quick-add-toast-text></span>
+  </div>
+
+</section>
+
+<style>
+  #c-pdp-related-{{ section.id }} {
+    --rel-bg:             {{ section.settings.bg_color }};
+    --rel-card-bg:        {{ section.settings.card_bg_color }};
+    --rel-image-bg:       {{ section.settings.image_bg_color }};
+    --rel-image-hover:    {{ section.settings.image_bg_hover_color }};
+    --rel-text:           {{ section.settings.text_color }};
+    --rel-muted:          {{ section.settings.muted_color }};
+    --rel-gap:            {{ section.settings.card_gap }}px;
+    --rel-padding-desktop:{{ section.settings.padding_desktop }}px;
+    --rel-padding-tablet: {{ section.settings.padding_tablet }}px;
+    --rel-padding-mobile: {{ section.settings.padding_mobile }}px;
+    position: relative;
+  }
+
+  .c-pdp-related {
+    padding: var(--rel-padding-desktop) 80px;
+    background: var(--rel-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1.5px solid rgba(0,0,0,0.14);
+    {% endif %}
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-pdp-related__header { margin-bottom: 20px; }
+
+  .c-pdp-related__label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--rel-muted);
+    margin-bottom: 16px;
+    font-weight: 300;
+  }
+
+  .c-pdp-related__title {
+    font-size: clamp(16px, 2vw, 22px);
+    font-weight: 300;
+    color: var(--rel-text);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-pdp-related__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--rel-gap);
+  }
+
+  .c-pdp-related__card {
+    position: relative;
+    background: var(--rel-card-bg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .c-pdp-related__image-wrap { position: relative; }
+
+  .c-pdp-related__image-link { display: block; text-decoration: none; }
+
+  .c-pdp-related__image-area {
+    background: var(--rel-image-bg);
+    aspect-ratio: 3 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: background 0.3s ease;
+    position: relative;
+  }
+
+  .c-pdp-related__card:hover .c-pdp-related__image-area { background: var(--rel-image-hover); }
+
+  .c-pdp-related__image {
+    width: 100%; height: 100%;
+    object-fit: contain; object-position: center;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .c-pdp-related__card:hover .c-pdp-related__image { transform: translateY(-8px) scale(1.02); }
+
+  .c-pdp-related__image-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.3;
+  }
+
+  .c-pdp-related__placeholder-svg { width: 50%; height: auto; }
+
+  /* ── Quick add button ── */
+  .c-pdp-related__quick-add {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+    color: #000000;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease;
+    z-index: 10;
+    visibility: visible;
+  }
+
+  .c-pdp-related__card:hover .c-pdp-related__quick-add,
+  .c-pdp-related__quick-add:focus-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (hover: none) {
+    .c-pdp-related__quick-add {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .c-pdp-related__quick-add:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+  }
+
+  .c-pdp-related__quick-add-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .c-pdp-related__quick-add-icon--custom {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .c-pdp-related__quick-add-spinner {
+    display: none;
+    width: 24px;
+    height: 24px;
+    animation: c-pdp-related-quick-add-spin 0.7s linear infinite;
+  }
+
+  .c-pdp-related__quick-add.is-loading .c-pdp-related__quick-add-icon {
+    display: none;
+  }
+
+  .c-pdp-related__quick-add.is-loading .c-pdp-related__quick-add-spinner {
+    display: block;
+  }
+
+  @keyframes c-pdp-related-quick-add-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Confirmation toast ── */
+  .c-quick-add-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translate(-50%, 16px);
+    background: #000000;
+    color: #ffffff;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    padding: 14px 22px;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 999;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  .c-quick-add-toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  .c-pdp-related__info {
+    padding: 24px 28px 32px;
+    display: flex; flex-direction: column;
+    gap: 6px; flex: 1;
+  }
+
+  .c-pdp-related__use {
+    font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--rel-muted);
+    font-weight: 300;
+  }
+
+  .c-pdp-related__name {
+    font-size: 12px; font-weight: 300;
+    letter-spacing: 0.14em; text-transform: uppercase; margin: 0;
+  }
+
+  .c-pdp-related__name-link {
+    color: var(--rel-text); text-decoration: none; transition: opacity 0.2s;
+  }
+
+  .c-pdp-related__name-link:hover { opacity: 0.6; }
+
+  .c-pdp-related__price {
+    font-size: 13px; color: var(--rel-muted);
+    font-weight: 300; margin: 0 0 10px 0;
+  }
+
+  .c-pdp-related__size { color: var(--rel-muted); }
+
+  .c-pdp-related__cta {
+    font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--rel-text);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    padding-bottom: 2px; display: inline-block;
+    transition: opacity 0.2s ease; width: fit-content; font-weight: 300;
+  }
+
+  .c-pdp-related__cta:hover { opacity: 0.55; }
+
+  @media screen and (max-width: 900px) {
+    .c-pdp-related { padding: var(--rel-padding-tablet) 48px; }
+    .c-pdp-related__grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media screen and (max-width: 640px) {
+    .c-pdp-related { padding: var(--rel-padding-mobile) 24px; }
+    .c-pdp-related__grid { grid-template-columns: 1fr; }
+    .c-pdp-related__header { margin-bottom: 36px; }
+  }
+</style>
+
+<script>
+  (function () {
+    var root = document.getElementById('c-pdp-related-{{ section.id }}');
+    if (!root || root.dataset.quickAddInit) return;
+    root.dataset.quickAddInit = 'true';
+
+    var toast = root.querySelector('[data-quick-add-toast]');
+    var toastText = root.querySelector('[data-quick-add-toast-text]');
+    var toastTimer = null;
+
+    function showToast(message) {
+      if (!toast || !toastText) return;
+      toastText.textContent = message;
+      toast.classList.add('is-visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        toast.classList.remove('is-visible');
+      }, 3000);
+    }
+
+    var CART_URL = (window.Shopify && Shopify.routes && Shopify.routes.root ? Shopify.routes.root : '/') + 'cart';
+
+    function updateHeaderCartBadge(cart) {
+      // Matches sections/c-header.liquid:
+      // <a class="c-header__cart" aria-label="Cart — N items">...<span class="c-header__cart-count">N</span></a>
+      if (!cart) return;
+      var cartLinks = document.querySelectorAll('.c-header__cart');
+      cartLinks.forEach(function (cartLink) {
+        cartLink.setAttribute('aria-label', 'Cart — ' + cart.item_count + ' items');
+        var badge = cartLink.querySelector('.c-header__cart-count');
+        if (cart.item_count > 0) {
+          if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'c-header__cart-count';
+            badge.setAttribute('aria-hidden', 'true');
+            cartLink.appendChild(badge);
+          }
+          badge.textContent = cart.item_count;
+        } else if (badge) {
+          badge.remove();
+        }
+      });
+    }
+
+    function updateCartCountFallback(cart) {
+      if (!cart) return;
+      var countEls = document.querySelectorAll('[data-cart-count], .cart-count, .cart-count-bubble, #CartCount');
+      countEls.forEach(function (el) {
+        if (el.tagName === 'INPUT') {
+          el.value = cart.item_count;
+        } else {
+          el.textContent = cart.item_count;
+        }
+      });
+    }
+
+    function refreshCartUI() {
+      fetch(CART_URL + '.js')
+        .then(function (r) { return r.json(); })
+        .then(function (cart) {
+          updateHeaderCartBadge(cart);
+          updateCartCountFallback(cart);
+          document.dispatchEvent(new CustomEvent('cart:update', { detail: { cart: cart } }));
+          document.dispatchEvent(new CustomEvent('cart:refresh', { detail: { cart: cart } }));
+        })
+        .catch(function () {});
+    }
+
+    root.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-quick-add-button]');
+      if (!button || button.classList.contains('is-loading')) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      var variantId = button.getAttribute('data-variant-id');
+      var productTitle = button.getAttribute('data-product-title') || 'Item';
+      if (!variantId) return;
+
+      button.classList.add('is-loading');
+
+      fetch(window.Shopify && Shopify.routes && Shopify.routes.root ? Shopify.routes.root + 'cart/add.js' : '/cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ items: [{ id: variantId, quantity: 1 }] })
+      })
+        .then(function (response) {
+          return response.json().then(function (data) {
+            if (!response.ok) throw data;
+            return data;
+          });
+        })
+        .then(function () {
+          showToast(productTitle + ' added to your cart.');
+          refreshCartUI();
+        })
+        .catch(function (err) {
+          var message = (err && err.description) || 'Could not add that item — please try again.';
+          showToast(message);
+        })
+        .finally(function () {
+          button.classList.remove('is-loading');
+        });
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "PDP — Related Collection",
+  "tag": "section",
+  "class": "c-pdp-related-wrapper",
+  "max_blocks": 4,
+  "blocks": [
+    {
+      "type": "product_card",
+      "name": "Product (Manual Override)",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Product"
+        },
+        {
+          "type": "text",
+          "id": "use_state",
+          "label": "Use state label",
+          "info": "Leave blank to use product type."
+        },
+        {
+          "type": "text",
+          "id": "cta_text",
+          "label": "CTA text",
+          "info": "Leave blank to auto-generate."
+        },
+        {
+          "type": "text",
+          "id": "size_label",
+          "label": "Size label",
+          "default": "100mL / 3.4 fl oz"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section header"
+    },
+    {
+      "type": "text",
+      "id": "section_label",
+      "label": "Section label",
+      "default": "The complete system"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section title",
+      "default": "Complete the system"
+    },
+    {
+      "type": "header",
+      "content": "Auto mode settings"
+    },
+    {
+      "type": "range",
+      "id": "auto_count",
+      "label": "Products to show (auto mode)",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3,
+      "info": "Used when no manual products are set. Shows other products from same collection, excluding current."
+    },
+    {
+      "type": "header",
+      "content": "Quick add to cart"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_quick_add",
+      "label": "Enable quick add to cart icon",
+      "info": "Adds a small shopping bag icon to each product image. Clicking it adds the product to the cart without leaving the page. Uses the first available variant, so it's best suited to single-variant products. Never shown on 'The Trio' (Coming Soon).",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "quick_add_icon",
+      "label": "Custom quick add icon (optional)",
+      "info": "Leave blank to use the default bag icon. Upload a small square PNG/SVG icon for best results."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Section background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "label": "Card background",
+      "default": "#EEEBE6"
+    },
+    {
+      "type": "color",
+      "id": "image_bg_color",
+      "label": "Image area background",
+      "default": "#E2DDD1"
+    },
+    {
+      "type": "color",
+      "id": "image_bg_hover_color",
+      "label": "Image area background (hover)",
+      "default": "#d4cec4"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted / label color",
+      "default": "#666666"
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop layout"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 200,
+      "step": 8,
+      "unit": "px",
+      "default": 136
+    },
+    {
+      "type": "range",
+      "id": "card_gap",
+      "label": "Gap between cards",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 2
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    }
+  ],
+  "presets": [
+    {
+      "name": "PDP — Related Collection",
+      "settings": {
+        "section_label": "The complete system",
+        "section_title": "Complete the system",
+        "show_border_top": true
+      }
+    }
+  ]
+}
+{% endschema %}

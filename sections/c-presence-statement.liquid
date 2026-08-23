@@ -1,0 +1,243 @@
+{% comment %}
+  CAST — Presence Statement
+  File: sections/c-presence-statement.liquid
+
+  Features:
+  - Full width centered statement text
+  - Editable text, colors, max-width, padding
+  - Optional CTA button
+  - Desktop / tablet / mobile padding controls
+  - No JS needed
+{% endcomment %}
+
+<section
+  class="c-presence-statement"
+  id="c-presence-statement-{{ section.id }}"
+>
+  <div class="c-presence-statement__inner">
+
+    {% if section.settings.statement != blank %}
+      <p class="c-presence-statement__text">{{ section.settings.statement }}</p>
+    {% endif %}
+
+    {% if section.settings.cta_text != blank and section.settings.cta_link != blank %}
+      <a href="{{ section.settings.cta_link }}" class="c-presence-statement__cta">
+        {{ section.settings.cta_text }}
+      </a>
+    {% endif %}
+
+  </div>
+</section>
+
+<style>
+  #c-presence-statement-{{ section.id }} {
+    --ps-bg:              {{ section.settings.bg_color }};
+    --ps-text-color:      {{ section.settings.text_color }};
+    --ps-max-width:       {{ section.settings.max_width }}px;
+    --ps-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --ps-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --ps-padding-mobile:  {{ section.settings.padding_mobile }}px;
+  }
+
+  .c-presence-statement {
+    padding: var(--ps-padding-desktop) 80px;
+    background: var(--ps-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1.5px solid rgba(0,0,0,0.14);
+    {% endif %}
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .c-presence-statement__inner {
+    max-width: var(--ps-max-width);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+  }
+
+  .c-presence-statement__text {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 300;
+    line-height: 1.4;
+    color: var(--ps-text-color);
+    letter-spacing: -0.01em;
+  }
+
+  .c-presence-statement__cta {
+    display: inline-block;
+    padding: 14px 36px;
+    background: transparent;
+    color: var(--ps-text-color);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid rgba(249,248,246,0.35);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .c-presence-statement__cta:hover {
+    border-color: var(--ps-text-color);
+    background: rgba(249,248,246,0.05);
+  }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 900px) {
+    .c-presence-statement {
+      padding: var(--ps-padding-tablet) 48px;
+    }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 640px) {
+    .c-presence-statement {
+      padding: var(--ps-padding-mobile) 24px;
+    }
+
+    .c-presence-statement__text {
+      font-size: clamp(20px, 5.5vw, 28px);
+    }
+
+    .c-presence-statement__cta {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Presence Statement",
+  "tag": "section",
+  "class": "c-presence-statement-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "textarea",
+      "id": "statement",
+      "label": "Statement text",
+      "default": "A rested nervous system is just the beginning. On the other side is presence in work, relationships, and life."
+    },
+    {
+      "type": "header",
+      "content": "Optional CTA"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "info": "Leave blank to hide"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Max text width",
+      "min": 400,
+      "max": 900,
+      "step": 20,
+      "unit": "px",
+      "default": 680
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 200,
+      "step": 8,
+      "unit": "px",
+      "default": 120
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 88
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    }
+  ],
+  "presets": [
+    {
+      "name": "Presence Statement",
+      "settings": {
+        "statement": "A rested nervous system is just the beginning. On the other side is presence in work, relationships, and life.",
+        "bg_color": "#0B1F4C",
+        "text_color": "#F9F8F6",
+        "show_border_top": true,
+        "max_width": 680,
+        "padding_desktop": 72,
+        "padding_tablet": 88,
+        "padding_mobile": 72
+      }
+    }
+  ]
+}
+{% endschema %}

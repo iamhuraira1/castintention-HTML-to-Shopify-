@@ -1,0 +1,590 @@
+{% comment %}
+  ────────────────────────────────────────────────
+  CAST — FAQ Section (c-faq)
+  Design: matches client mockup (CAST_FAQ_Mockup_FINAL.html)
+  Features:
+   • Unlimited FAQ blocks, richtext answers (bold = uppercase sub-heading style)
+   • Auto-generated category tabs (from block "category" field)
+   • FAQPage JSON-LD schema (SEO + AI answer engines)
+   • Deep linking (#anchor per question)
+   • Smooth height animation, one-open-at-a-time (always)
+   • Expand all / collapse all
+   • Fully customizable colors, spacing via theme editor
+  ────────────────────────────────────────────────
+{% endcomment %}
+
+{%- liquid
+  assign sid = section.id
+  assign has_categories = false
+  assign category_list = ''
+  for block in section.blocks
+    if block.type == 'faq' and block.settings.category != blank
+      assign cat = block.settings.category | strip
+      assign cat_check = '|' | append: cat | append: '|'
+      unless category_list contains cat_check
+        assign category_list = category_list | append: '|' | append: cat | append: '|'
+        assign has_categories = true
+      endunless
+    endif
+  endfor
+  assign categories = category_list | split: '|'
+-%}
+
+<style>
+  #c-faq-{{ sid }} {
+    --cf-bg: {{ section.settings.bg_color }};
+    --cf-heading: {{ section.settings.heading_color }};
+    --cf-text: {{ section.settings.text_color }};
+    --cf-muted: {{ section.settings.muted_color }};
+    --cf-border: {{ section.settings.border_color }};
+    --cf-accent: {{ section.settings.accent_color }};
+    background: var(--cf-bg);
+    font-family: 'Work Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── PAGE HEADER ── */
+  #c-faq-{{ sid }} .cf-header {
+    padding: {{ section.settings.padding_top }}px 80px 32px;
+    text-align: {{ section.settings.header_align }};
+  }
+  #c-faq-{{ sid }} .cf-label {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cf-muted);
+    font-weight: 300;
+    margin: 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    {% if section.settings.header_align == 'center' %}justify-content: center;{% endif %}
+  }
+  #c-faq-{{ sid }} .cf-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--cf-muted);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+  #c-faq-{{ sid }} .cf-headline {
+    font-family: 'Work Sans', sans-serif;
+    font-size: clamp(22px, 2.8vw, 36px);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--cf-heading);
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  /* ── BODY WRAP ── */
+  #c-faq-{{ sid }} .cf-body {
+    padding: 24px 80px {{ section.settings.padding_bottom }}px;
+    max-width: {{ section.settings.max_width }}px;
+  }
+  {% if section.settings.header_align == 'center' %}
+  #c-faq-{{ sid }} .cf-body { margin: 0 auto; }
+  {% endif %}
+
+  /* ── TOOLBAR (tabs / expand) ── */
+  #c-faq-{{ sid }} .cf-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+    margin-bottom: 32px;
+  }
+  #c-faq-{{ sid }} .cf-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  #c-faq-{{ sid }} .cf-tab {
+    background: transparent;
+    border: 1px solid var(--cf-border);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cf-muted);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  #c-faq-{{ sid }} .cf-tab[aria-pressed="true"] {
+    color: var(--cf-bg);
+    background: var(--cf-heading);
+    border-color: var(--cf-heading);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    #c-faq-{{ sid }} .cf-tab:hover { border-color: var(--cf-text); color: var(--cf-text); }
+    #c-faq-{{ sid }} .cf-tab[aria-pressed="true"]:hover { color: var(--cf-bg); }
+  }
+  #c-faq-{{ sid }} .cf-bulk {
+    margin-left: auto;
+    display: flex;
+    gap: 20px;
+  }
+  #c-faq-{{ sid }} .cf-bulk button {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cf-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--cf-border);
+    transition: color 0.2s;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    #c-faq-{{ sid }} .cf-bulk button:hover { color: var(--cf-text); }
+  }
+
+  /* ── ACCORDION ── */
+  #c-faq-{{ sid }} .cf-item {
+    border-bottom: 1px solid var(--cf-border);
+  }
+  #c-faq-{{ sid }} .cf-item.cf-first-visible {
+    border-top: 1px solid var(--cf-border);
+  }
+  #c-faq-{{ sid }} .cf-item[hidden] { display: none; }
+  #c-faq-{{ sid }} .cf-q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 28px 0;
+    cursor: pointer;
+    gap: 24px;
+    user-select: none;
+  }
+  #c-faq-{{ sid }} .cf-q-text {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 12.5px;
+    font-weight: 300;
+    color: var(--cf-heading);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+  #c-faq-{{ sid }} .cf-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    position: relative;
+  }
+  #c-faq-{{ sid }} .cf-icon::before,
+  #c-faq-{{ sid }} .cf-icon::after {
+    content: '';
+    position: absolute;
+    background: var(--cf-text);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  #c-faq-{{ sid }} .cf-icon::before {
+    width: 12px; height: 1px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  #c-faq-{{ sid }} .cf-icon::after {
+    width: 1px; height: 12px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  #c-faq-{{ sid }} .cf-item.is-open .cf-icon::after {
+    transform: translate(-50%, -50%) rotate(90deg);
+    opacity: 0;
+  }
+
+  /* answer — animated height */
+  #c-faq-{{ sid }} .cf-a-wrap {
+    overflow: hidden;
+    height: 0;
+    transition: height {{ section.settings.anim_speed }}ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #c-faq-{{ sid }} .cf-a-wrap { transition: none; }
+  }
+  #c-faq-{{ sid }} .cf-a {
+    padding: 0 40px 32px 0;
+  }
+ #c-faq-{{ sid }} .cf-a p {
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--cf-muted);
+  font-weight: 300;
+  margin: 0 0 12px;
+  text-wrap: balance;
+  text-wrap: pretty;
+}
+  #c-faq-{{ sid }} .cf-a p:last-child { margin-bottom: 0; }
+  #c-faq-{{ sid }} .cf-a strong,
+  #c-faq-{{ sid }} .cf-a b {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cf-text);
+    font-weight: 300;
+    display: block;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+  #c-faq-{{ sid }} .cf-a p:first-child strong,
+  #c-faq-{{ sid }} .cf-a p:first-child b { margin-top: 0; }
+  #c-faq-{{ sid }} .cf-a a {
+    color: var(--cf-text);
+    text-underline-offset: 3px;
+  }
+
+  /* highlight on deep-link arrival */
+  #c-faq-{{ sid }} .cf-item.cf-flash .cf-q-text {
+    animation: cfFlash-{{ sid }} 1.6s ease;
+  }
+  @keyframes cfFlash-{{ sid }} {
+    0%, 40% { color: var(--cf-accent-strong, var(--cf-heading)); opacity: 0.55; }
+    100% { opacity: 1; }
+  }
+
+  /* no results */
+  #c-faq-{{ sid }} .cf-empty {
+    display: none;
+    padding: 48px 0;
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 13.5px;
+    font-weight: 300;
+    color: var(--cf-muted);
+    font-style: italic;
+  }
+  #c-faq-{{ sid }} .cf-empty.is-visible { display: block; }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 749px) {
+    #c-faq-{{ sid }} .cf-header { padding: {{ section.settings.padding_top | times: 0.6 | round }}px 24px 28px; }
+    #c-faq-{{ sid }} .cf-body { padding: 16px 24px {{ section.settings.padding_bottom | times: 0.6 | round }}px; }
+    #c-faq-{{ sid }} .cf-toolbar { gap: 14px; margin-bottom: 24px; }
+    #c-faq-{{ sid }} .cf-bulk { margin-left: 0; }
+    #c-faq-{{ sid }} .cf-q { padding: 22px 0; }
+    #c-faq-{{ sid }} .cf-a { padding: 0 20px 26px 0; }
+  }
+</style>
+
+<div id="c-faq-{{ sid }}">
+
+  {%- if section.settings.label != blank or section.settings.headline != blank -%}
+    <div class="cf-header">
+      {%- if section.settings.label != blank -%}
+        <p class="cf-label">{{ section.settings.label | escape }}</p>
+      {%- endif -%}
+      {%- if section.settings.headline != blank -%}
+        <h1 class="cf-headline">{{ section.settings.headline | escape }}</h1>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  <div class="cf-body">
+
+    {%- assign show_toolbar = false -%}
+    {%- if section.settings.show_bulk -%}
+      {%- assign show_toolbar = true -%}
+    {%- endif -%}
+    {%- if section.settings.show_categories and has_categories -%}
+      {%- assign show_toolbar = true -%}
+    {%- endif -%}
+
+    {%- if show_toolbar -%}
+      <div class="cf-toolbar">
+
+        {%- if section.settings.show_categories and has_categories -%}
+          <div class="cf-tabs" role="group" aria-label="Filter by category">
+            <button type="button" class="cf-tab" data-cat="" aria-pressed="true">{{ section.settings.all_tab_label | default: 'All' | escape }}</button>
+            {%- for cat in categories -%}
+              {%- if cat != blank -%}
+                <button type="button" class="cf-tab" data-cat="{{ cat | escape }}" aria-pressed="false">{{ cat | escape }}</button>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+
+        {%- if section.settings.show_bulk -%}
+          <div class="cf-bulk">
+            <button type="button" data-bulk="open">{{ 'Expand all' }}</button>
+            <button type="button" data-bulk="close">{{ 'Collapse all' }}</button>
+          </div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <div class="cf-list">
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'faq' and block.settings.question != blank -%}
+          {%- assign anchor = block.settings.question | handleize -%}
+          <div
+            class="cf-item{% if forloop.first %} cf-first-visible{% endif %}"
+            id="{{ anchor }}"
+            data-cat="{{ block.settings.category | strip | escape }}"
+            {{ block.shopify_attributes }}
+          >
+            <button type="button" class="cf-q" aria-expanded="false" aria-controls="cf-a-{{ sid }}-{{ forloop.index }}">
+              <span class="cf-q-text">{{ block.settings.question | escape }}</span>
+              <span class="cf-icon" aria-hidden="true"></span>
+            </button>
+            <div class="cf-a-wrap" id="cf-a-{{ sid }}-{{ forloop.index }}" role="region">
+              <div class="cf-a">
+                {{ block.settings.answer }}
+              </div>
+            </div>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    <p class="cf-empty">{{ section.settings.empty_message | escape }}</p>
+
+  </div>
+</div>
+
+{%- comment -%} FAQPage structured data — SEO + AI answer engines {%- endcomment -%}
+{%- if section.settings.enable_schema -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'faq' and block.settings.question != blank -%}
+          {
+            "@type": "Question",
+            "name": {{ block.settings.question | strip_html | json }},
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": {{ block.settings.answer | strip_html | strip_newlines | json }}
+            }
+          }{%- unless forloop.last -%},{%- endunless -%}
+        {%- endif -%}
+      {%- endfor -%}
+    ]
+  }
+  </script>
+{%- endif -%}
+
+<script>
+(function () {
+  var root = document.getElementById('c-faq-{{ sid }}');
+  if (!root || root.dataset.cfInit) return;
+  root.dataset.cfInit = '1';
+
+  var items = Array.prototype.slice.call(root.querySelectorAll('.cf-item'));
+  var tabs = Array.prototype.slice.call(root.querySelectorAll('.cf-tab'));
+  var emptyMsg = root.querySelector('.cf-empty');
+  var activeCat = '';
+
+  /* ── open / close with height animation ── */
+  function setOpen(item, open, instant) {
+    var wrap = item.querySelector('.cf-a-wrap');
+    var btn = item.querySelector('.cf-q');
+    if (!wrap || !btn) return;
+    if (open === item.classList.contains('is-open')) return;
+
+    if (open) {
+      item.classList.add('is-open');
+      btn.setAttribute('aria-expanded', 'true');
+      if (instant) {
+        wrap.style.height = 'auto';
+      } else {
+        wrap.style.height = wrap.scrollHeight + 'px';
+        wrap.addEventListener('transitionend', function te(e) {
+          if (e.propertyName !== 'height') return;
+          wrap.removeEventListener('transitionend', te);
+          if (item.classList.contains('is-open')) wrap.style.height = 'auto';
+        });
+      }
+    } else {
+      item.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
+      if (instant) {
+        wrap.style.height = '0px';
+      } else {
+        wrap.style.height = wrap.scrollHeight + 'px';
+        // force reflow, then collapse
+        void wrap.offsetHeight;
+        wrap.style.height = '0px';
+      }
+    }
+  }
+
+  /* ── One-open-at-a-time is always on: opening any item closes the rest ── */
+  function toggle(item) {
+    var willOpen = !item.classList.contains('is-open');
+    if (willOpen) {
+      items.forEach(function (other) {
+        if (other !== item) setOpen(other, false);
+      });
+    }
+    setOpen(item, willOpen);
+  }
+
+  items.forEach(function (item) {
+    var btn = item.querySelector('.cf-q');
+    if (btn) btn.addEventListener('click', function () { toggle(item); });
+  });
+
+  /* ── category filtering ── */
+  function applyFilters() {
+    var anyVisible = false;
+    var firstDone = false;
+
+    items.forEach(function (item) {
+      var matchCat = !activeCat || item.dataset.cat === activeCat;
+      item.hidden = !matchCat;
+      item.classList.remove('cf-first-visible');
+      if (matchCat) {
+        anyVisible = true;
+        if (!firstDone) { item.classList.add('cf-first-visible'); firstDone = true; }
+      }
+    });
+
+    if (emptyMsg) emptyMsg.classList.toggle('is-visible', !anyVisible);
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      activeCat = tab.dataset.cat || '';
+      tabs.forEach(function (t) { t.setAttribute('aria-pressed', t === tab ? 'true' : 'false'); });
+      applyFilters();
+    });
+  });
+
+  /* ── expand / collapse all ── */
+  root.querySelectorAll('[data-bulk]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var open = btn.dataset.bulk === 'open';
+      if (open) {
+        // one-open-at-a-time: "expand all" opens only the first visible item
+        var firstVisible = items.find(function (item) { return !item.hidden; });
+        items.forEach(function (item) {
+          if (!item.hidden) setOpen(item, item === firstVisible);
+        });
+      } else {
+        items.forEach(function (item) {
+          if (!item.hidden) setOpen(item, false);
+        });
+      }
+    });
+  });
+
+  /* ── deep link: open + scroll on hash ── */
+  function openFromHash() {
+    var hash = decodeURIComponent(location.hash.replace('#', ''));
+    if (!hash) return;
+    var target = document.getElementById(hash);
+    if (!target || !target.classList.contains('cf-item') || !root.contains(target)) return;
+    items.forEach(function (o) { if (o !== target) setOpen(o, false); });
+    setOpen(target, true, true);
+    setTimeout(function () {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('cf-flash');
+      setTimeout(function () { target.classList.remove('cf-flash'); }, 1700);
+    }, 60);
+  }
+  window.addEventListener('hashchange', openFromHash);
+  openFromHash();
+
+  /* ── open first item by default ── */
+  {% if section.settings.open_first %}
+  if (!location.hash && items.length) setOpen(items[0], true, true);
+  {% endif %}
+
+  /* ── theme editor: re-run on section reload ── */
+  document.addEventListener('shopify:section:load', function (e) {
+    if (e.detail && e.detail.sectionId === '{{ sid }}') location.reload();
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "C - FAQ",
+  "tag": "section",
+  "class": "c-faq-section",
+  "settings": [
+    { "type": "header", "content": "Header" },
+    { "type": "text", "id": "label", "label": "Label", "default": "Support" },
+    { "type": "text", "id": "headline", "label": "Headline", "default": "Frequently asked questions" },
+    {
+      "type": "select",
+      "id": "header_align",
+      "label": "Header alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" }
+      ],
+      "default": "left"
+    },
+
+    { "type": "header", "content": "Features" },
+    { "type": "checkbox", "id": "show_categories", "label": "Show category tabs", "info": "Tabs appear automatically when blocks have a category filled in.", "default": true },
+    { "type": "text", "id": "all_tab_label", "label": "'All' tab label", "default": "All" },
+    { "type": "checkbox", "id": "show_bulk", "label": "Show expand / collapse all", "default": false },
+    { "type": "checkbox", "id": "open_first", "label": "Open first question by default", "default": false },
+    { "type": "text", "id": "empty_message", "label": "No results message", "default": "No questions match this filter." },
+    { "type": "range", "id": "anim_speed", "label": "Open/close animation speed", "min": 100, "max": 700, "step": 50, "unit": "ms", "default": 350 },
+
+    { "type": "header", "content": "SEO & AI" },
+    { "type": "checkbox", "id": "enable_schema", "label": "Enable FAQ structured data (JSON-LD)", "info": "Helps Google rich results and AI assistants read your FAQs.", "default": true },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "bg_color", "label": "Background", "default": "#F9F8F6" },
+    { "type": "color", "id": "heading_color", "label": "Headings & questions", "default": "#000000" },
+    { "type": "color", "id": "text_color", "label": "Text", "default": "#1a1a1a" },
+    { "type": "color", "id": "muted_color", "label": "Muted text (answers)", "default": "#666666" },
+    { "type": "color", "id": "border_color", "label": "Borders", "default": "#e5e3de" },
+    { "type": "color", "id": "accent_color", "label": "Search highlight / accent", "default": "#E2DDD1" },
+
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "max_width", "label": "Content max width", "min": 700, "max": 1600, "step": 50, "unit": "px", "default": 1600 },
+    { "type": "range", "id": "padding_top", "label": "Top padding", "min": 0, "max": 160, "step": 4, "unit": "px", "default": 80 },
+    { "type": "range", "id": "padding_bottom", "label": "Bottom padding", "min": 0, "max": 200, "step": 4, "unit": "px", "default": 120 }
+  ],
+  "blocks": [
+    {
+      "type": "faq",
+      "name": "Question",
+      "settings": [
+        { "type": "text", "id": "question", "label": "Question", "default": "What is physiological wellness?" },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "info": "Bold text renders as an uppercase sub-heading (like the spray names in the mockup).",
+          "default": "<p>Add your answer here.</p>"
+        },
+        { "type": "text", "id": "category", "label": "Category (optional)", "info": "e.g. Product, Shipping, Usage — used for filter tabs." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "C - FAQ",
+      "blocks": [
+        { "type": "faq" },
+        { "type": "faq" },
+        { "type": "faq" }
+      ]
+    }
+  ]
+}
+{% endschema %}

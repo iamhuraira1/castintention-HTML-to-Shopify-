@@ -1,0 +1,946 @@
+{% comment %}
+CAST — Collection Trio Featured Banner
+File: sections/c-collection-trio-banner.liquid
+
+Features:
+- 2 col: left = product image (full height cover), right = content
+- Separate desktop + mobile image uploaders
+- Product picker — pulls image, price, URL from Shopify
+- Eyebrow, name, description, price, CTA — all editable
+- Price override option
+- Dark deep blue background
+- Colors, padding, min-height customizable
+- Mobile: stacks vertically, image on top
+- No JS needed
+{% endcomment %}
+
+<section
+  class="c-col-trio"
+  id="c-col-trio-{{ section.id }}"
+>
+  
+  {%- comment -%} Left: Image Column {%- endcomment -%}
+  <div class="c-col-trio__image-col">
+    
+    {%- comment -%} Desktop Image {%- endcomment -%}
+   {% if section.settings.image != blank %}
+
+  {% if section.settings.product != blank %}
+    <a href="{{ section.settings.product.url }}">
+  {% endif %}
+
+  <img
+    src="{{ section.settings.image | image_url: width: 1400 }}"
+    alt="{{ section.settings.trio_name | default: 'The Trio' | escape }}"
+    width="{{ section.settings.image.width }}"
+    height="{{ section.settings.image.height }}"
+    loading="lazy"
+    class="c-col-trio__img c-col-trio__img--desktop"
+  >
+
+  {% if section.settings.product != blank %}
+    </a>
+  {% endif %}
+      {% elsif section.settings.product != blank and section.settings.product.featured_image != blank %}
+        <img
+          src="{{ section.settings.product.featured_image | image_url: width: 1400 }}"
+          alt="{{ section.settings.product.title | escape }}"
+          width="{{ section.settings.product.featured_image.width }}"
+          height="{{ section.settings.product.featured_image.height }}"
+          loading="lazy"
+          class="c-col-trio__img c-col-trio__img--desktop"
+        >
+        {% else %}
+          <div class="c-col-trio__img c-col-trio__img--desktop c-col-trio__img-placeholder"></div>
+        {% endif %}
+        
+        {%- comment -%} Mobile Image (shown only on mobile) {%- endcomment -%}
+        {% if section.settings.image_mobile != blank %}
+
+  {% if section.settings.product != blank %}
+    <a href="{{ section.settings.product.url }}">
+  {% endif %}
+
+  <img
+    src="{{ section.settings.image_mobile | image_url: width: 800 }}"
+    alt="{{ section.settings.trio_name | default: 'The Trio' | escape }}"
+    width="{{ section.settings.image_mobile.width }}"
+    height="{{ section.settings.image_mobile.height }}"
+    loading="lazy"
+    class="c-col-trio__img c-col-trio__img--mobile"
+  >
+
+  {% if section.settings.product != blank %}
+    </a>
+  {% endif %}
+          {% elsif section.settings.image != blank %}
+            <img
+              src="{{ section.settings.image | image_url: width: 800 }}"
+              alt="{{ section.settings.trio_name | default: 'The Trio' | escape }}"
+              width="{{ section.settings.image.width }}"
+              height="{{ section.settings.image.height }}"
+              loading="lazy"
+              class="c-col-trio__img c-col-trio__img--mobile"
+            >
+            {% elsif section.settings.product != blank and section.settings.product.featured_image != blank %}
+              <img
+                src="{{ section.settings.product.featured_image | image_url: width: 800 }}"
+                alt="{{ section.settings.product.title | escape }}"
+                width="{{ section.settings.product.featured_image.width }}"
+                height="{{ section.settings.product.featured_image.height }}"
+                loading="lazy"
+                class="c-col-trio__img c-col-trio__img--mobile"
+              >
+              {% else %}
+                <div class="c-col-trio__img c-col-trio__img--mobile c-col-trio__img-placeholder"></div>
+              {% endif %}
+              
+            </div>
+            
+            {%- comment -%} Right: Content {%- endcomment -%}
+            <div class="c-col-trio__info">
+              
+              {% if section.settings.eyebrow != blank %}
+                <p class="c-col-trio__eyebrow">{{ section.settings.eyebrow }}</p>
+              {% endif %}
+              
+              {% if section.settings.trio_name != blank %}
+  <h2 class="c-col-trio__name">
+
+    {% if section.settings.product != blank %}
+      <a href="{{ section.settings.product.url }}" class="c-col-trio__name-link">
+        {{ section.settings.trio_name }}
+      </a>
+    {% else %}
+      {{ section.settings.trio_name }}
+    {% endif %}
+
+  </h2>
+{% endif %}
+              
+              {% if section.settings.description != blank %}
+                <p class="c-col-trio__desc">{{ section.settings.description }}</p>
+              {% endif %}
+              
+              <div class="c-col-trio__footer">
+
+                {%- assign show_price = false -%}
+                {%- if section.settings.price_override != blank -%}
+                  {%- assign show_price = true -%}
+                  {%- assign price_display = section.settings.price_override -%}
+                {%- elsif section.settings.product != blank -%}
+                  {%- assign show_price = true -%}
+                  {%- assign price_display = section.settings.product.price | money -%}
+                  {%- if section.settings.size_label != blank -%}
+                    {%- assign price_display = price_display | append: ' | ' | append: section.settings.size_label -%}
+        {%- endif -%}
+      {%- endif -%}
+      
+      {% if show_price %}
+        <p class="c-col-trio__price">{{ price_display }}</p>
+      {% endif %}
+      
+     {% if section.settings.cta_text != blank %}
+  {%- assign cta_url = section.settings.cta_link -%}
+
+  {% comment %}
+  {% if cta_url == blank and section.settings.product != blank %}
+    {% assign cta_url = section.settings.product.url %}
+  {% endif %}
+  {% endcomment %}
+
+  {% if cta_url != blank %}
+    <a href="{{ cta_url }}" class="c-col-trio__cta">
+      {{ section.settings.cta_text }}
+    </a>
+  {% else %}
+    <span class="c-col-trio__cta">
+      {{ section.settings.cta_text }}
+    </span>
+  {% endif %}
+{% endif %}
+      
+    </div>
+    
+  </div>
+  
+</section>
+
+<style>
+  #c-col-trio-{{ section.id }} {
+    --trio-bg:              {{ section.settings.bg_color }};
+    --trio-divider:         {{ section.settings.divider_color }};
+    --trio-headline:        {{ section.settings.headline_color }};
+    --trio-eyebrow:         {{ section.settings.eyebrow_color }};
+    --trio-body:            {{ section.settings.body_color }};
+    --trio-price:           {{ section.settings.price_color }};
+    --trio-btn-bg:          {{ section.settings.btn_bg_color }};
+    --trio-btn-text:        {{ section.settings.btn_text_color }};
+    --trio-btn-border:      {{ section.settings.btn_border_color }};
+    --trio-btn-hover-bg:    {{ section.settings.btn_hover_bg_color }};
+    --trio-btn-hover-border:{{ section.settings.btn_hover_border_color }};
+    --trio-min-height:      {{ section.settings.min_height_desktop }}px;
+    --trio-min-height-tablet:{{ section.settings.min_height_tablet }}px;
+    --trio-min-height-mobile:{{ section.settings.min_height_mobile }}px;
+    --trio-content-pad-v:   {{ section.settings.content_padding_v }}px;
+    --trio-content-pad-h:   {{ section.settings.content_padding_h }}px;
+    --trio-content-pad-v-tablet: {{ section.settings.content_padding_v_tablet }}px;
+    --trio-content-pad-h-tablet: {{ section.settings.content_padding_h_tablet }}px;
+    --trio-content-pad-v-mobile: {{ section.settings.content_padding_v_mobile }}px;
+    --trio-content-pad-h-mobile: {{ section.settings.content_padding_h_mobile }}px;
+    --trio-eyebrow-size:    {{ section.settings.eyebrow_size }}px;
+    --trio-heading-size:    {{ section.settings.heading_size }}px;
+    --trio-body-size:       {{ section.settings.body_size }}px;
+    --trio-price-size:      {{ section.settings.price_size }}px;
+    --trio-cta-size:        {{ section.settings.cta_size }}px;
+    --trio-content-align:   {{ section.settings.content_align }};
+    --trio-image-fit:       {{ section.settings.image_fit }};
+    --trio-image-pos:       {{ section.settings.image_position }};
+    --trio-col-split:       {{ section.settings.col_split_left }}fr {{ section.settings.col_split_right }}fr;
+    --trio-btn-radius:      {{ section.settings.btn_radius }}px;
+    --trio-btn-pad-v:       {{ section.settings.btn_padding_v }}px;
+    --trio-btn-pad-h:       {{ section.settings.btn_padding_h }}px;
+    --trio-gap-eyebrow:     {{ section.settings.gap_eyebrow }}px;
+    --trio-gap-name:        {{ section.settings.gap_name }}px;
+    --trio-gap-desc:        {{ section.settings.gap_desc }}px;
+    --trio-gap-footer:      {{ section.settings.gap_footer }}px;
+    --trio-section-radius:  {{ section.settings.section_radius }}px;
+    --trio-outer-margin:    {{ section.settings.outer_margin }}px;
+    --trio-outer-margin-mobile: {{ section.settings.outer_margin_mobile }}px;
+  }
+  
+  /* ─── Outer wrapper ─────────────────────────────────── */
+  #c-col-trio-{{ section.id }} {
+    background: var(--trio-bg);
+    display: grid;
+    grid-template-columns: var(--trio-col-split);
+    min-height: var(--trio-min-height);
+    overflow: hidden;
+    border-radius: var(--trio-section-radius);
+    margin-left: var(--trio-outer-margin);
+    margin-right: var(--trio-outer-margin);
+    font-family: 'Work Sans', sans-serif;
+  }
+  
+  /* ─── Image column ──────────────────────────────────── */
+  #c-col-trio-{{ section.id }} .c-col-trio__image-col {
+    position: relative;
+    overflow: hidden;
+    border-right: 1px solid var(--trio-divider);
+  }
+  
+  /* Desktop image: always shown unless overridden by mobile */
+  #c-col-trio-{{ section.id }} .c-col-trio__img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: var(--trio-image-fit);
+    object-position: var(--trio-image-pos);
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  
+  #c-col-trio-{{ section.id }} .c-col-trio__img-placeholder {
+    background: rgba(249,248,246,0.05);
+    position: absolute;
+    top: 0; left: 0;
+  }
+  
+  /* Mobile/Desktop image visibility */
+  #c-col-trio-{{ section.id }} .c-col-trio__img--mobile {
+    display: none;
+  }
+  #c-col-trio-{{ section.id }} .c-col-trio__img--desktop {
+    display: block;
+  }
+  
+  /* ─── Content column ────────────────────────────────── */
+  #c-col-trio-{{ section.id }} .c-col-trio__info {
+    padding: var(--trio-content-pad-v) var(--trio-content-pad-h);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: {% if section.settings.content_align == 'center' %}center{% elsif section.settings.content_align == 'right' %}flex-end{% else %}flex-start{% endif %};
+    text-align: var(--trio-content-align);
+  }
+  
+  /* ─── Text elements ─────────────────────────────────── */
+  #c-col-trio-{{ section.id }} .c-col-trio__eyebrow {
+    font-size: var(--trio-eyebrow-size);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--trio-eyebrow);
+    font-weight: 300;
+    margin: 0 0 var(--trio-gap-eyebrow);
+  }
+  
+  #c-col-trio-{{ section.id }} .c-col-trio__name {
+    font-size: var(--trio-heading-size);
+    font-weight: 300;
+    color: var(--trio-headline);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Work Sans', sans-serif;
+    margin: 0 0 var(--trio-gap-name);
+    line-height: 1.15;
+  }
+  
+  #c-col-trio-{{ section.id }} .c-col-trio__desc {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: var(--trio-body-size);
+    line-height: 1.75;
+    color: var(--trio-body);
+    font-weight: 300;
+    max-width: {{ section.settings.desc_max_width }}px;
+    margin: 0 0 var(--trio-gap-desc);
+  }
+  
+  /* ─── Footer (price + CTA) ───────────────────────────── */
+  #c-col-trio-{{ section.id }} .c-col-trio__footer {
+    display: flex;
+    align-items: center;
+    gap: var(--trio-gap-footer);
+    margin-top: 0;
+    flex-wrap: wrap;
+    {% if section.settings.content_align == 'center' %}justify-content: center;{% elsif section.settings.content_align == 'right' %}justify-content: flex-end;{% endif %}
+  }
+  
+  #c-col-trio-{{ section.id }} .c-col-trio__price {
+    font-size: var(--trio-price-size);
+    color: var(--trio-price);
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    margin: 0;
+  }
+  
+  #c-col-trio-{{ section.id }} .c-col-trio__cta {
+    display: inline-block;
+    padding: var(--trio-btn-pad-v) var(--trio-btn-pad-h);
+    border: 1px solid var(--trio-btn-border);
+    background: var(--trio-btn-bg);
+    color: var(--trio-btn-text);
+    font-family: 'Work Sans', sans-serif;
+    font-size: var(--trio-cta-size);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    font-weight: 300;
+    border-radius: var(--trio-btn-radius);
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+  }
+  
+  #c-col-trio-{{ section.id }} .c-col-trio__cta:hover {
+    background: var(--trio-btn-hover-bg);
+    border-color: var(--trio-btn-hover-border);
+  }
+  
+#c-col-trio-{{ section.id }} .c-col-trio__img {
+   transform: scale(1.15);
+}
+  /* ─── Tablet ─────────────────────────────────────────── */
+  @media screen and (max-width: 900px) {
+    #c-col-trio-{{ section.id }} {
+      min-height: var(--trio-min-height-tablet);
+    }
+    #c-col-trio-{{ section.id }} .c-col-trio__info {
+      padding: var(--trio-content-pad-v-tablet) var(--trio-content-pad-h-tablet);
+    }
+  }
+  
+  /* ─── Mobile ─────────────────────────────────────────── */
+  @media screen and (max-width: 640px) {
+    #c-col-trio-{{ section.id }} {
+      grid-template-columns: 1fr;
+      min-height: unset;
+      border-radius: {% if section.settings.section_radius > 0 %}{{ section.settings.section_radius | divided_by: 2 }}px{% else %}0{% endif %};
+      margin-left: var(--trio-outer-margin-mobile);
+      margin-right: var(--trio-outer-margin-mobile);
+    }
+    
+    /* Image col on mobile: fixed height, not full stretch */
+    #c-col-trio-{{ section.id }} .c-col-trio__image-col {
+      min-height: var(--trio-min-height-mobile);
+      border-right: none;
+      border-bottom: 1px solid var(--trio-divider);
+    }
+
+    /* Swap desktop/mobile images */
+    #c-col-trio-{{ section.id }} .c-col-trio__img--desktop {
+      display: none;
+    }
+    #c-col-trio-{{ section.id }} .c-col-trio__img--mobile {
+      display: block;
+    }
+
+    #c-col-trio-{{ section.id }} .c-col-trio__info {
+      padding: var(--trio-content-pad-v-mobile) var(--trio-content-pad-h-mobile);
+    }
+
+    #c-col-trio-{{ section.id }} .c-col-trio__footer {
+      flex-direction: column;
+      align-items: {% if section.settings.content_align == 'center' %}center{% elsif section.settings.content_align == 'right' %}flex-end{% else %}flex-start{% endif %};
+      gap: 16px;
+    }
+
+    #c-col-trio-{{ section.id }} .c-col-trio__cta {
+      width: 100%;
+      text-align: center;
+    }
+  }
+  #c-col-trio-{{ section.id }} {
+  margin-left: 80px;
+  margin-right: 80px;
+  margin-bottom: 120px;
+}
+@media screen and (max-width: 900px) {
+  #c-col-trio-{{ section.id }} {
+    margin-left: 48px;
+    margin-right: 48px;
+    margin-bottom: 48px;
+  }
+}
+@media screen and (max-width: 640px) {
+  #c-col-trio-{{ section.id }} {
+    margin-left: 24px;
+    margin-right: 24px;
+    margin-bottom: 24px;
+  }
+}
+.c-col-trio__name-link{
+  color: inherit;
+  text-decoration: none;
+}
+
+.c-col-trio__name-link:hover{
+  color: inherit;
+  text-decoration: none;
+}
+</style>
+
+{% schema %}
+{
+  "name": "Collection Trio Banner",
+  "tag": "section",
+  "class": "c-col-trio-wrapper",
+  "limit": 1,
+  "settings": [
+
+    {
+      "type": "header",
+      "content": "🖼 Images"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Desktop image",
+      "info": "Shown on tablet and desktop. If set, takes priority over product image."
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mobile",
+      "label": "Mobile image",
+      "info": "Shown only on mobile (<640px). Falls back to desktop image if empty."
+    },
+    {
+      "type": "select",
+      "id": "image_fit",
+      "label": "Image fit",
+      "options": [
+        { "value": "cover",   "label": "Cover (fill, may crop)" },
+        { "value": "contain", "label": "Contain (full image, no crop)" },
+        { "value": "fill",    "label": "Stretch to fill" }
+      ],
+      "default": "cover"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "Image focal point",
+      "options": [
+        { "value": "center center", "label": "Center" },
+        { "value": "top center",    "label": "Top" },
+        { "value": "bottom center", "label": "Bottom" },
+        { "value": "center left",   "label": "Left" },
+        { "value": "center right",  "label": "Right" }
+      ],
+      "default": "center center"
+    },
+
+    {
+      "type": "header",
+      "content": "📦 Product"
+    },
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Trio product",
+      "info": "Used for price and URL if not overridden."
+    },
+
+    {
+      "type": "header",
+      "content": "✏️ Content"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "The complete system"
+    },
+    {
+      "type": "text",
+      "id": "trio_name",
+      "label": "Heading",
+      "default": "The Trio"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "Three sprays designed to support the nervous system across the full day. Sleep, Calm, and Clarity, each formulated for a distinct physiological state."
+    },
+    {
+      "type": "select",
+      "id": "content_align",
+      "label": "Content alignment",
+      "options": [
+        { "value": "left",   "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right",  "label": "Right" }
+      ],
+      "default": "left"
+    },
+
+    {
+      "type": "header",
+      "content": "💰 Price & CTA"
+    },
+    {
+      "type": "text",
+      "id": "price_override",
+      "label": "Price (manual override)",
+      "default": "$60 | 30mL each",
+      "info": "Overrides product price if filled."
+    },
+    {
+      "type": "text",
+      "id": "size_label",
+      "label": "Size label",
+      "info": "Appended to product price e.g. '30mL each'"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "default": "Shop The Trio"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link",
+      "info": "Leave blank to use product URL."
+    },
+
+    {
+      "type": "header",
+      "content": "🎨 Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "Column divider",
+      "default": "#1a2f5e"
+    },
+    {
+      "type": "color",
+      "id": "headline_color",
+      "label": "Headline color",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "eyebrow_color",
+      "label": "Eyebrow color",
+      "default": "#8090b8"
+    },
+    {
+      "type": "color",
+      "id": "body_color",
+      "label": "Description color",
+      "default": "#9eaac4"
+    },
+    {
+      "type": "color",
+      "id": "price_color",
+      "label": "Price color",
+      "default": "#6b7a9c"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg_color",
+      "label": "Button background",
+      "default": "#00000000"
+    },
+    {
+      "type": "color",
+      "id": "btn_text_color",
+      "label": "Button text color",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "btn_border_color",
+      "label": "Button border color",
+      "default": "#3d5280"
+    },
+    {
+      "type": "color",
+      "id": "btn_hover_bg_color",
+      "label": "Button hover background",
+      "default": "#1a2f5e"
+    },
+    {
+      "type": "color",
+      "id": "btn_hover_border_color",
+      "label": "Button hover border color",
+      "default": "#F9F8F6"
+    },
+
+    {
+      "type": "header",
+      "content": "📐 Layout — Column Split"
+    },
+    {
+      "type": "range",
+      "id": "col_split_left",
+      "label": "Image column weight",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 1,
+      "info": "1 = equal. Increase for wider image column."
+    },
+    {
+      "type": "range",
+      "id": "col_split_right",
+      "label": "Content column weight",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 1,
+      "info": "1 = equal. Increase for wider content column."
+    },
+
+    {
+      "type": "header",
+      "content": "📐 Layout — Section Height"
+    },
+    {
+      "type": "range",
+      "id": "min_height_desktop",
+      "label": "Min height — Desktop",
+      "min": 300,
+      "max": 900,
+      "step": 20,
+      "unit": "px",
+      "default": 460
+    },
+    {
+      "type": "range",
+      "id": "min_height_tablet",
+      "label": "Min height — Tablet",
+      "min": 200,
+      "max": 700,
+      "step": 20,
+      "unit": "px",
+      "default": 400
+    },
+    {
+      "type": "range",
+      "id": "min_height_mobile",
+      "label": "Image height — Mobile",
+      "min": 160,
+      "max": 500,
+      "step": 20,
+      "unit": "px",
+      "default": 280
+    },
+
+    {
+      "type": "header",
+      "content": "📐 Layout — Content Padding (Desktop)"
+    },
+    {
+      "type": "range",
+      "id": "content_padding_v",
+      "label": "Vertical padding",
+      "min": 16,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 56
+    },
+    {
+      "type": "range",
+      "id": "content_padding_h",
+      "label": "Horizontal padding",
+      "min": 16,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 56
+    },
+
+    {
+      "type": "header",
+      "content": "📐 Layout — Content Padding (Tablet)"
+    },
+    {
+      "type": "range",
+      "id": "content_padding_v_tablet",
+      "label": "Vertical padding",
+      "min": 16,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "content_padding_h_tablet",
+      "label": "Horizontal padding",
+      "min": 16,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+
+    {
+      "type": "header",
+      "content": "📐 Layout — Content Padding (Mobile)"
+    },
+    {
+      "type": "range",
+      "id": "content_padding_v_mobile",
+      "label": "Vertical padding",
+      "min": 16,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "content_padding_h_mobile",
+      "label": "Horizontal padding",
+      "min": 16,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 24
+    },
+
+    {
+      "type": "header",
+      "content": "📐 Layout — Section Border"
+    },
+    {
+      "type": "range",
+      "id": "section_radius",
+      "label": "Section border radius",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "outer_margin",
+      "label": "Outer margin — Desktop",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "outer_margin_mobile",
+      "label": "Outer margin — Mobile",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+
+    {
+      "type": "header",
+      "content": "🔡 Typography — Sizes"
+    },
+    {
+      "type": "range",
+      "id": "eyebrow_size",
+      "label": "Eyebrow font size",
+      "min": 8,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Heading font size",
+      "min": 18,
+      "max": 72,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "body_size",
+      "label": "Description font size",
+      "min": 11,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "price_size",
+      "label": "Price font size",
+      "min": 10,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 13
+    },
+    {
+      "type": "range",
+      "id": "cta_size",
+      "label": "Button font size",
+      "min": 8,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "desc_max_width",
+      "label": "Description max width",
+      "min": 200,
+      "max": 600,
+      "step": 20,
+      "unit": "px",
+      "default": 380
+    },
+
+    {
+      "type": "header",
+      "content": "↕️ Spacing — Between Elements"
+    },
+    {
+      "type": "range",
+      "id": "gap_eyebrow",
+      "label": "After eyebrow",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "gap_name",
+      "label": "After heading",
+      "min": 0,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "gap_desc",
+      "label": "After description",
+      "min": 0,
+      "max": 64,
+      "step": 4,
+      "unit": "px",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "gap_footer",
+      "label": "Price ↔ Button gap",
+      "min": 8,
+      "max": 64,
+      "step": 4,
+      "unit": "px",
+      "default": 32
+    },
+
+    {
+      "type": "header",
+      "content": "🔲 Button Shape"
+    },
+    {
+      "type": "range",
+      "id": "btn_radius",
+      "label": "Button border radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "btn_padding_v",
+      "label": "Button vertical padding",
+      "min": 6,
+      "max": 28,
+      "step": 2,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "btn_padding_h",
+      "label": "Button horizontal padding",
+      "min": 12,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 32
+    }
+
+  ],
+  "presets": [
+    {
+      "name": "Collection Trio Banner",
+      "settings": {
+        "eyebrow": "The complete system",
+        "trio_name": "The Trio",
+        "description": "Three sprays designed to support the nervous system across the full day. Sleep, Calm, and Clarity, each formulated for a distinct physiological state.",
+        "price_override": "$60 | 30mL each",
+        "cta_text": "Shop The Trio"
+      }
+    }
+  ]
+}
+{% endschema %}

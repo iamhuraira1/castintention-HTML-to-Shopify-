@@ -1,0 +1,220 @@
+{% comment %}
+  CAST — PDP Pull Quote
+  File: sections/c-pdp-pull-quote.liquid
+
+  Features:
+  - Featured customer quote with attribution
+  - Quote pulled from product metafield cast.pull_quote
+  - Attribution from product metafield cast.pull_quote_attr
+  - Or manually set via section settings (fallback)
+  - Colors, padding desktop/tablet/mobile customizable
+  - No JS needed
+{% endcomment %}
+
+{%- assign meta_quote = product.metafields.cast.pull_quote.value -%}
+{%- assign meta_attr   = product.metafields.cast.pull_quote_attr.value -%}
+
+{%- assign quote = meta_quote | default: section.settings.quote -%}
+{%- assign attr  = meta_attr  | default: section.settings.attribution -%}
+
+{% if quote != blank %}
+<section
+  class="c-pdp-pull-quote"
+  id="c-pdp-pull-quote-{{ section.id }}"
+>
+  <div class="c-pdp-pull-quote__inner">
+
+    <p class="c-pdp-pull-quote__text">{{ quote }}</p>
+
+    {% if attr != blank %}
+      <p class="c-pdp-pull-quote__attr">{{ attr }}</p>
+    {% endif %}
+
+  </div>
+</section>
+{% endif %}
+
+<style>
+  #c-pdp-pull-quote-{{ section.id }} {
+    --pq-bg:              {{ section.settings.bg_color }};
+    --pq-text:            {{ section.settings.text_color }};
+    --pq-attr:            {{ section.settings.attr_color }};
+    --pq-max-width:       {{ section.settings.max_width }}px;
+    --pq-padding-desktop: {{ section.settings.padding_desktop }}px;
+    --pq-padding-tablet:  {{ section.settings.padding_tablet }}px;
+    --pq-padding-mobile:  {{ section.settings.padding_mobile }}px;
+  }
+
+  .c-pdp-pull-quote {
+    padding: var(--pq-padding-desktop) 80px;
+    background: var(--pq-bg);
+    {% if section.settings.show_border_top %}
+    border-top: 1.5px solid rgba(0,0,0,0.14);
+    {% endif %}
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .c-pdp-pull-quote__inner {
+    max-width: var(--pq-max-width);
+    width: 100%;
+  }
+
+  .c-pdp-pull-quote__text {
+    font-family: 'Spectral', Georgia, serif;
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 300;
+    line-height: 1.45;
+    color: var(--pq-text);
+    letter-spacing: -0.01em;
+    margin-bottom: 32px;
+  }
+
+  .c-pdp-pull-quote__attr {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pq-attr);
+    font-weight: 300;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  /* Tablet */
+  @media screen and (max-width: 900px) {
+    .c-pdp-pull-quote {
+      padding: var(--pq-padding-tablet) 48px;
+    }
+  }
+
+  /* Mobile */
+  @media screen and (max-width: 640px) {
+    .c-pdp-pull-quote {
+      padding: var(--pq-padding-mobile) 24px;
+    }
+
+    .c-pdp-pull-quote__text {
+      font-size: clamp(20px, 5.5vw, 28px);
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "PDP — Pull Quote",
+  "tag": "section",
+  "class": "c-pdp-pull-quote-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Quote content"
+    },
+    {
+      "type": "paragraph",
+      "content": "Quote and attribution are pulled from product metafields cast.pull_quote and cast.pull_quote_attr. The fields below are fallbacks if metafields are empty."
+    },
+    {
+      "type": "textarea",
+      "id": "quote",
+      "label": "Quote (fallback)",
+      "default": "My breathing genuinely slows within a few minutes of using it. I have been using it every night for two months and the consistency of my sleep has improved noticeably."
+    },
+    {
+      "type": "text",
+      "id": "attribution",
+      "label": "Attribution (fallback)",
+      "default": "Elena M., Vancouver"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Quote text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "attr_color",
+      "label": "Attribution color",
+      "default": "#666666"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Max quote width",
+      "min": 400,
+      "max": 900,
+      "step": 20,
+      "unit": "px",
+      "default": 680
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border_top",
+      "label": "Show top border",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Desktop spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_desktop",
+      "label": "Padding top & bottom — Desktop",
+      "min": 40,
+      "max": 200,
+      "step": 8,
+      "unit": "px",
+      "default": 136
+    },
+    {
+      "type": "header",
+      "content": "Tablet spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_tablet",
+      "label": "Padding top & bottom — Tablet",
+      "min": 40,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "header",
+      "content": "Mobile spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_mobile",
+      "label": "Padding top & bottom — Mobile",
+      "min": 40,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 72
+    }
+  ],
+  "presets": [
+    {
+      "name": "PDP — Pull Quote"
+    }
+  ]
+}
+{% endschema %}

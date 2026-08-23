@@ -1,0 +1,906 @@
+{% comment %}
+  CAST — Waitlist Landing Page Section
+  File: sections/cast-waitlist.liquid
+  
+  Features:
+  - Pixel-perfect match to HTML mockup
+  - Klaviyo waitlist integration via API
+  - Fully customizable via Shopify Theme Editor
+  - Mobile responsive
+  - 85+ Lighthouse optimized
+{% endcomment %}
+
+<style>
+  /* ── RESET & ROOT ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cast-black: {{ section.settings.color_black }};
+    --cast-warm-white: {{ section.settings.color_warm_white }};
+    --cast-light-grey: {{ section.settings.color_light_grey }};
+    --cast-deep-blue: {{ section.settings.color_deep_blue }};
+    --cast-text-body: {{ section.settings.color_text_body }};
+    --cast-text-muted: {{ section.settings.color_text_muted }};
+    --cast-font: 'Work Sans', sans-serif;
+    --cast-font-body: 'Spectral', Georgia, serif;
+  }
+
+  /* ── PAGE WRAPPER ── */
+  #cast-waitlist-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    font-family: var(--cast-font);
+    font-weight: 300;
+    background: var(--cast-warm-white);
+    color: var(--cast-text-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── TOP BAR ── */
+  .cast-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px 64px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .cast-logo {
+    font-size: 18px;
+    letter-spacing: 0.28em;
+    font-weight: 300;
+    color: var(--cast-black);
+    text-decoration: none;
+    font-family: var(--cast-font);
+  }
+
+  .cast-launch-badge {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cast-text-muted);
+    font-weight: 300;
+    font-family: var(--cast-font);
+  }
+
+  /* ── MAIN GRID ── */
+  .cast-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100%;
+  }
+
+  /* ── LEFT PANEL ── */
+  .cast-left-panel {
+    padding: 80px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .cast-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cast-text-muted);
+    font-weight: 300;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    animation: castFadeUp 0.6s ease forwards;
+    opacity: 0;
+    animation-delay: 0.1s;
+  }
+
+  .cast-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--cast-text-muted);
+    opacity: 0.5;
+  }
+
+  .cast-headline {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 300;
+    line-height: 1.08;
+    color: var(--cast-black);
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    animation: castFadeUp 0.6s ease forwards;
+    opacity: 0;
+    animation-delay: 0.25s;
+  }
+
+  .cast-subhead {
+    font-family: var(--cast-font-body);
+    font-size: clamp(16px, 1.8vw, 20px);
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--cast-text-muted);
+    margin-bottom: 48px;
+    max-width: 440px;
+    animation: castFadeUp 0.6s ease forwards;
+    opacity: 0;
+    animation-delay: 0.4s;
+  }
+
+  /* ── FORM ── */
+  .cast-form-row {
+    display: flex;
+    max-width: 440px;
+    margin-bottom: 16px;
+    animation: castFadeUp 0.6s ease forwards;
+    opacity: 0;
+    animation-delay: 0.55s;
+  }
+
+  .cast-email-input {
+    flex: 1;
+    background: var(--cast-warm-white);
+    border: 1.5px solid rgba(0,0,0,0.2);
+    border-right: none;
+    color: var(--cast-text-body);
+    font-family: var(--cast-font);
+    font-weight: 300;
+    font-size: 13px;
+    padding: 14px 20px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+
+  .cast-email-input:focus { border-color: var(--cast-deep-blue); }
+  .cast-email-input::placeholder { color: rgba(0,0,0,0.28); }
+
+  .cast-submit-btn {
+    background: var(--cast-deep-blue);
+    border: 1.5px solid var(--cast-deep-blue);
+    color: var(--cast-warm-white);
+    font-family: var(--cast-font);
+    font-weight: 300;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    border-radius: 0;
+  }
+
+  .cast-submit-btn:hover { opacity: 0.85; }
+  .cast-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .cast-form-note {
+    font-size: 11px;
+    color: var(--cast-text-muted);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    max-width: 440px;
+    animation: castFadeUp 0.6s ease forwards;
+    opacity: 0;
+    animation-delay: 0.65s;
+  }
+
+  /* ── FORM STATES ── */
+  .cast-error-msg {
+    display: none;
+    font-size: 11px;
+    color: rgba(160,0,0,0.8);
+    margin-top: 8px;
+    font-family: var(--cast-font);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+  }
+
+  .cast-success-message {
+    display: none;
+    font-family: var(--cast-font-body);
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--cast-deep-blue);
+    font-style: italic;
+    max-width: 440px;
+    line-height: 1.6;
+    padding: 20px 0;
+  }
+
+  /* ── DEFINITION BLOCK ── */
+  .cast-definition-block {
+    margin-top: 64px;
+    padding-top: 40px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    max-width: 440px;
+    animation: castFadeUp 0.6s ease forwards;
+    opacity: 0;
+    animation-delay: 0.75s;
+  }
+
+  .cast-definition-label {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cast-text-muted);
+    font-weight: 300;
+    margin-bottom: 12px;
+  }
+
+  .cast-definition-text {
+    font-family: var(--cast-font-body);
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--cast-text-muted);
+    font-weight: 300;
+  }
+
+  /* ── RIGHT PANEL ── */
+  .cast-right-panel {
+    background: var(--cast-light-grey);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 64px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cast-right-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg, #e8e3da 0%, #ddd8ce 50%, #e4dfd6 100%);
+  }
+
+  /* ── BOTTLE ILLUSTRATION ── */
+  .cast-bottle-wrap {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: castFloat 6s ease-in-out infinite;
+  }
+
+  @keyframes castFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  .cast-bottle-cap {
+    width: 36px;
+    height: 56px;
+    background: #111111;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .cast-bottle-body {
+    width: 88px;
+    height: 180px;
+    background: linear-gradient(160deg, #6b3500 0%, #4a2400 55%, #6b3500 100%);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 8px 16px 40px rgba(0,0,0,0.18);
+  }
+
+  .cast-bottle-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .cast-bottle-label span {
+    font-size: 6px;
+    letter-spacing: 0.2em;
+    color: rgba(249,248,246,0.75);
+    font-weight: 300;
+    font-family: var(--cast-font);
+    text-transform: uppercase;
+  }
+
+  .cast-bottle-label .cast-product-name-label {
+    font-size: 5.5px;
+    opacity: 0.55;
+  }
+
+  /* ── RIGHT PANEL TEXT ── */
+  .cast-panel-product-label {
+    position: relative;
+    z-index: 1;
+    margin-top: 40px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cast-text-muted);
+    font-weight: 300;
+    text-align: center;
+    font-family: var(--cast-font);
+  }
+
+  .cast-panel-product-name {
+    position: relative;
+    z-index: 1;
+    font-size: 22px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cast-black);
+    font-weight: 300;
+    text-align: center;
+    margin-top: 8px;
+    font-family: var(--cast-font);
+  }
+
+  .cast-panel-product-desc {
+    position: relative;
+    z-index: 1;
+    font-family: var(--cast-font-body);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--cast-text-muted);
+    font-weight: 300;
+    text-align: center;
+    max-width: 280px;
+    margin-top: 12px;
+    font-style: italic;
+  }
+
+  .cast-panel-price {
+    position: relative;
+    z-index: 1;
+    font-size: 11px;
+    color: var(--cast-text-muted);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    margin-top: 16px;
+    text-align: center;
+    font-family: var(--cast-font);
+  }
+
+  .cast-panel-launch {
+    position: relative;
+    z-index: 1;
+    margin-top: 24px;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cast-deep-blue);
+    font-weight: 300;
+    text-align: center;
+    padding: 8px 20px;
+    border: 1px solid rgba(11,31,76,0.3);
+    font-family: var(--cast-font);
+  }
+
+  /* ── FOOTER ── */
+  .cast-bottom-bar {
+    padding: 24px 64px;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cast-bottom-copy {
+    font-size: 11px;
+    color: var(--cast-text-muted);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    font-family: var(--cast-font);
+  }
+
+  .cast-bottom-social {
+    display: flex;
+    gap: 24px;
+  }
+
+  .cast-bottom-social a {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--cast-text-muted);
+    text-decoration: none;
+    font-weight: 300;
+    transition: color 0.2s;
+    font-family: var(--cast-font);
+  }
+
+  .cast-bottom-social a:hover { color: var(--cast-black); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes castFadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── LOADING SPINNER ── */
+  .cast-spinner {
+    display: none;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid rgba(249,248,246,0.3);
+    border-top-color: var(--cast-warm-white);
+    border-radius: 50%;
+    animation: castSpin 0.7s linear infinite;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  @keyframes castSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    .cast-top-bar { padding: 24px 32px; }
+    .cast-main { grid-template-columns: 1fr; }
+    .cast-left-panel {
+      padding: 56px 32px;
+      border-right: none;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+    .cast-right-panel { padding: 56px 32px; min-height: 480px; }
+    .cast-bottom-bar {
+      padding: 20px 32px;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+    .cast-form-row { max-width: 100%; }
+    .cast-subhead,
+    .cast-definition-block,
+    .cast-form-note { max-width: 100%; }
+  }
+</style>
+
+{% comment %} Google Fonts — loaded once, scoped to this section {% endcomment %}
+{% comment %} <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400&family=Spectral:ital,wght@0,300;1,300&display=swap" rel="stylesheet"> {% endcomment %}
+
+<div id="cast-waitlist-page">
+
+  <!-- ── TOP BAR ── -->
+  <header class="cast-top-bar">
+    <a class="cast-logo" href="{{ routes.root_url }}">{{ section.settings.brand_name }}</a>
+    <span class="cast-launch-badge">{{ section.settings.launch_badge_text }}</span>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <div class="cast-main">
+
+    <!-- LEFT PANEL -->
+    <div class="cast-left-panel">
+
+      <p class="cast-eyebrow">{{ section.settings.eyebrow_text }}</p>
+
+      <h1 class="cast-headline">{{ section.settings.headline }}</h1>
+
+      <p class="cast-subhead">{{ section.settings.subheadline }}</p>
+
+      <div class="cast-form-row" id="cast-form-row">
+        <input
+          class="cast-email-input"
+          type="email"
+          id="cast-email-input"
+          placeholder="{{ section.settings.email_placeholder }}"
+          autocomplete="email"
+          aria-label="Email address"
+          required
+        >
+        <button
+          class="cast-submit-btn"
+          id="cast-submit-btn"
+          type="button"
+          onclick="castHandleSubmit()"
+        >
+          {{ section.settings.button_label }}
+          <span class="cast-spinner" id="cast-spinner"></span>
+        </button>
+      </div>
+
+      <p class="cast-error-msg" id="cast-error-msg">{{ section.settings.error_message }}</p>
+      <p class="cast-form-note" id="cast-form-note">{{ section.settings.form_note }}</p>
+      <p class="cast-success-message" id="cast-success-message">{{ section.settings.success_message }}</p>
+
+      {% if section.settings.show_definition %}
+      <div class="cast-definition-block">
+        <p class="cast-definition-label">{{ section.settings.definition_label }}</p>
+        <p class="cast-definition-text">{{ section.settings.definition_text }}</p>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="cast-right-panel">
+
+      <div class="cast-bottle-wrap">
+        <div class="cast-bottle-cap"></div>
+        <div class="cast-bottle-body">
+          <div class="cast-bottle-label">
+            <span>{{ section.settings.brand_name }}</span>
+            {% assign product_words = section.settings.product_name | split: ' ' %}
+            {% for word in product_words %}
+              <span class="cast-product-name-label">{{ word }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <p class="cast-panel-product-label">{{ section.settings.product_release_label }}</p>
+      <p class="cast-panel-product-name">{{ section.settings.product_name }}</p>
+      <p class="cast-panel-product-desc">{{ section.settings.product_description }}</p>
+      <p class="cast-panel-price">{{ section.settings.product_price }}</p>
+      <p class="cast-panel-launch">{{ section.settings.product_launch_date }}</p>
+
+    </div>
+
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer class="cast-bottom-bar">
+    <p class="cast-bottom-copy">{{ section.settings.footer_copyright }}</p>
+    <div class="cast-bottom-social">
+      {% if section.settings.social_instagram != blank %}
+        <a href="{{ section.settings.social_instagram }}" target="_blank" rel="noopener">Instagram</a>
+      {% endif %}
+      {% if section.settings.social_tiktok != blank %}
+        <a href="{{ section.settings.social_tiktok }}" target="_blank" rel="noopener">TikTok</a>
+      {% endif %}
+      {% if section.settings.social_substack != blank %}
+        <a href="{{ section.settings.social_substack }}" target="_blank" rel="noopener">Substack</a>
+      {% endif %}
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KLAVIYO_LIST_ID = {{ section.settings.klaviyo_list_id | json }};
+  var KLAVIYO_API_KEY = {{ section.settings.klaviyo_public_api_key | json }};
+  var SOURCE_NAME     = {{ section.settings.klaviyo_source_name | json }};
+
+  var emailInput = document.getElementById('cast-email-input');
+  var submitBtn  = document.getElementById('cast-submit-btn');
+  var spinner    = document.getElementById('cast-spinner');
+  var formRow    = document.getElementById('cast-form-row');
+  var formNote   = document.getElementById('cast-form-note');
+  var successMsg = document.getElementById('cast-success-message');
+  var errorMsg   = document.getElementById('cast-error-msg');
+
+  function isValidEmail(e) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+  }
+
+  function setInputError() {
+    emailInput.style.borderColor = 'rgba(180,0,0,0.4)';
+    errorMsg.style.display = 'block';
+    setTimeout(function(){ emailInput.style.borderColor = 'rgba(0,0,0,0.2)'; }, 2500);
+  }
+
+  function onSuccess() {
+    spinner.style.display    = 'none';
+    formRow.style.display    = 'none';
+    formNote.style.display   = 'none';
+    errorMsg.style.display   = 'none';
+    successMsg.style.display = 'block';
+    if (window.dataLayer) window.dataLayer.push({ event: 'cast_waitlist_signup' });
+  }
+
+  function onError(msg) {
+    spinner.style.display      = 'none';
+    submitBtn.disabled         = false;
+    emailInput.disabled        = false;
+    errorMsg.textContent       = msg || 'Something went wrong. Please try again.';
+    errorMsg.style.display     = 'block';
+  }
+
+  function castHandleSubmit() {
+    var email = emailInput.value.trim();
+    if (!email || !isValidEmail(email)) { setInputError(); emailInput.focus(); return; }
+
+    submitBtn.disabled    = true;
+    emailInput.disabled   = true;
+    spinner.style.display = 'inline-block';
+    errorMsg.style.display = 'none';
+
+    // Klaviyo v3 — correct payload structure per API docs
+    var payload = JSON.stringify({
+      data: {
+        type: 'subscription',
+        attributes: {
+          profile: {
+            data: {
+              type: 'profile',
+              attributes: {
+                email: email,
+                properties: { source: SOURCE_NAME || 'CAST Waitlist' }
+              }
+            }
+          }
+        },
+        relationships: {
+          list: {
+            data: {
+              type: 'list',
+              id: KLAVIYO_LIST_ID
+            }
+          }
+        }
+      }
+    });
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://a.klaviyo.com/client/subscriptions/?company_id=' + encodeURIComponent(KLAVIYO_API_KEY), true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('revision', '2024-10-15');
+    xhr.withCredentials = false;
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status === 202 || xhr.status === 200) {
+        onSuccess();
+      } else {
+        console.error('Klaviyo status:', xhr.status, xhr.responseText);
+        onError();
+      }
+    };
+    xhr.onerror = function() { console.error('XHR network error'); onError(); };
+    xhr.send(payload);
+  }
+
+  window.castHandleSubmit = castHandleSubmit;
+  emailInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') castHandleSubmit(); });
+
+})();
+</script>
+
+{% schema %}
+{
+  "name": "CAST Waitlist",
+  "tag": "section",
+  "class": "cast-waitlist-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "🎨 Brand & Identity"
+    },
+    {
+      "type": "text",
+      "id": "brand_name",
+      "label": "Brand Name",
+      "default": "CAST"
+    },
+    {
+      "type": "text",
+      "id": "launch_badge_text",
+      "label": "Launch Badge Text",
+      "default": "Launching June 2026"
+    },
+
+    {
+      "type": "header",
+      "content": "📝 Left Panel — Copy"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow_text",
+      "label": "Eyebrow Text",
+      "default": "Physiological wellness"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Headline",
+      "default": "Balance when your body needs it."
+    },
+    {
+      "type": "textarea",
+      "id": "subheadline",
+      "label": "Subheadline",
+      "default": "Plant chemistry designed to support your nervous system throughout the day. Launching June 2026."
+    },
+
+    {
+      "type": "header",
+      "content": "📧 Form Settings"
+    },
+    {
+      "type": "text",
+      "id": "email_placeholder",
+      "label": "Email Placeholder",
+      "default": "Your email address"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button Label",
+      "default": "Join the waitlist"
+    },
+    {
+      "type": "text",
+      "id": "form_note",
+      "label": "Form Note",
+      "default": "Be first to access Cast when we launch."
+    },
+    {
+      "type": "text",
+      "id": "success_message",
+      "label": "Success Message",
+      "default": "You're on the list. We'll be in touch before June."
+    },
+    {
+      "type": "text",
+      "id": "error_message",
+      "label": "Validation Error Message",
+      "default": "Please enter a valid email address."
+    },
+
+    {
+      "type": "header",
+      "content": "🔌 Klaviyo Integration"
+    },
+    {
+      "type": "text",
+      "id": "klaviyo_public_api_key",
+      "label": "Klaviyo Public API Key (Company ID)",
+      "info": "Found in Klaviyo → Settings → API Keys. This is your PUBLIC key — safe to use on the frontend."
+    },
+    {
+      "type": "text",
+      "id": "klaviyo_list_id",
+      "label": "Klaviyo List ID",
+      "info": "Found in Klaviyo → Lists & Segments → select your waitlist → Settings. Copy the List ID (e.g. XyZ123)."
+    },
+    {
+      "type": "text",
+      "id": "klaviyo_source_name",
+      "label": "Source Name (for Klaviyo profile property)",
+      "default": "CAST Waitlist Landing Page"
+    },
+
+    {
+      "type": "header",
+      "content": "📦 Right Panel — Product"
+    },
+    {
+      "type": "text",
+      "id": "product_release_label",
+      "label": "Release Label",
+      "default": "First release"
+    },
+    {
+      "type": "text",
+      "id": "product_name",
+      "label": "Product Name",
+      "default": "Sleep Spray"
+    },
+    {
+      "type": "textarea",
+      "id": "product_description",
+      "label": "Product Description",
+      "default": "Your nervous system stays active long after you're ready for sleep. Sleep Spray works through olfactory-limbic pathways to support your shift into rest."
+    },
+    {
+      "type": "text",
+      "id": "product_price",
+      "label": "Product Price + Size",
+      "default": "$52 | 100mL / 3.4 fl oz"
+    },
+    {
+      "type": "text",
+      "id": "product_launch_date",
+      "label": "Launch Date Label",
+      "default": "June 2026"
+    },
+
+    {
+      "type": "header",
+      "content": "💬 Definition Block"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_definition",
+      "label": "Show Definition Block",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "definition_label",
+      "label": "Definition Label",
+      "default": "What is physiological wellness"
+    },
+    {
+      "type": "textarea",
+      "id": "definition_text",
+      "label": "Definition Text",
+      "default": "Physiological wellness is the practice of helping your nervous system regulate itself throughout the day. Cast's home and body care supports this process through olfactory, herbal, and structural inputs formulated for everyday use."
+    },
+
+    {
+      "type": "header",
+      "content": "🔗 Footer & Social"
+    },
+    {
+      "type": "text",
+      "id": "footer_copyright",
+      "label": "Footer Copyright",
+      "default": "© 2026 Cast. All rights reserved."
+    },
+    {
+      "type": "url",
+      "id": "social_instagram",
+      "label": "Instagram URL"
+    },
+    {
+      "type": "url",
+      "id": "social_tiktok",
+      "label": "TikTok URL"
+    },
+    {
+      "type": "url",
+      "id": "social_substack",
+      "label": "Substack URL"
+    },
+
+    {
+      "type": "header",
+      "content": "🎨 Colour System"
+    },
+    {
+      "type": "color",
+      "id": "color_black",
+      "label": "Black",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "color_warm_white",
+      "label": "Warm White (Background)",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "color_light_grey",
+      "label": "Light Grey (Right Panel)",
+      "default": "#EEEBE6"
+    },
+    {
+      "type": "color",
+      "id": "color_deep_blue",
+      "label": "Deep Blue (CTA / Accents)",
+      "default": "#0B1F4C"
+    },
+    {
+      "type": "color",
+      "id": "color_text_body",
+      "label": "Body Text",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "color_text_muted",
+      "label": "Muted Text",
+      "default": "#666666"
+    }
+  ],
+  "presets": [
+    {
+      "name": "CAST Waitlist",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}

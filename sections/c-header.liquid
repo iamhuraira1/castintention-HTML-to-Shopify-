@@ -1,0 +1,1024 @@
+{% comment %}
+  CAST — Header / Navigation
+  File: sections/c-header.liquid
+
+  Features:
+  - Sticky always
+  - Transparent over hero (homepage), solid on scroll
+  - 4 logo slots: desktop transparent, desktop solid, mobile transparent, mobile solid
+  - Left: nav links from Shopify Navigation
+  - Right: Search, Cart, Account icons
+  - Mobile: hamburger left, icons right, logo center
+  - Slide-in drawer
+  - Expandable inline search bar (slides down under navbar, no page redirect)
+{% endcomment %}
+
+{% assign is_homepage = false %}
+{% if template.name == 'index' %}
+  {% assign is_homepage = true %}
+{% endif %}
+
+{% assign transparent_on_load = false %}
+{% if is_homepage and section.settings.transparent_on_hero %}
+  {% assign transparent_on_load = true %}
+{% endif %}
+
+<header
+  id="c-header"
+  class="c-header{% if transparent_on_load %} c-header--transparent{% else %} c-header--solid{% endif %}"
+  role="banner"
+  data-transparent="{{ transparent_on_load }}"
+>
+
+  {%- comment -%} Mobile hamburger — LEFT {%- endcomment -%}
+  <button
+    class="c-header__hamburger"
+    aria-label="Open menu"
+    aria-expanded="false"
+    aria-controls="c-mobile-drawer"
+    data-action="open-drawer"
+  >
+    <span class="c-header__hamburger-line"></span>
+    <span class="c-header__hamburger-line"></span>
+    <span class="c-header__hamburger-line"></span>
+  </button>
+
+  {%- comment -%} Desktop nav — LEFT {%- endcomment -%}
+  {% assign main_menu = linklists[section.settings.main_menu_handle] %}
+  <nav class="c-header__nav-left" aria-label="Main navigation">
+    {% if main_menu != blank %}
+      {% for link in main_menu.links %}
+        <a
+          href="{{ link.url }}"
+          class="c-header__nav-link{% if link.active %} is-active{% endif %}"
+          {% if link.url contains 'http' %}{% unless link.url contains shop.domain %}target="_blank" rel="noopener noreferrer"{% endunless %}{% endif %}
+        >{{ link.title }}</a>
+      {% endfor %}
+    {% endif %}
+  </nav>
+
+  {%- comment -%} Logo — CENTER {%- endcomment -%}
+  <a href="{{ routes.root_url }}" class="c-header__logo" aria-label="{{ shop.name }} — Home">
+
+    {%- comment -%} Desktop transparent logo {%- endcomment -%}
+    {% if section.settings.logo_desktop_transparent != blank %}
+      <img
+        src="{{ section.settings.logo_desktop_transparent | image_url: width: 300 }}"
+        alt="{{ shop.name }}"
+        width="{{ section.settings.logo_width }}"
+        height="auto"
+        loading="eager"
+        fetchpriority="high"
+        class="c-header__logo-img c-header__logo--desktop-transparent"
+      >
+    {% else %}
+      <span class="c-header__logo-text c-header__logo--desktop-transparent">
+        {{ section.settings.logo_text | default: shop.name }}
+      </span>
+    {% endif %}
+
+    {%- comment -%} Desktop solid logo {%- endcomment -%}
+    {% if section.settings.logo_desktop_solid != blank %}
+      <img
+        src="{{ section.settings.logo_desktop_solid | image_url: width: 300 }}"
+        alt="{{ shop.name }}"
+        width="{{ section.settings.logo_width }}"
+        height="auto"
+        loading="eager"
+        class="c-header__logo-img c-header__logo--desktop-solid"
+      >
+    {% else %}
+      <span class="c-header__logo-text c-header__logo--desktop-solid">
+        {{ section.settings.logo_text | default: shop.name }}
+      </span>
+    {% endif %}
+
+    {%- comment -%} Mobile transparent logo {%- endcomment -%}
+    {% if section.settings.logo_mobile_transparent != blank %}
+      <img
+        src="{{ section.settings.logo_mobile_transparent | image_url: width: 200 }}"
+        alt="{{ shop.name }}"
+        width="{{ section.settings.logo_width_mobile }}"
+        height="auto"
+        loading="eager"
+        class="c-header__logo-img c-header__logo--mobile-transparent"
+      >
+    {% else %}
+      <span class="c-header__logo-text c-header__logo--mobile-transparent">
+        {{ section.settings.logo_text | default: shop.name }}
+      </span>
+    {% endif %}
+
+    {%- comment -%} Mobile solid logo {%- endcomment -%}
+    {% if section.settings.logo_mobile_solid != blank %}
+      <img
+        src="{{ section.settings.logo_mobile_solid | image_url: width: 200 }}"
+        alt="{{ shop.name }}"
+        width="{{ section.settings.logo_width_mobile }}"
+        height="auto"
+        loading="eager"
+        class="c-header__logo-img c-header__logo--mobile-solid"
+      >
+    {% else %}
+      <span class="c-header__logo-text c-header__logo--mobile-solid">
+        {{ section.settings.logo_text | default: shop.name }}
+      </span>
+    {% endif %}
+
+  </a>
+
+  {%- comment -%} Right icons {%- endcomment -%}
+  <div class="c-header__nav-right">
+
+    {% if section.settings.show_search %}
+      <button class="c-header__icon-btn c-header__search-toggle" aria-label="Search" aria-expanded="false" aria-controls="c-search-bar" data-action="toggle-search">
+        <svg class="c-header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+      </button>
+    {% endif %}
+
+    {% if section.settings.show_cart %}
+      <a href="{{ routes.cart_url }}" class="c-header__icon-btn c-header__cart" aria-label="Cart — {{ cart.item_count }} items">
+        <svg class="c-header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+        {% if cart.item_count > 0 %}
+          <span class="c-header__cart-count" aria-hidden="true">{{ cart.item_count }}</span>
+        {% endif %}
+      </a>
+    {% endif %}
+
+    {% if section.settings.show_account %}
+      <a href="{{ routes.account_url }}" class="c-header__icon-btn" aria-label="{% if customer %}My account{% else %}Log in{% endif %}">
+        <svg class="c-header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </a>
+    {% endif %}
+
+  </div>
+
+  {%- comment -%} Inline expandable search bar — slides down under navbar {%- endcomment -%}
+  {% if section.settings.show_search %}
+    <div id="c-search-bar" class="c-search-bar" aria-hidden="true">
+      <form action="{{ routes.search_url }}" method="get" class="c-search-bar__form" role="search">
+        <input
+          type="search"
+          name="q"
+          class="c-search-bar__input"
+          placeholder="{{ section.settings.search_placeholder | default: 'Search' }}"
+          aria-label="Search"
+          autocomplete="off"
+        >
+        <input type="hidden" name="options[prefix]" value="last">
+        <button type="submit" class="c-search-bar__submit" aria-label="Submit search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+        </button>
+        <button type="button" class="c-search-bar__close" aria-label="Close search" data-action="close-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+  {% endif %}
+
+</header>
+
+{%- comment -%} Mobile Drawer {%- endcomment -%}
+<div id="c-mobile-drawer" class="c-mobile-drawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Mobile navigation">
+  <div class="c-mobile-drawer__overlay" data-action="close-drawer"></div>
+  <nav class="c-mobile-drawer__panel" aria-label="Mobile menu">
+    <button class="c-mobile-drawer__close" aria-label="Close menu" data-action="close-drawer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="20" height="20" aria-hidden="true">
+        <path d="M18 6 6 18M6 6l12 12"/>
+      </svg>
+    </button>
+    <div class="c-mobile-drawer__links">
+      {% assign main_menu = linklists[section.settings.main_menu_handle] %}
+      {% if main_menu != blank %}
+        {% for link in main_menu.links %}
+          <a href="{{ link.url }}" class="c-mobile-drawer__link{% if link.active %} is-active{% endif %}">
+            {{ link.title }}
+          </a>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <div class="c-mobile-drawer__footer">
+      {% if section.settings.show_account %}
+        <a href="{{ routes.account_url }}" class="c-mobile-drawer__util-link">
+          {% if customer %}My Account{% else %}Log In{% endif %}
+        </a>
+      {% endif %}
+    </div>
+  </nav>
+</div>
+
+<style>
+  :root {
+    --c-header-height: {{ section.settings.nav_height }}px;
+    --c-header-bg-solid:       {{ section.settings.bg_color_solid }};
+    --c-header-link-solid:     {{ section.settings.link_color_solid }};
+    --c-header-logo-solid:     {{ section.settings.logo_color_solid }};
+    --c-header-link-transparent: {{ section.settings.link_color_transparent }};
+    --c-header-logo-transparent: {{ section.settings.logo_color_transparent }};
+    --c-drawer-bg: {{ section.settings.bg_color_solid }};
+  }
+
+  /* ── Base header ── */
+  .c-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: var(--c-header-height);
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    transition: background 0.3s ease, border-color 0.3s ease;
+    left: 0;
+    right: 0;
+    z-index: 150;
+  }
+
+  /* ── Transparent state — homepage, before scroll ── */
+  /* position: absolute so it floats over hero */
+  .c-header--transparent {
+    position: absolute;
+    top: {{ section.settings.transparent_offset }}px;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+  }
+
+  /* ── Solid state — after scroll OR internal pages ── */
+ .c-header--solid {
+    position: fixed;
+    top: 0;
+    background: var(--c-header-bg-solid);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    transition: top 0.3s ease;
+  }
+
+  /* ── Logo visibility logic ── */
+
+  /* Hide ALL logos by default */
+  .c-header__logo--desktop-transparent,
+  .c-header__logo--desktop-solid,
+  .c-header__logo--mobile-transparent,
+  .c-header__logo--mobile-solid {
+    display: none !important;
+  }
+
+  /* Desktop solid state: show desktop-solid only */
+  .c-header--solid .c-header__logo--desktop-solid {
+    display: flex !important;
+  }
+
+  /* Desktop transparent state: show desktop-transparent only */
+  .c-header--transparent .c-header__logo--desktop-transparent {
+    display: flex !important;
+  }
+
+  /* ── Link / icon colors ── */
+  .c-header--solid .c-header__nav-link,
+  .c-header--solid .c-header__icon-btn,
+  .c-header--solid .c-header__icon {
+    color: var(--c-header-link-solid);
+  }
+
+  .c-header--solid .c-header__hamburger-line {
+    background: var(--c-header-link-solid);
+  }
+
+  .c-header--solid .c-header__logo-text {
+    color: var(--c-header-logo-solid);
+  }
+
+  .c-header--transparent .c-header__nav-link,
+  .c-header--transparent .c-header__icon-btn,
+  .c-header--transparent .c-header__icon {
+    color: var(--c-header-link-transparent);
+  }
+
+  .c-header--transparent .c-header__hamburger-line {
+    background: var(--c-header-link-transparent);
+  }
+
+  .c-header--transparent .c-header__logo-text {
+    color: var(--c-header-logo-transparent);
+  }
+
+  /* ── Nav Left ── */
+  .c-header__nav-left {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+  }
+
+  .c-header__nav-link {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+    font-weight: 300;
+    text-transform: uppercase;
+    transition: opacity 0.2s ease;
+  }
+
+  .c-header__nav-link:hover,
+  .c-header__nav-link.is-active { opacity: 0.5; }
+
+  /* ── Logo ── */
+  .c-header__logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .c-header__logo-text {
+    font-size: 16px;
+    letter-spacing: 0.25em;
+    font-weight: 300;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-header__logo-img {
+    height: auto;
+    display: block;
+  }
+
+  /* ── Nav Right ── */
+  .c-header__nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .c-header__icon-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: opacity 0.2s ease;
+    text-decoration: none;
+  }
+
+  .c-header__icon-btn:hover { opacity: 0.5; }
+
+  .c-header__search-toggle.is-active { opacity: 0.5; }
+
+  .c-header__icon {
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+
+  /* ── Cart badge ── */
+  .c-header__cart-count {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background:var(--c-header-bg-solid);
+    font-size: 9px;
+    font-weight: 400;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-family: 'Work Sans', sans-serif;
+    color: #000;
+  }
+
+  /* ── Hamburger — hidden desktop, shown mobile ── */
+  .c-header__hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+
+  .c-header__hamburger-line {
+    display: block;
+    width: 22px;
+    height: 1px;
+    transition: background 0.3s ease;
+  }
+
+  /* ── Inline expandable search bar ── */
+  .c-search-bar {
+    position: fixed;
+    top: var(--c-header-height);
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: var(--c-header-bg-solid);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    box-shadow: none;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease, top 0.3s ease;
+    z-index: 140;
+  }
+
+  .c-search-bar.is-open {
+    max-height: 64px;
+    opacity: 1;
+  }
+
+  .c-search-bar__form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 16px 48px;
+    box-shadow: none;
+  }
+
+  .c-search-bar__input {
+   flex: 0 0 25%;
+    max-width: 300px;
+    min-width: 220px;
+   -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    border-bottom: 1px solid var(--c-header-link-solid);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none !important;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 300;
+    font-size: 14px;
+    color: var(--c-header-link-solid);
+    padding: 4px 2px;
+    outline: none;
+    letter-spacing: 0.02em;
+  }
+
+  .c-search-bar__input::-webkit-search-decoration,
+  .c-search-bar__input::-webkit-search-cancel-button,
+  .c-search-bar__input::-webkit-search-results-button,
+  .c-search-bar__input::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .c-search-bar__input::placeholder {
+    color: var(--c-header-link-solid);
+    opacity: 0.45;
+    font-weight: 300;
+  }
+
+  .c-search-bar__input:focus,
+  .c-search-bar__input:focus-visible {
+    border-bottom-color: var(--c-header-link-solid);
+    outline: none;
+    box-shadow: none !important;
+  }
+
+  .c-search-bar__submit,
+  .c-search-bar__close {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-header-link-solid);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .c-search-bar__submit:hover,
+  .c-search-bar__close:hover { opacity: 1; }
+
+  /* ── Mobile Drawer ── */
+  .c-mobile-drawer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+  }
+
+  .c-mobile-drawer.is-open { display: block; }
+
+  .c-mobile-drawer__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    animation: c-fadeIn 0.3s ease forwards;
+  }
+
+  .c-mobile-drawer__panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: min(320px, 85vw);
+    height: 100%;
+    background: var(--c-drawer-bg);
+    display: flex;
+    flex-direction: column;
+    padding: 48px 40px;
+    animation: c-slideIn 0.35s ease forwards;
+    overflow-y: auto;
+  }
+
+  .c-mobile-drawer__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    align-self: flex-end;
+    margin-bottom: 40px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    color: var(--c-header-link-solid);
+  }
+
+  .c-mobile-drawer__close:hover { opacity: 1; }
+
+  .c-mobile-drawer__links {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+  }
+
+  .c-mobile-drawer__link {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-header-link-solid);
+    text-decoration: none;
+    font-weight: 300;
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    transition: opacity 0.2s;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-mobile-drawer__link:hover { opacity: 0.5; }
+
+  .c-mobile-drawer__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .c-mobile-drawer__util-link {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c-header-link-solid);
+    text-decoration: none;
+    font-weight: 300;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .c-mobile-drawer__util-link:hover { opacity: 1; }
+
+  @keyframes c-fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  @keyframes c-slideIn {
+    from { transform: translateX(-100%); } to { transform: translateX(0); }
+  }
+
+  /* ── TABLET ── */
+  @media screen and (max-width: 900px) {
+    .c-header { padding: 0 32px; }
+    .c-header__nav-left { gap: 24px; }
+  }
+
+  /* ── MOBILE ── */
+  @media screen and (max-width: 768px) {
+    .c-header {
+      padding: 0 20px;
+    }
+
+    /* Hide desktop nav */
+    .c-header__nav-left { display: none; }
+
+    /* Show hamburger */
+    .c-header__hamburger { display: flex; }
+
+    /* Logo center */
+    .c-header__logo {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+
+    /* Right icons stay right */
+    .c-header__nav-right {
+      gap: 14px;
+      z-index: 2;
+    }
+
+    /* Mobile logo visibility — override desktop rules */
+    .c-header--solid .c-header__logo--desktop-solid { display: none !important; }
+    .c-header--solid .c-header__logo--mobile-solid { display: flex !important; }
+
+    .c-header--transparent .c-header__logo--desktop-transparent { display: none !important; }
+    .c-header--transparent .c-header__logo--mobile-transparent { display: flex !important; }
+
+    .c-search-bar__form {
+      padding: 14px 20px;
+      gap: 12px;
+    }
+  }
+  /* Announcement bar ke sath header position adjust karo */
+  body.has-announcement-bar .c-header--solid {
+    top: var(--announcement-bar-height, 0px);
+  }
+  .section-template--18055550337109__main-padding{
+  padding-top: 60px !important;
+  }
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  var header        = document.getElementById('c-header');
+  var drawer         = document.getElementById('c-mobile-drawer');
+  var hamburger      = header.querySelector('.c-header__hamburger');
+  var closebtns       = document.querySelectorAll('[data-action="close-drawer"]');
+  var searchToggle    = header.querySelector('[data-action="toggle-search"]');
+  var searchBar       = document.getElementById('c-search-bar');
+  var searchInput      = searchBar ? searchBar.querySelector('.c-search-bar__input') : null;
+  var searchCloseBtn  = searchBar ? searchBar.querySelector('[data-action="close-search"]') : null;
+  var isTransparent  = header.dataset.transparent === 'true';
+  var scrollThreshold = {{ section.settings.scroll_threshold }};
+  var ticking = false;
+
+  /* ── Scroll — transparent (absolute) to solid (fixed) ── */
+  /* Matches mockup: triggers at 55% of viewport height */
+function updateHeaderTop() {
+  var barH = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--announcement-bar-height')
+  ) || 0;
+  // Announcement bar kitni scroll ho chuki hai
+  var barVisible = Math.max(0, barH - window.scrollY);
+  header.style.top = barVisible + 'px';
+
+  // Search bar ko bhi navbar ke neeche exactly sync rakho
+  if (searchBar) {
+    var headerHeight = header.offsetHeight;
+    searchBar.style.top = (barVisible + headerHeight) + 'px';
+  }
+}
+
+function onScroll() {
+  if (!ticking) {
+    window.requestAnimationFrame(function () {
+      var threshold = window.innerHeight * 0.55;
+      if (window.scrollY > threshold) {
+        header.classList.remove('c-header--transparent');
+        header.classList.add('c-header--solid');
+      } else {
+        header.classList.remove('c-header--solid');
+        header.classList.add('c-header--transparent');
+      }
+      updateHeaderTop();
+      ticking = false;
+    });
+    ticking = true;
+  }
+}
+
+if (isTransparent) {
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  // Har page pe chalega — announcement bar ke liye
+  window.addEventListener('scroll', updateHeaderTop, { passive: true });
+  updateHeaderTop();
+
+  /* ── Drawer ── */
+  function openDrawer() {
+    drawer.classList.add('is-open');
+    drawer.setAttribute('aria-hidden', 'false');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+    var firstLink = drawer.querySelector('.c-mobile-drawer__link');
+    if (firstLink) setTimeout(function () { firstLink.focus(); }, 50);
+  }
+
+  function closeDrawer() {
+    drawer.classList.remove('is-open');
+    drawer.setAttribute('aria-hidden', 'true');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+    hamburger.focus();
+  }
+
+  if (hamburger) hamburger.addEventListener('click', openDrawer);
+
+  closebtns.forEach(function (btn) {
+    btn.addEventListener('click', closeDrawer);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && drawer.classList.contains('is-open')) closeDrawer();
+  });
+
+  /* Focus trap */
+  drawer.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var focusable = drawer.querySelectorAll('a, button');
+    var first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  /* ── Inline expandable search ── */
+  function openSearch() {
+    if (!searchBar) return;
+    searchBar.classList.add('is-open');
+    searchBar.setAttribute('aria-hidden', 'false');
+    if (searchToggle) searchToggle.setAttribute('aria-expanded', 'true');
+    if (searchToggle) searchToggle.classList.add('is-active');
+    if (searchInput) {
+      setTimeout(function () { searchInput.focus(); }, 200);
+    }
+  }
+
+  function closeSearch() {
+    if (!searchBar) return;
+    searchBar.classList.remove('is-open');
+    searchBar.setAttribute('aria-hidden', 'true');
+    if (searchToggle) searchToggle.setAttribute('aria-expanded', 'false');
+    if (searchToggle) searchToggle.classList.remove('is-active');
+    if (searchInput) searchInput.blur();
+  }
+
+  function toggleSearch() {
+    if (!searchBar) return;
+    if (searchBar.classList.contains('is-open')) {
+      closeSearch();
+    } else {
+      openSearch();
+    }
+  }
+
+  if (searchToggle) {
+    searchToggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      toggleSearch();
+    });
+  }
+
+  if (searchCloseBtn) {
+    searchCloseBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      closeSearch();
+    });
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && searchBar && searchBar.classList.contains('is-open')) {
+      closeSearch();
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!searchBar || !searchBar.classList.contains('is-open')) return;
+    var isInsideSearch = searchBar.contains(e.target);
+    var isToggleBtn = searchToggle && searchToggle.contains(e.target);
+    if (!isInsideSearch && !isToggleBtn) {
+      closeSearch();
+    }
+  });
+
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Header",
+  "tag": "header",
+  "class": "c-header-wrapper",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Navigation menu"
+    },
+    {
+      "type": "link_list",
+      "id": "main_menu_handle",
+      "label": "Main menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "header",
+      "content": "Logo — Desktop"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo_desktop_transparent",
+      "label": "Desktop logo — Transparent (light/white)",
+      "info": "Shown on homepage hero before scroll. Use white/light version."
+    },
+    {
+      "type": "image_picker",
+      "id": "logo_desktop_solid",
+      "label": "Desktop logo — Solid (dark)",
+      "info": "Shown after scroll and on all internal pages. Use dark version."
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "label": "Desktop logo width",
+      "min": 60,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "Logo — Mobile"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo_mobile_transparent",
+      "label": "Mobile logo — Transparent (light/white)",
+      "info": "Shown on homepage hero on mobile before scroll."
+    },
+    {
+      "type": "image_picker",
+      "id": "logo_mobile_solid",
+      "label": "Mobile logo — Solid (dark)",
+      "info": "Shown after scroll and on all internal pages on mobile."
+    },
+    {
+      "type": "range",
+      "id": "logo_width_mobile",
+      "label": "Mobile logo width",
+      "min": 40,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Logo text fallback"
+    },
+    {
+      "type": "text",
+      "id": "logo_text",
+      "label": "Logo text",
+      "default": "CAST",
+      "info": "Used when no logo image is uploaded"
+    },
+    {
+      "type": "header",
+      "content": "Header height"
+    },
+    {
+      "type": "range",
+      "id": "nav_height",
+      "label": "Header height",
+      "min": 48,
+      "max": 96,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "header",
+      "content": "Transparent behavior"
+    },
+    {
+      "type": "checkbox",
+      "id": "transparent_on_hero",
+      "label": "Transparent on homepage hero",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "scroll_threshold",
+      "label": "Scroll to trigger solid",
+      "min": 40,
+      "max": 300,
+      "step": 10,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Icons"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show search",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "search_placeholder",
+      "label": "Search placeholder text",
+      "default": "Search"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cart",
+      "label": "Show cart",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_account",
+      "label": "Show account",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Colors — Solid"
+    },
+    {
+      "type": "color",
+      "id": "bg_color_solid",
+      "label": "Background",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "link_color_solid",
+      "label": "Links & icons",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "logo_color_solid",
+      "label": "Logo text color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Colors — Transparent"
+    },
+    {
+      "type": "color",
+      "id": "link_color_transparent",
+      "label": "Links & icons",
+      "default": "#F9F8F6"
+    },
+    {
+      "type": "color",
+      "id": "logo_color_transparent",
+      "label": "Logo text color",
+      "default": "#F9F8F6"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Header"
+    }
+  ]
+}
+{% endschema %}
