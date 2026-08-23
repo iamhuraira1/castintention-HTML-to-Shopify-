@@ -1,0 +1,110 @@
+{% comment %}
+  CAST — Search Result Product Card
+  File: snippets/c-search-product-card.liquid
+
+  Mirrors the product card design from sections/c-featured-collection.liquid
+  so search results use the same image-area background, hover lift,
+  use-state label, name, price, and CTA underline link.
+
+  Usage:
+    {% render 'c-search-product-card', product: item, lazy_load: lazy_load %}
+{% endcomment %}
+
+{%- liquid
+  assign use_state = product.type
+  assign cta_text = 'Shop ' | append: product.title
+  if lazy_load == false
+    assign loading_attr = 'eager'
+  else
+    assign loading_attr = 'lazy'
+  endif
+-%}
+
+<div class="c-product-card">
+{% if product.handle == 'the-trio' %}
+  <a
+    href="{{ product.url }}"
+    class="c-product-card__image-link"
+    aria-label="{{ product.title | escape }}"
+    tabindex="-1"
+  >
+    <div class="c-product-card__image-area">
+      {% if product.featured_image != blank %}
+        {{
+          product.featured_image
+          | image_url: width: 800
+          | image_tag:
+            class: 'c-product-card__image',
+            alt: product.featured_image.alt | default: product.title,
+            loading: loading_attr,
+            width: product.featured_image.width,
+            height: product.featured_image.height
+        }}
+      {% else %}
+        <div class="c-product-card__image-placeholder">
+          {{ 'product-1' | placeholder_svg_tag: 'c-product-card__placeholder-svg' }}
+        </div>
+      {% endif %}
+    </div>
+  </a>
+{% else %}
+  <a
+    href="{{ product.url }}"
+    class="c-product-card__image-link"
+    aria-label="{{ product.title | escape }}"
+    tabindex="-1"
+  >
+    <div class="c-product-card__image-area">
+      {% if product.featured_image != blank %}
+        {{
+          product.featured_image
+          | image_url: width: 800
+          | image_tag:
+            class: 'c-product-card__image',
+            alt: product.featured_image.alt | default: product.title,
+            loading: loading_attr,
+            width: product.featured_image.width,
+            height: product.featured_image.height
+        }}
+      {% else %}
+        <div class="c-product-card__image-placeholder">
+          {{ 'product-1' | placeholder_svg_tag: 'c-product-card__placeholder-svg' }}
+        </div>
+      {% endif %}
+    </div>
+  </a>
+{% endif %}
+
+  <div class="c-product-card__info">
+
+    {% if use_state != blank %}
+      <span class="c-product-card__use-state">{{ use_state }}</span>
+    {% endif %}
+
+    <h3 class="c-product-card__name">
+ {% if product.handle == 'the-trio' %}
+  <a href="{{ product.url }}" class="c-product-card__name-link">
+    {{ product.title }}
+  </a>
+  {% else %}
+    <a href="{{ product.url }}" class="c-product-card__name-link">
+      {{ product.title }}
+    </a>
+  {% endif %}
+</h3>
+<p class="c-product-card__price">
+  {{ product.price | money_without_trailing_zeros }}
+</p>
+
+{% if product.handle == 'the-trio' %}
+  <a href="{{ product.url }}" class="c-product-card__cta">
+    Coming Soon
+  </a>
+{% else %}
+  <a href="{{ product.url }}" class="c-product-card__cta">
+    {{ cta_text }}
+  </a>
+{% endif %}
+
+  </div>
+</div>

@@ -1,0 +1,59 @@
+{%- liquid
+  if lazy_load == false
+    assign loading_attr = 'eager'
+  else
+    assign loading_attr = 'lazy'
+  endif
+-%}
+
+<div class="c-product-card">
+
+  <a
+    href="{{ article.url }}"
+    class="c-product-card__image-link"
+    aria-label="{{ article.title | escape }}"
+    tabindex="-1"
+  >
+    <div class="c-product-card__image-area">
+      {% if article.image %}
+        {{
+          article.image
+          | image_url: width: 800
+          | image_tag:
+            class: 'c-product-card__image',
+            alt: article.image.alt | default: article.title,
+            loading: loading_attr,
+            width: article.image.width,
+            height: article.image.height
+        }}
+      {% else %}
+        <div class="c-product-card__image-placeholder">
+          {{ 'image' | placeholder_svg_tag: 'c-product-card__placeholder-svg' }}
+        </div>
+      {% endif %}
+    </div>
+  </a>
+
+  <div class="c-product-card__info">
+
+    <span class="c-product-card__use-state">
+      {{ article.blog.title }}
+    </span>
+
+    <h3 class="c-product-card__name">
+      <a href="{{ article.url }}" class="c-product-card__name-link">
+        {{ article.title }}
+      </a>
+    </h3>
+
+<p class="c-product-card__price">
+  {{ article.published_at | date: "%b %d, %Y" }}
+</p>
+
+    <a href="{{ article.url }}" class="c-product-card__cta">
+      Read Article
+    </a>
+
+  </div>
+
+</div>
